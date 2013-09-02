@@ -35,7 +35,7 @@ found = ''
 
 def init_globals():
     global markers, tfListen, cmd_pub
-    markers['food'] = [201,202]
+    markers['food'] = [201, 202]
     markers['hive'] = [200, 199]
     tfListen = tf.TransformListener()
     rospy.sleep(1)
