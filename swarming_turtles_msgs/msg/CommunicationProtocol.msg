@@ -1,4 +1,4 @@
-string from
-string to
-geometry_msgs/Pose_Stamped location
+string sender
+string receiver
+geometry_msgs/PoseStamped location
 string request

@@ -34,10 +34,11 @@ def limit_ang(ang):
 
 class DetectTurtles:
     def __init__(self):
-        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
         self.tfListen = tf.TransformListener()
+        self.turtle_pub = rospy.Publisher('found_turtles', Turtles)
         rospy.sleep(0.5)
-        self.turtle_pub  = rospy.Publisher('found_turtles', Turtles)
+        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
+       
         
     def transform_pose(self,pose_in):
         if pose_in.header.frame_id == base_frame:

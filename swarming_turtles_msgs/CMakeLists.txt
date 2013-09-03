@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs std_msg
    FILES
    Turtle.msg
    Turtles.msg
+   CommunicationProtocol.msg
  )
 
 ## Generate services in the 'srv' folder

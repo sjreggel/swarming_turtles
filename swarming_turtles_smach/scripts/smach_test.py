@@ -104,7 +104,7 @@ class Explore(smach.State):
         smach.State.__init__(self, outcomes=['found_hive', 'found_food'])
         self.locs = ['food', 'hive']
 
-    def execute(self, userdate):
+    def execute(self, userdata):
         global found
         found = ''
 
@@ -124,7 +124,7 @@ class SearchLocations(smach.State):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
         self.loc = looking_for
 
-    def execute(self, userdate):
+    def execute(self, userdata):
         global found
         found = ''
 
@@ -144,7 +144,7 @@ class PreSearchLocation(smach.State):
         smach.State.__init__(self, outcomes=['known', 'not_known'])
         self.loc = loc
         
-    def execute(self, userdate):
+    def execute(self, userdata):
         if self.loc in locations.keys():
             return 'known'
         else:

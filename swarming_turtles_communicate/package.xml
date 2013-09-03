@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>swarming_turtles_smach</name>
+  <name>swarming_turtles_communicate</name>
   <version>0.0.0</version>
-  <description>The swarming_turtles_smach package</description>
+  <description>The swarming_turtles_communicate package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://ros.org/wiki/swarming_turtles_smach</url> -->
+  <!-- <url type="website">http://ros.org/wiki/swarming_turtles_communicate</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -40,28 +40,12 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>ar_track_alvar</build_depend>
+  <build_depend>rosgraph</build_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>smach</build_depend>
-  <build_depend>smach_ros</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>visualization_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>kobuki_msgs</build_depend>
   <build_depend>swarming_turtles_msgs</build_depend>
-  <build_depend>swarming_turtles_communicate</build_depend>
-
-  
-  <run_depend>ar_track_alvar</run_depend>
+  <run_depend>rosgraph</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>smach</run_depend>
-  <run_depend>smach_ros</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>kobuki_msgs</run_depend>
   <run_depend>swarming_turtles_msgs</run_depend>
-  <run_depend>swarming_turtles_communicate</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
