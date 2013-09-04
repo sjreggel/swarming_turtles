@@ -62,11 +62,12 @@ using namespace collvoid;
 
 namespace collvoid{
 
-  ROSAgent::ROSAgent(){
+  ROSAgent::ROSAgent()  {
     initialized_ = false;
     cur_allowed_error_ = 0;
     cur_loc_unc_radius_ = 0;
     min_dist_obst_ = DBL_MAX;
+    agents_.positions.clear();
   }
   
   void ROSAgent::init(ros::NodeHandle private_nh, tf::TransformListener* tf){
@@ -75,7 +76,9 @@ namespace collvoid{
     private_nh.param<std::string>("global_frame", global_frame_, "/odom");
 
     standalone_ = getParamDef(private_nh, "standalone", true);
-   
+
+    as_ = new actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>(private_nh, "swarm_nav_goal", boost::bind(&ROSAgent::executeCB, this, _1), false);
+    
     ros::NodeHandle nh;
     id_ = nh.getNamespace();
     if (strcmp(id_.c_str(), "/") == 0) {
@@ -107,15 +110,65 @@ namespace collvoid{
     setFootprint(footprint);
     
     eps_= getParamDef(private_nh, "eps", 0.1);
-    getParam(private_nh, "convex", &convex_);
+    convex_ = getParamDef(private_nh, "convex", false);
     getParam(private_nh, "holo_robot",&holo_robot_);
 
-    initParams(private_nh);
+    if (standalone_) 
+      initParams(private_nh);
 
+    as_->start();
     initialized_ = true;
 
   }
 
+  void ROSAgent::executeCB(const move_base_msgs::MoveBaseGoalConstPtr& msg){
+    bool done = false;
+
+    tf::Stamped<tf::Pose> goal_pose, global_pose;
+    tf::poseStampedMsgToTF(msg->target_pose, goal_pose);
+
+    //just get the latest available transform... for accuracy they should send
+    //goals in the frame of the planner
+    goal_pose.stamp_ = ros::Time();
+
+    try{
+      tf_->transformPose(global_frame_, goal_pose, global_pose);
+    }
+    catch(tf::TransformException& ex){
+      ROS_WARN("Failed to transform the goal pose from %s into the %s frame: %s",
+	       goal_pose.frame_id_.c_str(), global_frame_.c_str(), ex.what());
+      as_->setPreempted();
+      return;
+    }
+
+    geometry_msgs::PoseStamped global_pose_msg;
+    tf::poseStampedTFToMsg(global_pose, global_pose_msg);
+
+    Vector2 goal = Vector2(global_pose_msg.pose.position.x, global_pose_msg.pose.position.y);
+
+    double ang = tf::getYaw(global_pose_msg.pose.orientation);
+    
+    while(!done){
+      if (as_->isPreemptRequested() || ! ros::ok()) {
+	as_->setPreempted();
+	geometry_msgs::Twist msg;
+	twist_pub_.publish(msg);
+	return;
+      }
+      geometry_msgs::Twist msg;
+      
+      msg = computeVelocityCommand(goal, ang);
+
+      twist_pub_.publish(msg);
+      if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0) {
+	done = true;
+      }
+	
+    }
+    as_->setSucceeded();
+  }
+
+  
 
   void ROSAgent::initParams(ros::NodeHandle private_nh) {
     getParam(private_nh,"max_vel_with_obstacles", &max_vel_with_obstacles_);
@@ -126,6 +179,8 @@ namespace collvoid{
     getParam(private_nh,"max_vel_th", &max_vel_th_);
     getParam(private_nh,"min_vel_th", &min_vel_th_);
     getParam(private_nh,"min_vel_th_inplace", &min_vel_th_inplace_);
+    getParam(private_nh, "base/use_obstacles", &use_obstacles_);
+
 
     time_horizon_obst_ = getParamDef(private_nh,"time_horizon_obst",10.0);
     time_to_holo_ = getParamDef(private_nh,"time_to_holo", 0.4);
@@ -134,6 +189,10 @@ namespace collvoid{
     delete_observations_ = getParamDef(private_nh, "delete_observations", true);
     threshold_last_seen_ = getParamDef(private_nh,"threshold_last_seen",1.0);
     max_neighbors_ = getParamDef(private_nh, "max_neighbors", 10);
+
+    yaw_goal_tolerance_ = getParamDef(private_nh, "yaw_goal_tolerance", 0.1);
+    xy_goal_tolerance_ = getParamDef(private_nh, "xy_goal_tolerance", 0.1);
+
     
     getParam(private_nh, "orca", &orca_);
     getParam(private_nh, "clearpath", &clearpath_);
@@ -144,6 +203,7 @@ namespace collvoid{
 
     trunc_time_ = getParamDef(private_nh,"trunc_time",10.0);
     left_pref_ = getParamDef(private_nh,"left_pref",0.1);
+    twist_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
   }
 
 
@@ -168,7 +228,7 @@ namespace collvoid{
 
     //Subscribers
     odom_sub_ = nh.subscribe("odom",1, &ROSAgent::odomCallback, this);
-
+    position_share_sub_ = nh.subscribe("position_share", 1, &ROSAgent::positionShareCallback, this);
 
     laser_scan_sub_.subscribe (nh, "scan_obst", 1);
     laser_notifier.reset(new tf::MessageFilter<sensor_msgs::LaserScan>(laser_scan_sub_, *tf_, global_frame_, 10));
@@ -180,14 +240,78 @@ namespace collvoid{
 
     ROS_INFO("New Agent as me initialized");
   }
+
+
+  geometry_msgs::Twist ROSAgent::computeVelocityCommand(Vector2 waypoint, double goal_ang) {
+    if(!initialized_){
+      ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
+      return geometry_msgs::Twist();
+    }
+    tf::Stamped<tf::Pose> global_pose;
+    //let's get the pose of the robot in the frame of the plan
+    global_pose.setIdentity();
+    global_pose.frame_id_ = base_frame_;
+    global_pose.stamp_ = ros::Time();
+    tf_->transformPose(global_frame_, global_pose, global_pose);
+    // Set current velocities from odometry
+    geometry_msgs::Twist global_vel;
+    me_lock_.lock();
+    global_vel.linear.x = base_odom_.twist.twist.linear.x;
+    global_vel.linear.y = base_odom_.twist.twist.linear.y;
+    global_vel.angular.z = base_odom_.twist.twist.angular.z;
+    setAgentParams(this);
+    me_lock_.unlock();
+
+    Vector2 pos = Vector2(global_pose.getOrigin().x(), global_pose.getOrigin().y());
+    Vector2 goal_dir = waypoint - pos;
+
+    geometry_msgs::Twist cmd_vel;
+
+    //rotate to goal:
+    if (collvoid::abs(goal_dir) < xy_goal_tolerance_) {
+      double robot_yaw = tf::getYaw(global_pose.getRotation());
+      double ang_diff = angles::shortest_angular_distance(robot_yaw, goal_ang);
+      if (fabs(ang_diff) < yaw_goal_tolerance_) {
+	return cmd_vel;
+      }
+      double v_th_samp = ang_diff > 0.0 ? std::min(max_vel_th_,
+						   std::max(min_vel_th_inplace_, ang_diff)) : std::max(-1.0 * max_vel_th_,
+													   std::min(-1.0 * min_vel_th_inplace_, ang_diff));
+      v_th_samp = sign(v_th_samp) * std::max(min_vel_th_inplace_,fabs(v_th_samp));
+      cmd_vel.angular.z = v_th_samp;
+      return cmd_vel;
+    }
+    
+    else {
+      if (collvoid::abs(goal_dir) > max_vel_x_) {
+	goal_dir = max_vel_x_ * collvoid::normalize(goal_dir);
+      }
+      else if (collvoid::abs(goal_dir) < min_vel_x_) {
+	goal_dir = min_vel_x_ * 1.2* collvoid::normalize(goal_dir);
+      }
+      
+      computeNewVelocity(goal_dir, cmd_vel);
+
+      if(std::abs(cmd_vel.angular.z)<min_vel_th_)
+	cmd_vel.angular.z = 0.0;
+      if(std::abs(cmd_vel.linear.x)<min_vel_x_)
+	cmd_vel.linear.x = 0.0;
+      if(std::abs(cmd_vel.linear.y)<min_vel_y_)
+	cmd_vel.linear.y = 0.0;
+
+      return cmd_vel;
+    }
+    
+    
+  }
   
 
   void ROSAgent::computeNewVelocity(Vector2 pref_velocity, geometry_msgs::Twist& cmd_vel){
     boost::mutex::scoped_lock lock(me_lock_);
-    //Forward project agents
+    //Forward project me
     setAgentParams(this);
 
-
+    //get all neighbors
     //updateAllNeighbors();
 
     new_velocity_ = Vector2(0.0,0.0);
@@ -752,6 +876,14 @@ namespace collvoid{
     return last_seen_;
   }
 
+  void ROSAgent::positionShareCallback(const swarming_turtles_msgs::PositionShares::ConstPtr& msg) {
+    boost::mutex::scoped_lock(neighbors_lock_);
+    agents_.positions.clear();
+    for (int i=0; i<(int)msg->positions.size(); i++) {  
+      agents_.positions.push_back(msg->positions[i]);
+    }
+  }
+  
   void ROSAgent::odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
     //we assume that the odometry is published in the frame of the base
     boost::mutex::scoped_lock(me_lock_);
@@ -782,6 +914,31 @@ namespace collvoid{
     base_odom_.pose.pose = pose_msg.pose;
   }
 
+
+  void ROSAgent::updateAllNeighbors() {
+    boost::mutex::scoped_lock(neighbors_lock_);
+    agent_neighbors_.clear();
+    for (int i=0; i<(int)agents_.positions.size(); i++) {
+      swarming_turtles_msgs::PositionShare msg = agents_.positions[i];
+      
+      ROSAgentPtr agent(new ROSAgent);
+      agent->id_ = msg.name;
+      agent->holo_robot_ = msg.holo_robot;
+      agent->radius_ = msg.radius;
+      agent->controlled_ = msg.controlled;
+      agent->velocity_ = Vector2(msg.velocity.x, msg.velocity.y);
+      agent->position_ = Vector2(msg.position.x, msg.position.y);
+      
+      agent->footprint_msg_ = msg.footprint;
+      //calculate mink footprint?
+      
+      //TODO?
+      agent->timestep_ = sim_period_;
+      agent_neighbors_.push_back(agent);
+      
+    }
+  }
+  
   void ROSAgent::setAgentParams(ROSAgent* agent) {
     double time_dif = (ros::Time::now() - agent->last_seen_).toSec();
     double yaw, x_dif, y_dif, th_dif;
@@ -796,6 +953,10 @@ namespace collvoid{
     else {
       x_dif = time_dif * agent->base_odom_.twist.twist.linear.x * cos(yaw + th_dif/2.0);
       y_dif = time_dif * agent->base_odom_.twist.twist.linear.x * sin(yaw + th_dif/2.0);
+      Vector2 vel = rotateVectorByAngle(x_dif, y_dif, yaw);
+      x_dif = vel.x();
+      y_dif = vel.y();
+
     }
     agent->heading_ = yaw + th_dif;
     agent->position_ = Vector2(agent->base_odom_.pose.pose.position.x + x_dif, agent->base_odom_.pose.pose.position.y + y_dif);

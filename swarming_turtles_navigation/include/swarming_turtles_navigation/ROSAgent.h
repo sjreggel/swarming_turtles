@@ -44,8 +44,12 @@
 #include <tf/message_filter.h>
 #include <message_filters/subscriber.h>
 #include <laser_geometry/laser_geometry.h>
-#include <swarming_turtles_msgs/Turtles.h>
-#include <swarming_turtles_msgs/Turtle.h>
+#include <actionlib/server/simple_action_server.h>
+#include <move_base_msgs/MoveBaseAction.h>
+
+
+#include <swarming_turtles_msgs/PositionShare.h>
+#include <swarming_turtles_msgs/PositionShares.h>
 
 #include <swarming_turtles_navigation/Agent.h>
 
@@ -141,8 +145,8 @@ namespace collvoid {
 
 
     
-    void positionShareCallback(const collvoid_msgs::PoseTwistWithCovariance::ConstPtr& msg); 
-    void amclPoseArrayWeightedCallback(const amcl::PoseArrayWeighted::ConstPtr& msg);
+    void positionShareCallback(const swarming_turtles_msgs::PositionShares::ConstPtr& msg); 
+
     void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     void updateAllNeighbors();
@@ -158,11 +162,16 @@ namespace collvoid {
     
     geometry_msgs::PoseStamped transformMapPoseToBaseLink(geometry_msgs::PoseStamped in);
 
+    geometry_msgs::Twist computeVelocityCommand(Vector2 waypoint, double goal_ang);
+
     void computeNewLocUncertainty();
     
     void computeNewMinkowskiFootprint();
 
     void baseScanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
+
+
+    void executeCB(const move_base_msgs::MoveBaseGoalConstPtr& goal);
 
     //config
     double publish_positions_period_;
@@ -212,7 +221,12 @@ namespace collvoid {
     double footprint_radius_;
 
 
+    swarming_turtles_msgs::PositionShares agents_;
+
     bool standalone_;
+
+    double xy_goal_tolerance_, yaw_goal_tolerance_;
+
     //set automatically
     bool initialized_;
     bool has_polygon_footprint_;
@@ -220,6 +234,10 @@ namespace collvoid {
 
     std::vector< std::pair< collvoid::Vector2,collvoid::Vector2 > > footprint_lines_;
 
+
+
+    //Actionserver
+    actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
     
     ros::Time last_seen_;
     nav_msgs::Odometry base_odom_; 
@@ -238,7 +256,7 @@ namespace collvoid {
     tf::TransformListener* tf_;
     
     //subscribers and publishers
-    ros::Publisher lines_pub_, neighbors_pub_, polygon_pub_, vo_pub_, me_pub_, samples_pub_, speed_pub_, position_share_pub_, obstacles_pub_;
+    ros::Publisher lines_pub_, neighbors_pub_, polygon_pub_, vo_pub_, me_pub_, samples_pub_, speed_pub_, position_share_pub_, obstacles_pub_, twist_pub_;
     ros::Subscriber amcl_posearray_sub_, position_share_sub_, odom_sub_;
 
     

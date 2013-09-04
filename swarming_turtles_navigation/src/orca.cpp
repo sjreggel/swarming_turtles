@@ -62,7 +62,7 @@
  *
  */
 
-#include "collvoid_local_planner/orca.h"
+#include "swarming_turtles_navigation/orca.h"
 
 namespace collvoid{
 

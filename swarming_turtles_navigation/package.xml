@@ -48,6 +48,12 @@
   <build_depend>rospy</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>visualization_msgs</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>laser_geometry</build_depend>
+
+
+  
   <run_depend>actionlib</run_depend>
   <run_depend>rosconsole</run_depend>
   <run_depend>roscpp</run_depend>
@@ -56,6 +62,9 @@
   <run_depend>rospy</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <run_depend>move_base_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>laser_geometry</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

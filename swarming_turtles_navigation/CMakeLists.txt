@@ -4,7 +4,7 @@ project(swarming_turtles_navigation)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs move_base_msgs geometry_msgs laser_geometry)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -32,7 +32,6 @@ catkin_python_setup()
 #   Service1.srv
 #   Service2.srv
 # )
-
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
@@ -51,7 +50,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES swarming_turtles_navigation
-  CATKIN_DEPENDS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs
+  CATKIN_DEPENDS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs move_base_msgs geometry_msgs laser_geometry
   DEPENDS system_lib
 )
 
@@ -63,6 +62,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -76,11 +76,11 @@ include_directories(${Boost_INCLUDE_DIRS})
 ## Declare a cpp executable
 # add_executable(swarming_turtles_navigation_node src/swarming_turtles_navigation_node.cpp)
 
-#add_executable(ROSAgent src/collvoid_local_planner.cpp src/Agent.cpp src/ROSAgent.cpp src/orca.cpp src/collvoid_publishers.cpp src/clearpath.cpp)
-#target_link_libraries(ROSAgent
-#  ${catkin_LIBRARIES}
-#  ${Boost_LIBRARIES})
-#add_dependencies(ROSAgent ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(SwarmCollvoid src/Agent.cpp src/ROSAgent.cpp src/orca.cpp src/collvoid_publishers.cpp src/clearpath.cpp)
+target_link_libraries(SwarmCollvoid
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES})
+#add_dependencies(SwarmCollvoid ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
 ## Add cmake target dependencies of the executable/library

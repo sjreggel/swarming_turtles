@@ -20,7 +20,7 @@ RADIUS = 0.2
 MIN_SPEED = 0.1
 
 TIME_THRESHOLD = 1.0 #seconds not seen
-DIST_THRESHOLD = 2.0 #m too far away to include
+DIST_THRESHOLD = 2.5 #m too far away to include
 
 MIN_TIME_DIFF = 0.1
 
