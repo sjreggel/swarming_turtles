@@ -131,7 +131,7 @@ def predict_pos_vel(poses, times, steps = 5):
     
     if len(poses)<steps:
         steps = len(poses)
-
+        
     avg_lin_speed = 0
     avg_rot_speed = 0
     for i in xrange(steps-1,0,-1):
@@ -140,6 +140,8 @@ def predict_pos_vel(poses, times, steps = 5):
 
         time_dif = (times[-i] - times[-(i+1)]).to_sec()
 
+        if time_dif == 0:
+            time_dif == 0.0000000001
         #print times
         avg_lin_speed += 1./(steps-1) * dist_between(cur, prev)/time_dif
         avg_rot_speed += 1./(steps-1) * abs(get_jaw(cur.orientation) - get_jaw(prev.orientation))/time_dif

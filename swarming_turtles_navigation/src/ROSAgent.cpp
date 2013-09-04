@@ -179,7 +179,7 @@ namespace collvoid{
     getParam(private_nh,"max_vel_th", &max_vel_th_);
     getParam(private_nh,"min_vel_th", &min_vel_th_);
     getParam(private_nh,"min_vel_th_inplace", &min_vel_th_inplace_);
-    getParam(private_nh, "base/use_obstacles", &use_obstacles_);
+    getParam(private_nh,"use_obstacles", &use_obstacles_);
 
 
     time_horizon_obst_ = getParamDef(private_nh,"time_horizon_obst",10.0);
@@ -203,7 +203,7 @@ namespace collvoid{
 
     trunc_time_ = getParamDef(private_nh,"trunc_time",10.0);
     left_pref_ = getParamDef(private_nh,"left_pref",0.1);
-    twist_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    twist_pub_ = private_nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   }
 
 

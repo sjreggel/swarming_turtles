@@ -1,0 +1,7 @@
+<launch>
+  <rosparam command="load" file="$(find swarming_turtles_navigation)/config/params.yaml"/>
+  <node name="pose_resend" pkg="swarming_turtles_navigation" type="pose_resend.py" output="screen" />
+  <node name="SwarmCollvoid" pkg="swarming_turtles_navigation" type="SwarmCollvoid" output="screen">
+    <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi" />
+  </node>
+</launch>
