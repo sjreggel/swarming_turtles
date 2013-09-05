@@ -4,7 +4,7 @@ project(swarming_turtles_smach)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS ar_track_alvar rospy smach smach_ros std_msgs visualization_msgs swarming_turtles_msgs swarming_turtles_communicate)
+find_package(catkin REQUIRED COMPONENTS ar_track_alvar rospy smach smach_ros std_msgs visualization_msgs swarming_turtles_msgs swarming_turtles_communicate actionlib actionlib_msgs move_base_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
