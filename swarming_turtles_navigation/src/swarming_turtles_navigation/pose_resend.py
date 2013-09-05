@@ -17,9 +17,9 @@ turtles = {}
 RATE = 10
 RADIUS = 0.2
 
-MIN_SPEED = 0.1
+MIN_SPEED = 0.05
 
-TIME_THRESHOLD = 1.0 #seconds not seen
+TIME_THRESHOLD = 2.0 #seconds not seen
 DIST_THRESHOLD = 2.5 #m too far away to include
 
 MIN_TIME_DIFF = 0.1
@@ -64,7 +64,7 @@ def dist_between(a, b):
 
 def cb_found_turtles(msg):
     global updating
-    if updating:
+    if updating or publishing:
         return
     updating = True
     for turtle in msg.turtles:
@@ -115,6 +115,7 @@ def create_pose_msg(own_pose, t):
     msg.position = p
     msg.velocity = v
 
+    #print p,v
     return msg
     
 def predict_pos_vel(poses, times, steps = 5):
@@ -140,13 +141,14 @@ def predict_pos_vel(poses, times, steps = 5):
 
         time_dif = (times[-i] - times[-(i+1)]).to_sec()
 
-        if time_dif == 0:
-            time_dif == 0.0000000001
+        if time_dif == 0 or steps == 1:
+            print steps, time_dif
+            time_dif = 0.001
         #print times
         avg_lin_speed += 1./(steps-1) * dist_between(cur, prev)/time_dif
-        avg_rot_speed += 1./(steps-1) * abs(get_jaw(cur.orientation) - get_jaw(prev.orientation))/time_dif
+        avg_rot_speed += 1./(steps-1) * (get_jaw(cur.orientation) - get_jaw(prev.orientation))/time_dif
 
-    #print avg_lin_speed, avg_rot_speed
+
     time_to_now = (rospy.Time.now() - times[-1]).to_sec()
 
     jaw = get_jaw(poses[-1].orientation)

@@ -2,6 +2,7 @@
 import rospy
 import actionlib
 import tf
+import math
 from actionlib_msgs.msg import *
 from move_base_msgs.msg import *
 from geometry_msgs.msg import *
@@ -36,10 +37,11 @@ def main():
 
     goal = PoseStamped()
 
-    theta = 0
+    theta = math.pi
     
     q = tf.transformations.quaternion_from_euler(0,0, theta, axes='sxyz')
-    goal.pose.position.x = 1.0
+    goal.pose.position.x = 2.0
+    goal.pose.position.y = 0.0
 
     quat = Quaternion(*q)
     goal.pose.orientation = quat
@@ -47,7 +49,7 @@ def main():
     goal_msg = create_goal_message(goal)
 
     client.send_goal(goal_msg)
-    client.wait_for_result(rospy.Duration(5.0))
+    client.wait_for_result(rospy.Duration(10.0))
 
 
 if __name__ == '__main__':

@@ -11,6 +11,8 @@ from swarming_turtles_msgs.msg import Turtle,Turtles
 base_frame = "/base_link"
 odom = "/odom"
 
+output_frame = '/odom'
+
 MARKER_ANGS = [180, 0, 0, 180, 90, 90] #left out, left in, right out, right in,center out, center in (center inside up side down)
 MARKER_VEC_TO_CENTER = [[0, -0.125], [0, -0.125],[0, 0.125], [0, 0.125], [0.055, 0],[0.055, 0]]
 
@@ -41,13 +43,13 @@ class DetectTurtles:
        
         
     def transform_pose(self,pose_in):
-        if pose_in.header.frame_id == base_frame:
+        if pose_in.header.frame_id == output_frame:
             return pose_in
         
-        if self.tfListen.frameExists(base_frame) and self.tfListen.frameExists(pose_in.header.frame_id):
-            time = self.tfListen.getLatestCommonTime(pose_in.header.frame_id, base_frame)
+        if self.tfListen.frameExists(output_frame) and self.tfListen.frameExists(pose_in.header.frame_id):
+            time = self.tfListen.getLatestCommonTime(pose_in.header.frame_id, output_frame)
             pose_in.header.stamp = time
-            pose = self.tfListen.transformPose(base_frame, pose_in)
+            pose = self.tfListen.transformPose(output_frame, pose_in)
             return pose
         return None
 
@@ -76,7 +78,7 @@ class DetectTurtles:
         
         pose_in.header.frame_id = frame_id
               
-        pose = self.transform_pose(pose_in)  #transform to baseframe
+        pose = self.transform_pose(pose_in)  #transform to output_frame
 #calculate angle of other robot in baseframe
         marker_angle = get_jaw(pose.pose.orientation)
         marker_vec = MARKER_VEC_TO_CENTER[marker_id]
@@ -98,7 +100,7 @@ class DetectTurtles:
         q = tf.transformations.quaternion_from_euler(0, 0, angle)
         orientation = Quaternion(*q)
         center.pose.orientation = orientation
-        center.header.frame_id = base_frame
+        center.header.frame_id = output_frame
         #print center, angle/math.pi * 180
 
         return center

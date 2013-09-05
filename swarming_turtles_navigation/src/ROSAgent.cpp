@@ -146,9 +146,14 @@ namespace collvoid{
 
     Vector2 goal = Vector2(global_pose_msg.pose.position.x, global_pose_msg.pose.position.y);
 
+   
+    int counter = 0;
     double ang = tf::getYaw(global_pose_msg.pose.orientation);
+    //ROS_ERROR("Vector goal %f, %f, ang %f", goal.x(), goal.y(), ang);
     
-    while(!done){
+    ros::Rate rate = ros::Rate(10);
+    bool failed = false;
+    while(!done && !failed){
       if (as_->isPreemptRequested() || ! ros::ok()) {
 	as_->setPreempted();
 	geometry_msgs::Twist msg;
@@ -160,12 +165,28 @@ namespace collvoid{
       msg = computeVelocityCommand(goal, ang);
 
       twist_pub_.publish(msg);
-      if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0) {
-	done = true;
+      if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0 ) {
+	if (collvoid::abs(goal-position_) < xy_goal_tolerance_) { 
+	  done = true;
+	}
+	else {
+	  if (counter++ > 5) {
+	    failed = true;
+	  }
+	}
       }
+      else{
+	counter = 0;
+      }
+      rate.sleep();
 	
     }
-    as_->setSucceeded();
+    ROS_INFO("done");
+    if (done)
+      as_->setSucceeded();
+    if (failed)
+      as_->setPreempted();
+      
   }
 
   
@@ -189,7 +210,8 @@ namespace collvoid{
     delete_observations_ = getParamDef(private_nh, "delete_observations", true);
     threshold_last_seen_ = getParamDef(private_nh,"threshold_last_seen",1.0);
     max_neighbors_ = getParamDef(private_nh, "max_neighbors", 10);
-
+    sim_period_ = getParamDef(private_nh, "sim_period", 0.2);
+    
     yaw_goal_tolerance_ = getParamDef(private_nh, "yaw_goal_tolerance", 0.1);
     xy_goal_tolerance_ = getParamDef(private_nh, "xy_goal_tolerance", 0.1);
 
@@ -265,6 +287,7 @@ namespace collvoid{
     Vector2 pos = Vector2(global_pose.getOrigin().x(), global_pose.getOrigin().y());
     Vector2 goal_dir = waypoint - pos;
 
+    
     geometry_msgs::Twist cmd_vel;
 
     //rotate to goal:
@@ -289,6 +312,10 @@ namespace collvoid{
       else if (collvoid::abs(goal_dir) < min_vel_x_) {
 	goal_dir = min_vel_x_ * 1.2* collvoid::normalize(goal_dir);
       }
+
+      double goal_dir_ang = atan2(goal_dir.y(), goal_dir.x());
+      //ROS_INFO("Pose (%f, %f), goal (%f, %f), dir (%f, %f), ang %f", pos.x(), pos.y(), waypoint.x(), waypoint.y(), goal_dir.x(), goal_dir.y(), goal_dir_ang);
+
       
       computeNewVelocity(goal_dir, cmd_vel);
 
@@ -312,7 +339,7 @@ namespace collvoid{
     setAgentParams(this);
 
     //get all neighbors
-    //updateAllNeighbors();
+    updateAllNeighbors();
 
     new_velocity_ = Vector2(0.0,0.0);
 
@@ -333,7 +360,7 @@ namespace collvoid{
       addNHConstraints(min_dist, pref_velocity);
     }
     //add acceleration constraints
-    addAccelerationConstraintsXY(max_vel_x_,acc_lim_x_, max_vel_y_, acc_lim_y_, velocity_, heading_, sim_period_, holo_robot_, additional_orca_lines_);
+    //addAccelerationConstraintsXY(max_vel_x_,acc_lim_x_, max_vel_y_, acc_lim_y_, velocity_, heading_, sim_period_, holo_robot_, additional_orca_lines_);
 
     computeObstacles();
     
@@ -353,6 +380,8 @@ namespace collvoid{
 
     double speed_ang = atan2(new_velocity_.y(), new_velocity_.x());
     double dif_ang = angles::shortest_angular_distance(heading_, speed_ang);
+
+    //ROS_INFO("speed_ang %f, dif_ang %f, heading %f", speed_ang, dif_ang, heading_);
 
     if (!holo_robot_){
       double vel = collvoid::abs(new_velocity_);
@@ -935,7 +964,7 @@ namespace collvoid{
       //TODO?
       agent->timestep_ = sim_period_;
       agent_neighbors_.push_back(agent);
-      
+      ROS_INFO("neighbor %s, radius = %f,   pos(%.2f, %.2f), vel (%.2f, %.2f)", msg.name.c_str(), agent->radius_, agent->position_.x() - position_.x(), agent->position_.y() - position_.y(), agent->velocity_.x(), agent->velocity_.y());
     }
   }
   

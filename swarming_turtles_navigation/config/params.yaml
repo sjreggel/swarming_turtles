@@ -13,14 +13,21 @@ SwarmCollvoid:
   acc_lim_y: 5.0
   acc_lim_th: 5.2
 
+
+  #time_to_holo: 0.4
+  min_error_holo: 0.04
+  max_error_holo: 0.15
+
   max_vel_with_obstacles: 0.5
   
-  footprint_radius: 0.20 #was 0.17
+  footprint_radius: 0.22 #was 0.17
   xy_goal_tolerance: 0.1
   yaw_goal_tolerance: 0.1
 
+  sim_period: 0.2
   use_obstacles: true
 
-  orca: true
-  clearpath: false
+  orca: false
+  clearpath: true
   use_truncation: true
+  convex: false
