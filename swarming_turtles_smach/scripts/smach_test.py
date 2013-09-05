@@ -22,6 +22,9 @@ bumper = False
 tfListen = None
 cmd_pub = None
 
+hive_pub = None
+food_pub = None
+
 #config
 ROTATION_SPEED = 1
 FORWARD_SPEED = 0.3
@@ -30,7 +33,7 @@ DIST_OFFSET = 0.2
 
 EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
-INWARDS = 0.6
+INWARDS = 0.4
 
 RATE = 30
 EPS = 0.1
@@ -43,13 +46,18 @@ found = ''
 
 
 def init_globals():
-    global markers, tfListen, cmd_pub
+    global markers, tfListen, cmd_pub, hive_pub, food_pub
     markers['food'] = [201, 202]
     markers['hive'] = [200, 199]
     tfListen = tf.TransformListener()
     rospy.sleep(1)
 
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
+
+    food_pub = rospy.Publisher('cur_food', PoseStamped)
+
+    hive_pub = rospy.Publisher('cur_hive', PoseStamped)
+
     rospy.Subscriber('ar_pose_marker', AlvarMarkers, cb_ar_marker)
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)
 
@@ -126,6 +134,15 @@ def update_location(loc, msg):
     locations[loc]['frame'] = msg.header.frame_id
     locations[loc]['pose'] = move_location_inwards(msg.pose, INWARDS)
     locations[loc]['time'] = msg.header.stamp
+    
+    pose = locations[loc]['pose']
+    pose.header.frame_id = locations[loc]['frame']
+    pose.header.stamp = locations[loc]['time']
+
+    if loc == 'hive':
+        hive_pub.publish(pose)
+    else:
+        food_pub.publish(pose)
     #print locations[loc]
 
 def quat_msg_to_array(quat):
@@ -143,7 +160,7 @@ def move_location_inwards(pose, dist):
     ang = get_jaw(pose.pose.orientation)
     vec = Vector3()
     vec.x = dist
-    rotate_vec_by_angle(vec, ang-math.pi/2.0)
+    vec = rotate_vec_by_angle(vec, ang-math.pi/2.0)
 
     pose_stamped.pose.position.x = pose.pose.position.x + vec.x
     pose_stamped.pose.position.y = pose.pose.position.y + vec.y
@@ -169,6 +186,7 @@ def get_own_pose():
     pose_stamped.header.stamp = rospy.Time.now()
     pose_stamped.header.frame_id = base_frame
     pose_stamped.pose.orientation.w = 1.0
+    
     return transformPose(pose_stamped)
 
 
@@ -280,12 +298,13 @@ class MoveToLocation(smach.State):
 
     
     def execute(self, userdata):
+
+        #return 'success'
         own_pose = get_own_pose()
 
         target = copy.deepcopy(locations[self.loc]['pose'])
 
         #print target
-
         
         #diff_x = target.pose.position.x - own_pose.pose.position.x
         #diff_y = target.pose.position.y - own_pose.pose.position.y
@@ -329,10 +348,10 @@ def main():
 
         #smach.StateMachine.add("Explore", Explore(), transitions = {'found_hive':'end', 'found_food':'GoToFood'})
 
-        smach.StateMachine.add("Explore", Explore(), transitions = {'found_hive':'GoToHive', 'found_food':'SearchHive'})
+        #smach.StateMachine.add("Explore", Explore(), transitions = {'found_hive':'Explore', 'found_food':'Explore'})
 
         
-        #smach.StateMachine.add("Explore", Explore(), transitions = {'found_hive':'SearchFood', 'found_food':'SearchHive'})
+        smach.StateMachine.add("Explore", Explore(), transitions = {'found_hive':'SearchFood', 'found_food':'SearchHive'})
 
         #Hive states
         
