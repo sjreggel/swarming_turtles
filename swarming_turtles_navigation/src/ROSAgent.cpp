@@ -165,28 +165,38 @@ namespace collvoid{
       msg = computeVelocityCommand(goal, ang);
 
       twist_pub_.publish(msg);
-      if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0 ) {
+      
+      if (msg.linear.x <= min_vel_x_) {
 	if (collvoid::abs(goal-position_) < xy_goal_tolerance_) { 
-	  done = true;
+	  
+	  if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0 ) {
+	    done = true;
+	  }
 	}
-	else {
-	  if (counter++ > 5) {
+	else if (std::abs(msg.angular.z) < max_vel_th_ - EPSILON) {
+	  if (++counter > 3) {
 	    failed = true;
 	  }
 	}
       }
-      else{
+      
+      else {
 	counter = 0;
       }
+      
       rate.sleep();
 	
     }
-    ROS_INFO("done");
-    if (done)
+    if (done) {
+      ROS_INFO("done");
+
       as_->setSucceeded();
-    if (failed)
+    }
+    if (failed) {
+      ROS_INFO("failed");
+
       as_->setPreempted();
-      
+    }
   }
 
   
