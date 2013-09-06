@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>turtlebot_swarmlab</name>
+  <name>swarming_turtles_bringup</name>
   <version>0.0.0</version>
   <description>The turtlebot_swarmlab package</description>
 
