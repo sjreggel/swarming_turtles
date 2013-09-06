@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="swarming_turtles_detect" type="detect_turtles.py" name="detect_turtles" output="screen" />
+  <node pkg="swarming_turtles_detect" type="visualize_turtles.py" name="visualize_turtles" output="screen" />
+  
+</launch>
