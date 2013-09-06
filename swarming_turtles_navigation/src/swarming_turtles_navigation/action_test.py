@@ -40,7 +40,7 @@ def main():
     theta = math.pi
     
     q = tf.transformations.quaternion_from_euler(0,0, theta, axes='sxyz')
-    goal.pose.position.x = -2.0
+    goal.pose.position.x = 2.0
     goal.pose.position.y = 0.0
 
     quat = Quaternion(*q)

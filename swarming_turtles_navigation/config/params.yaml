@@ -8,7 +8,7 @@ SwarmCollvoid:
   min_vel_th: 0.2
   min_vel_y: 0.0
   max_vel_y: 0.0
-  min_vel_th_inplace: 0.5
+  min_vel_th_inplace: 1.0
   acc_lim_x: 5.0
   acc_lim_y: 5.0
   acc_lim_th: 5.2
@@ -22,7 +22,7 @@ SwarmCollvoid:
   
   footprint_radius: 0.23 #was 0.17
   xy_goal_tolerance: 0.1
-  yaw_goal_tolerance: 0.1
+  yaw_goal_tolerance: 0.2
 
   sim_period: 0.2
   use_obstacles: true
