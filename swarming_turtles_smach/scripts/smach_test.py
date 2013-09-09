@@ -44,7 +44,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 1
+ROTATION_SPEED = 0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 10
 
@@ -321,6 +321,12 @@ def process_msg(loc, msg):
     locations[loc]['frame'] = odom
     locations[loc]['pose'] = transformPose(res_pose)
     locations[loc]['time'] = msg.location.header.stamp
+
+    if loc == 'hive':
+        hive_pub.publish(locations[loc]['pose'])
+    else:
+        food_pub.publish(locations[loc]['pose'])
+
     return True
 
 
