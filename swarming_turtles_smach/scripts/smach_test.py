@@ -93,7 +93,7 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    thread.start_new_thread(check_open_connections, ())
+    #thread.start_new_thread(check_open_connections, ())
 
 def check_open_connections():
     global open_cons
@@ -148,16 +148,16 @@ def send(receiver, msg):
     global open_cons 
     foreign_master_uri = make_master_uri(receiver)
     try:
-        if not foreign_master_uri in open_cons.keys():
-            connect(topic, foreign_master_uri)
-            rospy.sleep(0.1)
+        #if not foreign_master_uri in open_cons.keys():
+        connect(topic, foreign_master_uri)
+        rospy.sleep(0.2)
             
-        for i in xrange(2):
+        for i in xrange(1):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        open_cons[foreign_master_uri] = rospy.Time.now()
+        #open_cons[foreign_master_uri] = rospy.Time.now()
           
-#disconnect(topic, foreign_master_uri)
+        disconnect(topic, foreign_master_uri)
        
     except Exception as e:
         print "exception", e
