@@ -112,7 +112,7 @@ def connect(foreign_master_uri):
     if not check_master(m):
         return False
     cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_out, topic_in]
-    print cmdf
+    #print cmd
     relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     
     #con = MasterSync(foreign_master_uri, local_pub_names=[topic])
