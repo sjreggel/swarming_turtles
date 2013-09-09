@@ -46,7 +46,7 @@ comm_pub = None
 #config
 ROTATION_SPEED = 0.75
 FORWARD_SPEED = 0.3
-SEARCH_TIMEOUT = 10
+SEARCH_TIMEOUT = 15
 
 LAST_SEEN = 1.0 #check last seen for other turtle
 
@@ -105,6 +105,8 @@ def check_open_connections():
             if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 disconnect(topic, con)
                 rm_list.append(con)
+            else:
+                connect(topic, con)
         for rm in rm_list:
             open_cons.pop(rm)
         r.sleep()
@@ -155,9 +157,9 @@ def send(receiver, msg):
         if not foreign_master_uri in open_cons.keys():
             connect(topic, foreign_master_uri)
             rospy.sleep(0.3)
-        else:
-            connect(topic, foreign_master_uri)
-        for i in xrange(1):
+        #else:
+        #    connect(topic, foreign_master_uri)
+        for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
         open_cons[foreign_master_uri] = rospy.Time.now()
@@ -414,6 +416,7 @@ class SearchLocations(smach.State):
                 stop()
                 return 'not_found'
             if received in self.loc:
+                print 'RECEIVED', received
                 if process_msg(received, received_msg):
                     return 'found'
             if not self.closest=='': # and self.closest not in send_msg:
