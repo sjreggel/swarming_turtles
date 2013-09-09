@@ -439,27 +439,21 @@ class PreSearchLocation(smach.State):
             return 'known'
         else:
             return 'not_known'
-    
 
-class MoveToLocation(smach.State):
+
+class CheckIfAtLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
         self.loc = loc
-        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
-        self.client.wait_for_server()
-
 
     def rotate_to_ang(self, ang):
         twist = Twist()
         twist.linear.x = 0
         twist.angular.z = self.rotate_side(ang) * ROTATION_SPEED
-
         rate = rospy.Rate(RATE)
-        while not self.rotation_aligned(ang):
-            cmd_pub.publish(twist)
-        stop()
-
-
+        #while not self.rotation_aligned(ang):
+        cmd_pub.publish(twist)
+        #stop()
         
     def rotate_side(self, ang):
         own_pose = get_own_pose(pose_stamped)
@@ -475,6 +469,35 @@ class MoveToLocation(smach.State):
         quat = [own_pose.pose.orientation.x, own_pose.pose.orientation.y, own_pose.pose.orientation.z,own_pose.pose.orientation.w]
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
         return  abs(ang - theta) < EPS
+
+    def execute(self, userdata):
+        global found
+        found = ''
+
+        own_pose = get_own_pose()
+        target = copy.deepcopy(locations[self.loc]['pose'])
+        diff_x = target.pose.position.x - own_pose.pose.position.x
+        diff_y = target.pose.position.y - own_pose.pose.position.y
+
+        ang = math.atan2(diff_y, diff_x)
+
+        rate = rospy.Rate(RATE)
+
+        while not found == self.loc:
+            if self.rotation_aligned(ang):
+                return 'failed'
+            else:
+                self.rotate_to_ang(ang)
+            rate.sleep()
+        return 'success'
+
+    
+class MoveToLocation(smach.State):
+    def __init__(self, loc):
+        smach.State.__init__(self, outcomes=['failed', 'success'])
+        self.loc = loc
+        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client.wait_for_server()
 
        
     def drive_to_straight(self, dist):
@@ -556,13 +579,17 @@ def main():
         
         smach.StateMachine.add("PreSearchHive", PreSearchLocation('hive'), transitions = {'known':'GoToHive', 'not_known':'SearchHive'})
         smach.StateMachine.add("SearchHive", SearchLocations(['hive']), transitions = {'found':'PreSearchFood', 'not_found':'SearchHive'})
-        smach.StateMachine.add("GoToHive", MoveToLocation('hive'), transitions = {'failed':'SearchHive', 'success':'PreSearchFood'})
-
+        smach.StateMachine.add("GoToHive", MoveToLocation('hive'), transitions = {'failed':'SearchHive', 'success':'AtHive'})
+        smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'PreSearchFood'})
+        
+        
         # #food states
         smach.StateMachine.add("PreSearchFood", PreSearchLocation('food'), transitions = {'known':'GoToFood', 'not_known':'SearchFood'})
-        smach.StateMachine.add("SearchFood", SearchLocations(['food']), transitions = {'found':'PreSearchHive', 'not_found':'SearchFood'})
-        smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'SearchFood', 'success':'PreSearchHive'})
+        smach.StateMachine.add("SearchFood", SearchLocations(['food']), transitions = {'found':'GoToFood', 'not_found':'SearchFood'})
+        smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'SearchFood', 'success':'AtFood'})
+        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'PreSearchHive'})
 
+        
         #smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
        
         

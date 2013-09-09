@@ -165,13 +165,17 @@ namespace collvoid{
       msg = computeVelocityCommand(goal, ang);
 
       twist_pub_.publish(msg);
-      
-      if (msg.linear.x <= min_vel_x_) {
+      if (collvoid::abs(goal-position_) < xy_goal_tolerance_) { 
+	done = true;
+	
+      }
+     
+      else if (msg.linear.x <= min_vel_x_) {
 	if (collvoid::abs(goal-position_) < xy_goal_tolerance_) { 
 	  
-	  if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0 ) {
-	    done = true;
-	  }
+	  //if (msg.linear.x == 0 && msg.linear.y == 0 && msg.angular.z == 0 ) {
+	  done = true;
+	  //}
 	}
 	else if (std::abs(msg.angular.z) < max_vel_th_ - EPSILON) {
 	  if (++counter > 5) {
