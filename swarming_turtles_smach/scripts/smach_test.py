@@ -143,6 +143,7 @@ def check_open_connections():
         r.sleep()
     
 def cb_communication(msg):
+    print msg
     global received, received_msg, location_received
     if not msg.receiver == name:
         return
@@ -157,7 +158,8 @@ def cb_communication(msg):
             print "answered", req[1], msg.sender
             
     elif "answer" == req[0]:
-        #print msg
+        print "GOT ANSWER"
+  #print msg
         received_msg = msg #handle message in search states
         received = req[1]  #say we received something
 
