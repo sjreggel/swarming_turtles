@@ -132,8 +132,9 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
-    thread.start_new_thread(send,(receiver, msg))
-
+    #thread.start_new_thread(send,(receiver, msg))
+    send(receiver, msg)
+   
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
     msg.sender = name
