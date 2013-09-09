@@ -97,14 +97,16 @@ def init_globals():
 
 def check_open_connections():
     global open_cons
-    r = rospy.Rate(10)
+    r = rospy.Rate(20)
     while True:
         dict_copy = dict(open_cons)
+        rm_list = []
         for con in open_cons.keys():
             if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 disconnect(topic, con)
-                dict_copy.pop(con, None)
-        open_cons = dict_copy
+                rm_list.append(con)
+        for r in rm_list:
+            open_cons.pop(r)
         r.sleep()
     
 def cb_communication(msg):
@@ -148,6 +150,8 @@ def send(receiver, msg):
     global open_cons 
     foreign_master_uri = make_master_uri(receiver)
     try:
+        print open_cons
+
         if not foreign_master_uri in open_cons.keys():
             connect(topic, foreign_master_uri)
             rospy.sleep(0.3)
