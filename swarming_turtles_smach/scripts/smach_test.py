@@ -129,7 +129,7 @@ def disconnect():
     global open_cons, master_syncs
     for ms in master_syncs:
         #ms.stop()
-        ms.join()
+        ms.terminate()
     master_syncs = []
     open_cons = {}
     
@@ -159,7 +159,7 @@ def check_open_connections():
         r.sleep()
     
 def cb_communication(msg):
-    print msg
+    #print msg
     global received, received_msg, location_received
     if not msg.receiver == name:
         return
