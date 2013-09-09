@@ -41,7 +41,8 @@ tfListen = None
 cmd_pub = None
 
 name = ''
-topic_in = '/communication'
+topic = '/communication'
+topic_in = '/communication_in'
 
 topic_out = '/communication_out'
 
@@ -101,7 +102,7 @@ def init_globals():
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)
     rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)
     
-    rospy.Subscriber(topic_in, CommunicationProtocol, cb_communication)
+    rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
     thread.start_new_thread(check_open_connections, ())
 
@@ -111,7 +112,7 @@ def connect(foreign_master_uri):
     if not check_master(m):
         return False
     cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_out, topic_in]
-    print cmd
+    print cmdf
     relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     
     #con = MasterSync(foreign_master_uri, local_pub_names=[topic])
