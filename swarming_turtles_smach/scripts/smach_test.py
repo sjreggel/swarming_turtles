@@ -148,16 +148,16 @@ def send(receiver, msg):
     global open_cons 
     foreign_master_uri = make_master_uri(receiver)
     try:
-        #if not foreign_master_uri in open_cons.keys():
-        connect(topic, foreign_master_uri)
-        rospy.sleep(0.3)
+        if not foreign_master_uri in open_cons.keys():
+            connect(topic, foreign_master_uri)
+            rospy.sleep(0.3)
             
         for i in xrange(1):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        #open_cons[foreign_master_uri] = rospy.Time.now()
+        open_cons[foreign_master_uri] = rospy.Time.now()
           
-        disconnect(topic, foreign_master_uri)
+        #disconnect(topic, foreign_master_uri)
         rospy.sleep(0.1)
        
     except Exception as e:
@@ -412,9 +412,9 @@ class SearchLocations(smach.State):
                 if process_msg(received, received_msg):
                     return 'found'
             if not self.closest=='': # and self.closest not in send_msg:
-                print "asking ", self.closest
                 send_msg.append(self.closest)
                 for loc in self.loc:
+                    print "asking ", self.closest, loc
                     request(self.closest, loc)
             move_random()
             rate.sleep()
