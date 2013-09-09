@@ -20,7 +20,7 @@ def disconnect(topic, foreign_master_uri):
         print 'unregistering %s @ %s'%(p,g_publishers[p])
 
 def connect(topic, foreign_master_uri):
-    publishers = {}
+    publishers = dict(g_publishers)
 
     sub_uri = os.environ['ROS_MASTER_URI']
     adv_uri = foreign_master_uri
@@ -28,6 +28,7 @@ def connect(topic, foreign_master_uri):
     server_sub = xmlrpclib.ServerProxy(sub_uri)
     server_adv = xmlrpclib.ServerProxy(adv_uri)
 
+    
     code, msg, topics = server_sub.getPublishedTopics('', '')
     # Determine the type of the topic
     type = None
