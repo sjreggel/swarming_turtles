@@ -108,6 +108,7 @@ def init_globals():
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
+    print 'test', foreign_master_uri
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
