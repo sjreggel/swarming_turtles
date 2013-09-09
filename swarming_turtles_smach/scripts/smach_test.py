@@ -20,7 +20,7 @@ from move_base_msgs.msg import *
 from swarming_turtles_msgs.msg import Turtles, Turtle, CommunicationProtocol
 from swarming_turtles_communicate.communicate  import make_master_uri
 
-from swarming_turtles_communicate.master_sync import MasterSync
+from swarming_turtles_communicate.master_sync import MasterSync, check_master
 
 #confirm Location
 
@@ -100,9 +100,13 @@ def init_globals():
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
+    m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
+    if not check_master(m):
+        return False
     con = MasterSync(foreign_master_uri, foreign_pub_names=[topic])
     global master_syncs
     master_syncs.append(con)
+    return True
 
 def disconnect():
     global open_cons, master_syncs
@@ -179,9 +183,9 @@ def send(receiver, msg):
     try:
         print open_cons
         if not foreign_master_uri in open_cons.keys():
-            connect(foreign_master_uri)
-            open_cons[foreign_master_uri] = rospy.Time.now()
-            rospy.sleep(0.3)
+            if connect(foreign_master_uri):
+                open_cons[foreign_master_uri] = rospy.Time.now()
+                rospy.sleep(0.3)
         #else:
         #    connect(topic, foreign_master_uri)
         for i in xrange(2):
