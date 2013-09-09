@@ -18,8 +18,9 @@ from actionlib_msgs.msg import *
 from move_base_msgs.msg import *
 
 from swarming_turtles_msgs.msg import Turtles, Turtle, CommunicationProtocol
-from swarming_turtles_communicate.communicate  import connect, disconnect, make_master_uri
+from swarming_turtles_communicate.communicate  import make_master_uri
 
+from swarming_turtles_communicate.master_sync import MasterSync
 
 #confirm Location
 
@@ -70,6 +71,8 @@ received = ''
 turtles = {}
 open_cons = {}
 
+master_syncs = []
+
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
     markers['food'] = [201, 202]
@@ -93,8 +96,18 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    thread.start_new_thread(check_open_connections, ())
+    #thread.start_new_thread(check_open_connections, ())
 
+def connect(foreign_master):
+    master_uri = make_master_uri(foreign_master)
+    con = MasterSync(master_uri, foreign_pub_names=[topic])
+    global master_syncs
+    master_syncs.append(con)
+
+def disconnect():
+    for ms in master_syncs:
+        ms.stop()
+    
 def check_open_connections():
     global open_cons
     r = rospy.Rate(10)
@@ -102,10 +115,9 @@ def check_open_connections():
         dict_copy = dict(open_cons)
         rm_list = []
         for con in open_cons.keys():
-            if False and (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
+            if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 try:
                     disconnect(topic, con)
-                    
                 except Exception as e:
                     print e
                 rm_list.append(con)
