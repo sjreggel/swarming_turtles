@@ -105,7 +105,7 @@ def connect(foreign_master_uri):
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
-    con = MasterSync(foreign_master_uri, foreign_pub_names=[topic])
+    con = MasterSync(foreign_master_uri, local_pub_names=[topic], foreign_pub_names=[topic])
     global master_syncs
     master_syncs.append(con)
     return True
@@ -192,6 +192,7 @@ def send(receiver, msg):
         #    connect(topic, foreign_master_uri)
         for i in xrange(2):
             comm_pub.publish(msg)
+            print msg
             rospy.sleep(0.1)
         open_cons[foreign_master_uri] = rospy.Time.now()
           
