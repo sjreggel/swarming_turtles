@@ -97,7 +97,7 @@ def init_globals():
 
 def check_open_connections():
     global open_cons
-    r = rospy.Rate(20)
+    r = rospy.Rate(10)
     while True:
         dict_copy = dict(open_cons)
         rm_list = []
@@ -160,8 +160,8 @@ def send(receiver, msg):
     foreign_master_uri = make_master_uri(receiver)
     try:
         print open_cons
-
         if not foreign_master_uri in open_cons.keys():
+            open_cons[foreign_master_uri] = rospy.Time.now()
             connect(topic, foreign_master_uri)
             rospy.sleep(0.3)
         #else:
