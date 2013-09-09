@@ -102,9 +102,10 @@ def check_open_connections():
         dict_copy = dict(open_cons)
         rm_list = []
         for con in open_cons.keys():
-            if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
+            if False and (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 try:
                     disconnect(topic, con)
+                    
                 except Exception as e:
                     print e
                 rm_list.append(con)
@@ -387,7 +388,7 @@ class Explore(smach.State):
             self.closest = copy.deepcopy(closest)
             if received in self.locs:
                 if process_msg(received, received_msg):
-                    print received
+                    print 'RECEIVED', received
                     return 'found_%s'%(received)
             if not self.closest=='' and closest not in send_msg:
                 send_msg.append(self.closest)
