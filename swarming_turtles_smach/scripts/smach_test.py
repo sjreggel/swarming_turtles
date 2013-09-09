@@ -456,7 +456,7 @@ class CheckIfAtLocation(smach.State):
         #stop()
         
     def rotate_side(self, ang):
-        own_pose = get_own_pose(pose_stamped)
+        own_pose = get_own_pose()
         quat = [own_pose.pose.orientation.x, own_pose.pose.orientation.y, own_pose.pose.orientation.z,own_pose.pose.orientation.w]
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
         if (ang - theta) < 0:
@@ -465,7 +465,7 @@ class CheckIfAtLocation(smach.State):
             return 1
 
     def rotation_aligned(self, ang):
-        own_pose = get_own_pose(pose_stamped)
+        own_pose = get_own_pose()
         quat = [own_pose.pose.orientation.x, own_pose.pose.orientation.y, own_pose.pose.orientation.z,own_pose.pose.orientation.w]
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
         return  abs(ang - theta) < EPS
