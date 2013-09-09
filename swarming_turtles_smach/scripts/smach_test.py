@@ -150,7 +150,7 @@ def send(receiver, msg):
     try:
         #if not foreign_master_uri in open_cons.keys():
         connect(topic, foreign_master_uri)
-        rospy.sleep(0.2)
+        rospy.sleep(0.3)
             
         for i in xrange(1):
             comm_pub.publish(msg)
@@ -158,6 +158,7 @@ def send(receiver, msg):
         #open_cons[foreign_master_uri] = rospy.Time.now()
           
         disconnect(topic, foreign_master_uri)
+        rospy.sleep(0.1)
        
     except Exception as e:
         print "exception", e

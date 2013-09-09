@@ -174,7 +174,7 @@ namespace collvoid{
 	  }
 	}
 	else if (std::abs(msg.angular.z) < max_vel_th_ - EPSILON) {
-	  if (++counter > 3) {
+	  if (++counter > 5) {
 	    failed = true;
 	  }
 	}
