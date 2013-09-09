@@ -55,7 +55,7 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
-LAST_USED = 2.0
+LAST_USED = 10.0
 
 RATE = 10
 EPS = 0.1
@@ -98,15 +98,18 @@ def init_globals():
 
     #thread.start_new_thread(check_open_connections, ())
 
-def connect(foreign_master):
-    master_uri = make_master_uri(foreign_master)
-    con = MasterSync(master_uri, foreign_pub_names=[topic])
+def connect(foreign_master_uri):
+    #master_uri = make_master_uri(foreign_master)
+    con = MasterSync(foreign_master_uri, foreign_pub_names=[topic])
     global master_syncs
     master_syncs.append(con)
 
 def disconnect():
+    global open_cons, master_syncs
     for ms in master_syncs:
         ms.stop()
+    master_syncs = []
+    open_cons = {}
     
 def check_open_connections():
     global open_cons
@@ -117,18 +120,20 @@ def check_open_connections():
         for con in open_cons.keys():
             if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 try:
-                    disconnect(topic, con)
+                    #disconnect(topic, con)
+                    disconnect()
                 except Exception as e:
                     print e
-                rm_list.append(con)
+                #rm_list.append(con)
                     
-            else:
-                try:
-                    connect(topic, con)
-                except Exception as e:
-                    print e
-        for rm in rm_list:
-            open_cons.pop(rm)
+            #else:
+            #    try:
+
+            #        connect(topic, con)
+            #    except Exception as e:
+            #        print e
+        #for rm in rm_list:
+        #    open_cons.pop(rm)
         r.sleep()
     
 def cb_communication(msg):
@@ -174,12 +179,12 @@ def send(receiver, msg):
     try:
         print open_cons
         if not foreign_master_uri in open_cons.keys():
-            connect(topic, foreign_master_uri)
+            connect(foreign_master_uri)
             open_cons[foreign_master_uri] = rospy.Time.now()
             rospy.sleep(0.3)
         #else:
         #    connect(topic, foreign_master_uri)
-        for i in xrange(1):
+        for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
         open_cons[foreign_master_uri] = rospy.Time.now()
