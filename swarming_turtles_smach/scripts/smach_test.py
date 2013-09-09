@@ -8,6 +8,7 @@ import tf
 import math
 import actionlib
 import copy
+import thread
 from socket import gethostname
 
 from ar_track_alvar.msg import AlvarMarkers
@@ -43,7 +44,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 1
+ROTATION_SPEED = 0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 10
 
@@ -126,11 +127,11 @@ def send(receiver, msg):
     
     try:
         connect(topic, foreign_master_uri)
-        rospy.sleep(0.2)
-        #for i in xrange(2):
-        comm_pub.publish(msg)
+        rospy.sleep(0.3)
+        for i in xrange(2):
+            comm_pub.publish(msg)
+            rospy.sleep(0.1)
         disconnect(topic, foreign_master_uri)
-        rospy.sleep(0.2)
        
     except Exception as e:
         print "exception", e
@@ -343,9 +344,9 @@ class Explore(smach.State):
                     print received
                     return 'found_%s'%(received)
             if not self.closest=='': # and closest not in send_msg:
-                print "asking ", self.closest
                 send_msg.append(self.closest)
                 for loc in self.locs:
+                    print "asking ", self.closest, loc
                     request(self.closest, loc)
             move_random()
             rate.sleep()
