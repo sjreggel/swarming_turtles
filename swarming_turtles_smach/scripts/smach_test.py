@@ -187,12 +187,11 @@ def send(receiver, msg):
         if not foreign_master_uri in open_cons.keys():
             if connect(foreign_master_uri):
                 open_cons[foreign_master_uri] = rospy.Time.now()
-                rospy.sleep(0.3)
+                rospy.sleep(0.5)
         #else:
         #    connect(topic, foreign_master_uri)
         for i in xrange(2):
             comm_pub.publish(msg)
-            print msg
             rospy.sleep(0.1)
         open_cons[foreign_master_uri] = rospy.Time.now()
           
@@ -414,7 +413,7 @@ class Explore(smach.State):
                 if process_msg(received, received_msg):
                     print 'RECEIVED', received
                     return 'found_%s'%(received)
-            if not self.closest=='' and closest not in send_msg:
+            if not self.closest=='':#and closest not in send_msg:
                 send_msg.append(self.closest)
                 for loc in self.locs:
                     print "asking ", self.closest, loc
@@ -451,7 +450,7 @@ class SearchLocations(smach.State):
                 print 'RECEIVED', received
                 if process_msg(received, received_msg):
                     return 'found'
-            if not self.closest=='' and self.closest not in send_msg:
+            if not self.closest=='': # and self.closest not in send_msg:
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
