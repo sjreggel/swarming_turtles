@@ -312,7 +312,7 @@ def process_msg(msg):
     
     yaw = get_jaw(pose.pose.orientation) + get_jaw(msg.location.pose.orientation)
     q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
-    res_pose.positon.orientation = Quaternion(*q)
+    res_pose.position.orientation = Quaternion(*q)
     
     global locations
     
