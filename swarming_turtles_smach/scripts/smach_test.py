@@ -54,7 +54,7 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
-LAST_USED = 1.0
+LAST_USED = 2.0
 
 RATE = 30
 EPS = 0.1
@@ -93,7 +93,7 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    #thread.start_new_thread(check_open_connections, ())
+    thread.start_new_thread(check_open_connections, ())
 
 def check_open_connections():
     global open_cons
@@ -158,7 +158,7 @@ def send(receiver, msg):
         open_cons[foreign_master_uri] = rospy.Time.now()
           
         #disconnect(topic, foreign_master_uri)
-        rospy.sleep(0.1)
+        #rospy.sleep(0.1)
        
     except Exception as e:
         print "exception", e
