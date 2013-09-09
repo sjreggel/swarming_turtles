@@ -112,7 +112,7 @@ def connect(foreign_master_uri):
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
-    cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_out, topic_in]
+    cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_in, topic_out]
     #print cmd
     relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     
