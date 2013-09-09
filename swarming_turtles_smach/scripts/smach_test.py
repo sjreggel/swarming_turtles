@@ -50,7 +50,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 0.75
+ROTATION_SPEED = 0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
