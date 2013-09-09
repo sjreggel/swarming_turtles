@@ -120,7 +120,7 @@ def connect(foreign_master_uri):
     relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     
     global open_cons
-    if foreign_master_uri in open_cons.keys():
+    if not foreign_master_uri in open_cons.keys():
         open_cons[foreign_master_uri] = {}
     open_cons[foreign_master_uri]['process'] = relay
     return True
