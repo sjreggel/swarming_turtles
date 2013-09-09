@@ -54,7 +54,7 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
-LAST_USED = 2.0
+LAST_USED = 1.0
 
 RATE = 30
 EPS = 0.1
@@ -155,7 +155,8 @@ def send(receiver, msg):
         if not foreign_master_uri in open_cons.keys():
             connect(topic, foreign_master_uri)
             rospy.sleep(0.3)
-            
+        else:
+            connect(topic, foreign_master_uri)
         for i in xrange(1):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
