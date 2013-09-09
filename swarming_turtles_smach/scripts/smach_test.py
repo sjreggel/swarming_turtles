@@ -188,14 +188,14 @@ def send(receiver, msg):
         if not foreign_master_uri in open_cons.keys():
             if connect(foreign_master_uri):
                 print "connected"
-                open_cons[foreign_master_uri]['last_seen'] = rospy.Time.now()
+                open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
                 rospy.sleep(0.5)
             else:
                 print "failed"
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        open_cons[foreign_master_uri]['last_seen'] = rospy.Time.now()
+        open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
        
     except Exception as e:
         print "exception", e
