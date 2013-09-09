@@ -93,7 +93,7 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    thread.start_new_thread(check_open_connections)
+    thread.start_new_thread(check_open_connections, ())
 
 def check_open_connections():
     global open_cons
