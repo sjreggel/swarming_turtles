@@ -296,7 +296,7 @@ def cb_found_turtles(msg):
         turtles[turtle.name] = turtle.position
     closest = closest_tmp
 
-def process_msg(msg):
+def process_msg(loc, msg):
     if msg.sender not in turtles.keys():
         return False
     turtle = turtles[msg.sender]
@@ -342,7 +342,7 @@ class Explore(smach.State):
 
         while found=='':
             if received in self.locs:
-                if process_msg(received_msg):
+                if process_msg(received, received_msg):
                     print received
                     return 'found_%s'%(received)
             if not closest=='': # and closest not in send_msg:
@@ -377,7 +377,7 @@ class SearchLocations(smach.State):
                 stop()
                 return 'not_found'
             if received in self.loc:
-                if process_msg(received_msg):
+                if process_msg(received, received_msg):
                     return 'found'
             if not closest=='': # and self.closest not in send_msg:
                 print "asking ", closest
