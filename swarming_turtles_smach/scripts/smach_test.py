@@ -103,10 +103,17 @@ def check_open_connections():
         rm_list = []
         for con in open_cons.keys():
             if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
-                disconnect(topic, con)
+                try:
+                    disconnect(topic, con)
+                except Exception as e:
+                    print e
                 rm_list.append(con)
+                    
             else:
-                connect(topic, con)
+                try:
+                    connect(topic, con)
+                except Exception as e:
+                    print e
         for rm in rm_list:
             open_cons.pop(rm)
         r.sleep()
