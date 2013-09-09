@@ -154,7 +154,7 @@ def send(receiver, msg):
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        open_cons[foreign_master_uri] = rospy.Time
+        open_cons[foreign_master_uri] = rospy.Time.now()
           
 #disconnect(topic, foreign_master_uri)
        
