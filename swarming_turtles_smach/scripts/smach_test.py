@@ -62,8 +62,10 @@ base_frame = "/base_link"
 
 
 found = ''
-
+closest = ''
 received = ''
+
+turtles = {}
 
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
@@ -84,12 +86,14 @@ def init_globals():
 
     rospy.Subscriber('ar_pose_marker', AlvarMarkers, cb_ar_marker)
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)
+    rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)
+    
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
 
 def cb_communication(msg):
     print "COMM!!!!", msg
-    global received, location_received
+    global received, received_msg, location_received
     if not msg.receiver == name:
         return
     req = msg.request.split(' ')
@@ -112,19 +116,19 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
-    send(receiver, msg)
+    thread.start_new_thread(send,(receiver, msg))
 
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
     msg.sender = name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
-    send(receiver, msg)
+    thread.start_new_thread(send,(receiver, msg))
+    #send(receiver, msg)
     
 
 def send(receiver, msg):
     foreign_master_uri = make_master_uri(receiver)
-    
     try:
         connect(topic, foreign_master_uri)
         rospy.sleep(0.3)
@@ -275,79 +279,77 @@ def get_own_pose():
     return transformPose(pose_stamped)
 
 
+
+def cb_found_turtles(msg):
+    global closest, turtles
+    if len(msg.turtles) == 0:
+        closest = ''
+        return
+    closest_tmp = '' #self.closest
+    closest_dist = 3.0
+    for turtle in msg.turtles:
+        pose = transform_to_baseframe(turtle.position)
+        dist = dist_vec(pose.pose.position, Vector3())
+        if dist < closest_dist:
+            closest_dist = dist
+            closest_tmp = turtle.name
+        turtles[turtle.name] = turtle.position
+    closest = closest_tmp
+
+def process_msg(msg):
+    if msg.sender not in turtles.keys():
+        return False
+    turtle = turtles[msg.sender]
+    if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
+        return False
+        #turtle pose in base_link
+    pose = transform_to_baseframe(turtle)
+    
+    res_pose = PoseStamped()
+    res_pose.header.frame_id = base_frame
+    res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
+    res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
+    
+    yaw = get_jaw(pose.pose.orientation) + (msg.location.pose.orientation)
+    q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
+    res_pose.positon.orientation = Quaternion(*q)
+    
+    global locations
+    
+    if not loc in locations:
+        locations[loc] = {}
+    locations[loc]['frame'] = odom
+    locations[loc]['pose'] = transformPose(res_pose)
+    locations[loc]['time'] = msg.location.header.stamp
+    return True
+
+
+
 class Explore(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['found_hive', 'found_food'])
         self.locs = ['food', 'hive']
-        rospy.Subscriber('/found_turtles', Turtles, self.cb_found_turtles)
-        self.closest = ''
-        self.turtles = {}
-
-    def cb_found_turtles(self, msg):
-        if len(msg.turtles) == 0:
-            self.closest = ''
-            return
-        closest = '' #self.closest
-        closest_dist = 3.0
-        for turtle in msg.turtles:
-            pose = transform_to_baseframe(turtle.position)
-            dist = dist_vec(pose.pose.position, Vector3())
-            if dist < closest_dist:
-                closest_dist = dist
-                closest = turtle.name
-            self.turtles[turtle.name] = turtle.position
-        self.closest = closest
-
-    def process_msg(self, msg):
-      
-        if msg.sender not in self.turtles.keys():
-            return False
-        turtle = self.turtles[msg.sender]
-        if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
-            return False
-        #turtle pose in base_link
-        pose = transform_to_baseframe(turtle)
-
-        res_pose = PoseStamped()
-        res_pose.header.frame_id = base_frame
-        res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
-        res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
-
-        yaw = get_jaw(pose.pose.orientation) + (msg.location.pose.orientation)
-        q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
-        res_pose.positon.orientation = Quaternion(*q)
-        
-        global locations
-          
-        if not loc in locations:
-            locations[loc] = {}
-        locations[loc]['frame'] = odom
-        locations[loc]['pose'] = transformPose(res_pose)
-        locations[loc]['time'] = msg.location.header.stamp
-             
-        
-        return True
-
 
     def execute(self, userdata):
-        global found, received
+        global found, received, closest
         found = ''
         received = ''
+        closest = ''
+       
         send_msg = []
-        self.closest = ''
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
 
         while found=='':
             if received in self.locs:
-                if self.process_msg(received_msg):
+                if process_msg(received_msg):
                     print received
                     return 'found_%s'%(received)
-            if not self.closest=='': # and closest not in send_msg:
-                send_msg.append(self.closest)
+            if not closest=='': # and closest not in send_msg:
+                send_msg.append(closest)
                 for loc in self.locs:
-                    print "asking ", self.closest, loc
-                    request(self.closest, loc)
+                    print "asking ", closest, loc
+                    request(closest, loc)
             move_random()
             rate.sleep()
         stop()
@@ -361,63 +363,13 @@ class SearchLocations(smach.State):
     def __init__(self, looking_for):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
         self.loc = looking_for
-        rospy.Subscriber('/found_turtles', Turtles, self.cb_found_turtles)
-        self.closest = ''
-        self.turtles = {}
 
-
-    def cb_found_turtles(self, msg):
-        if len(msg.turtles) == 0:
-            self.closest = ''
-            return
-        closest = '' #self.closest
-        closest_dist = 3.0
-        for turtle in msg.turtles:
-            pose = transform_to_baseframe(turtle.position)
-            dist = dist_vec(pose.pose.position, Vector3())
-            if dist < closest_dist:
-                closest_dist = dist
-                closest = turtle.name
-            self.turtles[turtle.name] = turtle.position
-        self.closest = closest
-
-
-    def process_msg(self, msg):
-        
-        if msg.sender not in self.turtles.keys():
-            return False
-        turtle = self.turtles[msg.sender]
-        if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
-            return False
-        #turtle pose in base_link
-        pose = transform_to_baseframe(turtle)
-
-        res_pose = PoseStamped()
-        res_pose.header.frame_id = base_frame
-        res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
-        res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
-
-        yaw = get_jaw(pose.pose.orientation) + (msg.location.pose.orientation)
-        q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
-        res_pose.positon.orientation = Quaternion(*q)
-        
-        global locations
-          
-        if not loc in locations:
-            locations[loc] = {}
-        locations[loc]['frame'] = odom
-        locations[loc]['pose'] = transformPose(res_pose)
-        locations[loc]['time'] = msg.location.header.stamp
-            
-        
-        return True
-        
     def execute(self, userdata):
-        global found, received
+        global found, received, closest
         found = ''
         received = ''
+        closest = ''
         send_msg = []
-        self.closest = ''
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         while not found in self.loc:
@@ -425,13 +377,13 @@ class SearchLocations(smach.State):
                 stop()
                 return 'not_found'
             if received in self.loc:
-                if self.process_msg(received_msg):
+                if process_msg(received_msg):
                     return 'found'
-            if not self.closest=='': # and self.closest not in send_msg:
-                print "asking ", self.closest
-                send_msg.append(self.closest)
+            if not closest=='': # and self.closest not in send_msg:
+                print "asking ", closest
+                send_msg.append(closest)
                 for loc in self.loc:
-                    request(self.closest, loc)
+                    request(closest, loc)
             move_random()
             rate.sleep()
         stop()
