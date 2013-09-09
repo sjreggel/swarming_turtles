@@ -44,7 +44,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 1
+ROTATION_SPEED = 0.75
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 10
 
@@ -105,8 +105,8 @@ def check_open_connections():
             if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
                 disconnect(topic, con)
                 rm_list.append(con)
-        for r in rm_list:
-            open_cons.pop(r)
+        for rm in rm_list:
+            open_cons.pop(rm)
         r.sleep()
     
 def cb_communication(msg):
