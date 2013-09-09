@@ -28,7 +28,7 @@ SwarmCollvoid:
   sim_period: 0.2
   use_obstacles: true
 
-  orca: true
+  orca: false
   clearpath: true
   use_truncation: true
   convex: false
