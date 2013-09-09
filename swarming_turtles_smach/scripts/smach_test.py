@@ -11,6 +11,8 @@ import copy
 import thread
 from socket import gethostname
 
+import rosgraph
+
 from ar_track_alvar.msg import AlvarMarkers
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
