@@ -54,7 +54,7 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
-LAST_USED = 1.0
+LAST_USED = 2.0
 
 RATE = 30
 EPS = 0.1

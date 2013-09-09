@@ -13,16 +13,19 @@ def make_master_uri(name):
 
 # Clean up the stuff that we registered
 def disconnect(topic, foreign_master_uri):
+    global g_publishers
     server = xmlrpclib.ServerProxy(foreign_master_uri)
     
     for p in g_publishers:
         server.unregisterPublisher(p, topic, g_publishers[p])
         print 'unregistering %s @ %s'%(p,g_publishers[p])
+    g_publishers = {}
 
 def connect(topic, foreign_master_uri):
     global g_publishers
     publishers = dict(g_publishers)
 
+    #print publishers
     sub_uri = os.environ['ROS_MASTER_URI']
     adv_uri = foreign_master_uri
 
