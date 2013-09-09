@@ -20,6 +20,7 @@ def disconnect(topic, foreign_master_uri):
         print 'unregistering %s @ %s'%(p,g_publishers[p])
 
 def connect(topic, foreign_master_uri):
+    global g_publishers
     publishers = dict(g_publishers)
 
     sub_uri = os.environ['ROS_MASTER_URI']
@@ -68,7 +69,6 @@ def connect(topic, foreign_master_uri):
             server_adv.registerPublisher(a, topic, type, new_publishers[a])
             print 'registering %s @ %s'%(a,new_publishers[a])
         publishers = new_publishers
-        global g_publishers
         g_publishers = publishers
 
 
