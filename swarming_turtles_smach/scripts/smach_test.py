@@ -98,7 +98,7 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    #thread.start_new_thread(check_open_connections, ())
+    thread.start_new_thread(check_open_connections, ())
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
@@ -183,7 +183,7 @@ def send(receiver, msg):
     global open_cons 
     foreign_master_uri = make_master_uri(receiver)
     try:
-        print open_cons
+        #print open_cons
         if not foreign_master_uri in open_cons.keys():
             if connect(foreign_master_uri):
                 open_cons[foreign_master_uri] = rospy.Time.now()
