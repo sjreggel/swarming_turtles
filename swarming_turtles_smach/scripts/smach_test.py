@@ -9,6 +9,7 @@ import math
 import actionlib
 import copy
 import thread
+import subprocess
 from socket import gethostname
 
 import rosgraph
@@ -40,7 +41,9 @@ tfListen = None
 cmd_pub = None
 
 name = ''
-topic = '/communication'
+topic_in = '/communication'
+
+topic_out = '/communication_out'
 
 hive_pub = None
 food_pub = None
@@ -75,6 +78,8 @@ open_cons = {}
 
 master_syncs = []
 
+
+
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
     markers['food'] = [201, 202]
@@ -84,7 +89,7 @@ def init_globals():
     name = gethostname()
     rospy.sleep(1)
 
-    comm_pub = rospy.Publisher(topic, CommunicationProtocol)
+    comm_pub = rospy.Publisher(topic_out, CommunicationProtocol)
 
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
 
@@ -96,7 +101,7 @@ def init_globals():
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)
     rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)
     
-    rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
+    rospy.Subscriber(topic_in, CommunicationProtocol, cb_communication)
 
     thread.start_new_thread(check_open_connections, ())
 
@@ -105,15 +110,19 @@ def connect(foreign_master_uri):
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
-    con = MasterSync(foreign_master_uri, local_pub_names=[topic])
-    global master_syncs
-    master_syncs.append(con)
-    return True
+    cmd = ["rosrun", "foreign_relay", "foreign_relay", foreign_master_uri, topic_out, topic_in]
+    relay = subprocess.Popen(cmd, shell=True)
+    
+    #con = MasterSync(foreign_master_uri, local_pub_names=[topic])
+    #global master_syncs
+    master_syncs.append(relay)
+    #return True
 
 def disconnect():
     global open_cons, master_syncs
     for ms in master_syncs:
-        ms.stop()
+        #ms.stop()
+        ms.join()
     master_syncs = []
     open_cons = {}
     
