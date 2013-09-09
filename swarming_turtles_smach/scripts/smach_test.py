@@ -123,7 +123,7 @@ def connect(foreign_master_uri):
     if foreign_master_uri in open_cons.keys():
         open_cons[foreign_master_uri] = {}
     open_cons[foreign_master_uri]['process'] = relay
-
+    return True
     
 def disconnect(foreign_master_uri):
     global open_cons
