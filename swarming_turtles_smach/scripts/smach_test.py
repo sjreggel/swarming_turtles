@@ -54,6 +54,8 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
+LAST_USED = 1.0
+
 RATE = 30
 EPS = 0.1
 
@@ -66,6 +68,7 @@ closest = ''
 received = ''
 
 turtles = {}
+open_cons = {}
 
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
@@ -90,7 +93,20 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
+    thread.start_new_thread(check_open_connections)
 
+def check_open_connections():
+    global open_cons
+    r = rospy.Rate(10)
+    while True:
+        dict_copy = dict(open_cons)
+        for con in open_cons.keys():
+            if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
+                disconnect(topic, con)
+                dict_copy.pop(con, None)
+        open_cons = dict_copy
+        r.sleep()
+    
 def cb_communication(msg):
     global received, received_msg, location_received
     if not msg.receiver == name:
@@ -128,14 +144,19 @@ def request(receiver, loc_name):
     
 
 def send(receiver, msg):
+    global open_cons 
     foreign_master_uri = make_master_uri(receiver)
     try:
-        connect(topic, foreign_master_uri)
-        rospy.sleep(0.3)
+        if not foreign_master_uri in open_cons.keys():
+            connect(topic, foreign_master_uri)
+            rospy.sleep(0.1)
+            
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        disconnect(topic, foreign_master_uri)
+        open_cons[foreign_master_uri] = rospy.Time
+          
+#disconnect(topic, foreign_master_uri)
        
     except Exception as e:
         print "exception", e
