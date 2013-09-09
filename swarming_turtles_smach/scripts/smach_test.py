@@ -96,9 +96,8 @@ def cb_communication(msg):
     if "request" == req[0]: #handle reqest
         if req[1] in locations.keys():
             pose_dict = dict(locations[req[1]])
-            print pose_dict
             pose = pose_dict['pose']
-            pose.header.frame_id = pose_dict['frame_id']
+            pose.header.frame_id = pose_dict['frame']
             pose = transform_to_baseframe(pose)
             answer(msg.sender, req[1], pose)
             print "answered"
