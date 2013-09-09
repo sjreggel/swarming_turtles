@@ -368,15 +368,16 @@ class Explore(smach.State):
         rate = rospy.Rate(RATE)
 
         while found=='':
+            self.closest = copy.deepcopy(closest)
             if received in self.locs:
                 if process_msg(received, received_msg):
                     print received
                     return 'found_%s'%(received)
-            if not closest=='': # and closest not in send_msg:
-                send_msg.append(closest)
+            if not self.closest=='': # and closest not in send_msg:
+                send_msg.append(self.closest)
                 for loc in self.locs:
-                    print "asking ", closest, loc
-                    request(closest, loc)
+                    print "asking ", self.closest, loc
+                    request(self.closest, loc)
             move_random()
             rate.sleep()
         stop()
@@ -400,17 +401,19 @@ class SearchLocations(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         while not found in self.loc:
+            self.closest = copy.deepcopy(closest)
+
             if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
                 stop()
                 return 'not_found'
             if received in self.loc:
                 if process_msg(received, received_msg):
                     return 'found'
-            if not closest=='': # and self.closest not in send_msg:
-                print "asking ", closest
-                send_msg.append(closest)
+            if not self.closest=='': # and self.closest not in send_msg:
+                print "asking ", self.closest
+                send_msg.append(self.closest)
                 for loc in self.loc:
-                    request(closest, loc)
+                    request(self.closest, loc)
             move_random()
             rate.sleep()
         stop()
