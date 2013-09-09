@@ -310,7 +310,7 @@ def process_msg(msg):
     res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
     res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
     
-    yaw = get_jaw(pose.pose.orientation) + (msg.location.pose.orientation)
+    yaw = get_jaw(pose.pose.orientation) + get_jaw(msg.location.pose.orientation)
     q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
     res_pose.positon.orientation = Quaternion(*q)
     
