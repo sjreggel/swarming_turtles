@@ -51,7 +51,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 0
+ROTATION_SPEED = 1
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
@@ -61,7 +61,9 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
-LAST_USED = 10.0
+MIN_DIST = 2.0 #how close to include in asking?
+
+LAST_USED = 5.0 #how long vefore closing connection
 
 RATE = 10
 EPS = 0.1
@@ -75,11 +77,8 @@ closest = ''
 received = ''
 
 turtles = {}
+
 open_cons = {}
-
-master_syncs = []
-
-
 
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
@@ -112,54 +111,42 @@ def init_globals():
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
-    print 'test', foreign_master_uri
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
+    
     cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_in, topic_out]
-    #print cmd
+
     relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     
-    #con = MasterSync(foreign_master_uri, local_pub_names=[topic])
-    #global master_syncs
-    master_syncs.append(relay)
-    #return True
+    global open_cons
+    if foreign_master_uri in open_cons.keys():
+        open_cons[foreign_master_uri] = {}
+    open_cons[foreign_master_uri]['process'] = relay
 
-def disconnect():
-    global open_cons, master_syncs
-    for ms in master_syncs:
-        #ms.stop()
-        ms.terminate()
-    master_syncs = []
-    open_cons = {}
+    
+def disconnect(foreign_master_uri):
+    global open_cons
+
+    if foreign_master_uri in open_cons.keys():
+        open_cons[foreign_master_uri]['process'].terminate()
+        open_cons.pop(foreign_master_uri, None)
     
 def check_open_connections():
     global open_cons
     r = rospy.Rate(10)
     while True:
         dict_copy = dict(open_cons)
-        rm_list = []
-        for con in open_cons.keys():
-            if (rospy.Time.now() - open_cons[con]).to_sec() > LAST_USED:
+        keys = open_cons.keys()
+        for con in keys:
+            if (rospy.Time.now() - open_cons[con]['last_used']).to_sec() > LAST_USED:
                 try:
-                    #disconnect(topic, con)
-                    disconnect()
+                    disconnect(con)
                 except Exception as e:
                     print e
-                #rm_list.append(con)
-                    
-            #else:
-            #    try:
-
-            #        connect(topic, con)
-            #    except Exception as e:
-            #        print e
-        #for rm in rm_list:
-        #    open_cons.pop(rm)
         r.sleep()
     
 def cb_communication(msg):
-    #print msg
     global received, received_msg, location_received
     if not msg.receiver == name:
         return
@@ -171,11 +158,9 @@ def cb_communication(msg):
             pose.header.frame_id = pose_dict['frame']
             pose = transform_to_baseframe(pose)
             answer(msg.sender, req[1], pose)
-            print "answered", req[1], msg.sender
             
     elif "answer" == req[0]:
         print "GOT ANSWER"
-  #print msg
         received_msg = msg #handle message in search states
         received = req[1]  #say we received something
 
@@ -185,7 +170,6 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
-    #thread.start_new_thread(send,(receiver, msg))
     send(receiver, msg)
    
 def request(receiver, loc_name):
@@ -193,7 +177,6 @@ def request(receiver, loc_name):
     msg.sender = name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
-    #thread.start_new_thread(send,(receiver, msg))
     send(receiver, msg)
     
 
@@ -204,24 +187,17 @@ def send(receiver, msg):
         #print open_cons
         if not foreign_master_uri in open_cons.keys():
             if connect(foreign_master_uri):
-                open_cons[foreign_master_uri] = rospy.Time.now()
+                open_cons[foreign_master_uri]['last_seen'] = rospy.Time.now()
                 rospy.sleep(0.5)
-        #else:
-        #    connect(topic, foreign_master_uri)
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
-        open_cons[foreign_master_uri] = rospy.Time.now()
-          
-        #disconnect(topic, foreign_master_uri)
-        #rospy.sleep(0.1)
+        open_cons[foreign_master_uri]['last_seen'] = rospy.Time.now()
        
     except Exception as e:
         print "exception", e
-        #disconnect(topic, foreign_master_uri)
-        #rospy.sleep(0.5)
+
         
-    
 def rotate_vec_by_angle(v, ang):
     res = Vector3()
     cos_a = math.cos(ang)
@@ -303,7 +279,6 @@ def update_location(loc, msg):
         hive_pub.publish(pose)
     else:
         food_pub.publish(pose)
-    #print locations[loc]
 
 def quat_msg_to_array(quat):
     return [quat.x, quat.y, quat.z, quat.w]
@@ -332,18 +307,24 @@ def move_location_inwards(pose, dist):
     return pose_stamped
 
                    
-def transform_to_baseframe(pose_in):
+def transform_to_baseframe(pose_in, time_in = None):
     if tfListen.frameExists(pose_in.header.frame_id) and tfListen.frameExists(base_frame):
         time = tfListen.getLatestCommonTime(base_frame, pose_in.header.frame_id)
-        pose_in.header.stamp = time
+        if not time_in:
+            pose_in.header.stamp = time
+        else:
+            pose_in.header.stamp = time_in
         pose = tfListen.transformPose(base_frame, pose_in)
         return pose
     return None
 
-def transformPose(pose_in):
+def transformPose(pose_in, time_in = None):
     if tfListen.frameExists(pose_in.header.frame_id) and tfListen.frameExists(odom):
         time = tfListen.getLatestCommonTime(odom, pose_in.header.frame_id)
-        pose_in.header.stamp = time
+        if not time_in:
+            pose_in.header.stamp = time
+        else:
+            pose_in.header.stamp = time_in
         pose = tfListen.transformPose(odom, pose_in)
         return pose
     return None
@@ -354,7 +335,7 @@ def get_own_pose():
     pose_stamped.header.stamp = rospy.Time.now()
     pose_stamped.header.frame_id = base_frame
     pose_stamped.pose.orientation.w = 1.0
-    
+  
     return transformPose(pose_stamped)
 
 
@@ -364,8 +345,8 @@ def cb_found_turtles(msg):
     if len(msg.turtles) == 0:
         closest = ''
         return
-    closest_tmp = '' #self.closest
-    closest_dist = 3.0
+    closest_tmp = ''
+    closest_dist = MIN_DIST
     for turtle in msg.turtles:
         pose = transform_to_baseframe(turtle.position)
         dist = dist_vec(pose.pose.position, Vector3())
@@ -475,7 +456,6 @@ class SearchLocations(smach.State):
                     request(self.closest, loc)
             move_random()
             rate.sleep()
-        #stop()
         return 'found'
 
 class PreSearchLocation(smach.State):
@@ -566,12 +546,8 @@ class MoveToLocation(smach.State):
 
     
     def execute(self, userdata):
-
-        #return 'success'
         own_pose = get_own_pose()
-
         target = copy.deepcopy(locations[self.loc]['pose'])
-
         #print target
         
         #diff_x = target.pose.position.x - own_pose.pose.position.x
