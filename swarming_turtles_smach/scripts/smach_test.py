@@ -105,7 +105,7 @@ def connect(foreign_master_uri):
     m = rosgraph.Master(rospy.get_name(), master_uri=foreign_master_uri)
     if not check_master(m):
         return False
-    con = MasterSync(foreign_master_uri, local_pub_names=[topic], foreign_pub_names=[topic])
+    con = MasterSync(foreign_master_uri, local_pub_names=[topic])
     global master_syncs
     master_syncs.append(con)
     return True
@@ -157,7 +157,7 @@ def cb_communication(msg):
             print "answered", req[1], msg.sender
             
     elif "answer" == req[0]:
-        print msg
+        #print msg
         received_msg = msg #handle message in search states
         received = req[1]  #say we received something
 
