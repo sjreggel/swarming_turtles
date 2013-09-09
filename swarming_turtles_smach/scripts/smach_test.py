@@ -56,7 +56,7 @@ INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
 LAST_USED = 2.0
 
-RATE = 30
+RATE = 10
 EPS = 0.1
 
 odom = "/odom"
@@ -130,7 +130,7 @@ def cb_communication(msg):
             pose.header.frame_id = pose_dict['frame']
             pose = transform_to_baseframe(pose)
             answer(msg.sender, req[1], pose)
-            print "answered"
+            print "answered", req[1], msg.sender
             
     elif "answer" == req[0]:
         print msg
@@ -166,7 +166,7 @@ def send(receiver, msg):
             rospy.sleep(0.3)
         #else:
         #    connect(topic, foreign_master_uri)
-        for i in xrange(2):
+        for i in xrange(3):
             comm_pub.publish(msg)
             rospy.sleep(0.1)
         open_cons[foreign_master_uri] = rospy.Time.now()
@@ -433,7 +433,7 @@ class SearchLocations(smach.State):
                     request(self.closest, loc)
             move_random()
             rate.sleep()
-        stop()
+        #stop()
         return 'found'
 
 class PreSearchLocation(smach.State):
@@ -456,11 +456,8 @@ class CheckIfAtLocation(smach.State):
     def rotate_to_ang(self, ang):
         twist = Twist()
         twist.linear.x = 0
-        twist.angular.z = self.rotate_side(ang) * ROTATION_SPEED
-        rate = rospy.Rate(RATE)
-        #while not self.rotation_aligned(ang):
+        twist.angular.z = self.rotate_side(ang) * 2 * ROTATION_SPEED
         cmd_pub.publish(twist)
-        #stop()
         
     def rotate_side(self, ang):
         own_pose = get_own_pose()
@@ -559,11 +556,9 @@ class MoveToLocation(smach.State):
                 
             if self.client.get_state() == GoalStatus.SUCCEEDED:
                 self.client.cancel_all_goals()
-                stop()
                 return 'success'
             if self.client.get_state() == GoalStatus.PREEMPTED:
                 self.client.cancel_all_goals()
-                stop()
                 return 'failed'
             rate.sleep()
     
@@ -585,7 +580,7 @@ def main():
         #Hive states
         
         smach.StateMachine.add("PreSearchHive", PreSearchLocation('hive'), transitions = {'known':'GoToHive', 'not_known':'SearchHive'})
-        smach.StateMachine.add("SearchHive", SearchLocations(['hive']), transitions = {'found':'PreSearchFood', 'not_found':'SearchHive'})
+        smach.StateMachine.add("SearchHive", SearchLocations(['hive']), transitions = {'found':'GoToHive', 'not_found':'SearchHive'})
         smach.StateMachine.add("GoToHive", MoveToLocation('hive'), transitions = {'failed':'SearchHive', 'success':'AtHive'})
         smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'PreSearchFood'})
         
