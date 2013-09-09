@@ -92,7 +92,6 @@ def init_globals():
 
 
 def cb_communication(msg):
-    print "COMM!!!!", msg
     global received, received_msg, location_received
     if not msg.receiver == name:
         return
@@ -107,6 +106,7 @@ def cb_communication(msg):
             print "answered"
             
     elif "answer" == req[0]:
+        print msg
         received_msg = msg #handle message in search states
         received = req[1]  #say we received something
 
@@ -123,8 +123,8 @@ def request(receiver, loc_name):
     msg.sender = name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
-    thread.start_new_thread(send,(receiver, msg))
-    #send(receiver, msg)
+    #thread.start_new_thread(send,(receiver, msg))
+    send(receiver, msg)
     
 
 def send(receiver, msg):
