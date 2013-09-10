@@ -275,6 +275,9 @@ def get_random_walk():
     ang = random.random() * 2. * math.pi 
     return dist, ang
 
+
+
+
 def move_random(client):
         #todo move forward turn on bumper detect
     twist = Twist()
@@ -288,7 +291,7 @@ def move_random(client):
     
     #cmd_pub.publish(twist)
     
-    if bumper or client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
+    if bumper or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
         dist, ang = get_random_walk()
@@ -299,7 +302,8 @@ def move_random(client):
 
         goal.pose.position.x += v.x
         goal.pose.position.y += v.y
-        
+
+        goal = create_goal_message(goal)
         client.send_goal(goal)
         
 
@@ -450,6 +454,21 @@ class Explore(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
 
+
+        goal = get_own_pose()
+        dist, ang = get_random_walk()
+
+        v = Vector3()
+        v.x = dist
+        vect = rotate_vec_by_angle(v, ang)
+
+        goal.pose.position.x += v.x
+        goal.pose.position.y += v.y
+
+        goal = create_goal_message(goal)
+        self.client.send_goal(goal)
+
+
         while found=='':
             self.closest = copy.deepcopy(closest)
             if received in self.locs:
@@ -487,6 +506,20 @@ class SearchLocations(smach.State):
         send_msg = []
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
+
+        goal = get_own_pose()
+        dist, ang = get_random_walk()
+
+        v = Vector3()
+        v.x = dist
+        vect = rotate_vec_by_angle(v, ang)
+
+        goal.pose.position.x += v.x
+        goal.pose.position.y += v.y
+
+        goal = create_goal_message(goal)
+        self.client.send_goal(goal)
+
         while not found in self.loc:
             self.closest = copy.deepcopy(closest)
 
