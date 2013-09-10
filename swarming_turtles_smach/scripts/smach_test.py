@@ -145,7 +145,21 @@ def check_open_connections():
                 except Exception as e:
                     print e
         r.sleep()
+
+def create_pose_msg_from_received(loc, pose_in):
+    pose_dict = dict(locations[loc])
+    pose = pose_dict['pose']
+    pose.header.frame_id = pose_dict['frame']
+    pose = transform_to_baseframe(pose, time=pose_in.header.stamp)
+
+    pose.pose.position.x = pose.pose.position.x + pose_in.pose.position.x
+    pose.pose.position.y = pose.pose.position.y + pose_in.pose.position.y
     
+    yaw = get_jaw(pose.pose.orientation) + get_jaw(pose_in.orientation)
+    q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
+    pose.pose.orientation = Quaternion(*q)
+    return pose
+        
 def cb_communication(msg):
     global received, received_msg, location_received
     if not msg.receiver == name:
@@ -153,14 +167,11 @@ def cb_communication(msg):
     req = msg.request.split(' ')
     if "request" == req[0]: #handle reqest
         if req[1] in locations.keys():
-            pose_dict = dict(locations[req[1]])
-            pose = pose_dict['pose']
-            pose.header.frame_id = pose_dict['frame']
-            pose = transform_to_baseframe(pose)
+            pose = create_pose_msg_from_received(req[1], msg.location)
             answer(msg.sender, req[1], pose)
             
     elif "answer" == req[0]:
-        print "GOT ANSWER"
+        print "GOT ANSWER", req[1]
         received_msg = msg #handle message in search states
         received = req[1]  #say we received something
 
@@ -177,6 +188,7 @@ def request(receiver, loc_name):
     msg.sender = name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
+    msg.location = turtles[receiver]
     send(receiver, msg)
     
 
@@ -366,23 +378,23 @@ def process_msg(loc, msg):
     if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
         return False
         #turtle pose in base_link
-    pose = transform_to_baseframe(turtle)
+    #pose = transform_to_baseframe(turtle)
     
-    res_pose = PoseStamped()
-    res_pose.header.frame_id = base_frame
-    res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
-    res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
+    #res_pose = PoseStamped()
+    #res_pose.header.frame_id = base_frame
+    #res_pose.pose.position.x = pose.pose.position.x + msg.location.pose.position.x
+    #res_pose.pose.position.y = pose.pose.position.y + msg.location.pose.position.y
     
-    yaw = get_jaw(pose.pose.orientation) + get_jaw(msg.location.pose.orientation)
-    q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
-    res_pose.pose.orientation = Quaternion(*q)
-    
+    #yaw = get_jaw(pose.pose.orientation) + get_jaw(msg.location.pose.orientation)
+    #q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
+    #res_pose.pose.orientation = Quaternion(*q)
+    msg.location.header.frame_id = odom
     global locations
     
     if not loc in locations:
         locations[loc] = {}
     locations[loc]['frame'] = odom
-    locations[loc]['pose'] = transformPose(res_pose)
+    locations[loc]['pose'] = msg.location.header.frame_id #transformPose(res_pose)
     locations[loc]['time'] = msg.location.header.stamp
 
     if loc == 'hive':
