@@ -538,7 +538,7 @@ class SearchLocations(smach.State):
                 for loc in self.loc:
                     print "asking ", self.closest, loc
                     request(self.closest, loc)
-            move_random(client)
+            move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
         stop()
