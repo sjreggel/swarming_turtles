@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 #import roslib; roslib.load_manifest('swarming_turtles_smach')
+
 import rospy
 import smach
 import smach_ros
 import tf
 import math
+import random
 import actionlib
 import copy
 import thread
@@ -268,8 +270,12 @@ def stop():
     for i in xrange(3):
         cmd_pub.publish(Twist())
 
-        
-def move_random():
+def get_random_walk():
+    dist = random.random() * 1.5
+    ang = random.random() * 2. * math.pi 
+    return dist, ang
+
+def move_random(client):
         #todo move forward turn on bumper detect
     twist = Twist()
     if bumper or True:
@@ -280,8 +286,24 @@ def move_random():
        twist.angular.z = 0
         
     
-    cmd_pub.publish(twist)
+    #cmd_pub.publish(twist)
+    
+    if bumper || client.get_state() == GoalStatus.SUCCEEDED || GoalStatus.PREEMPTED:
+        client.cancel_all_goals()
+        goal = get_own_pose()
+        dist, ang = get_random_walk()
 
+        v = Vector3()
+        v.x = dist
+        vect = rotate_vec_by_angle(v, ang)
+
+        goal.pose.position.x += v.x
+        goal.pose.position.y += v.y
+        
+        client.send_goal(goal)
+        
+
+    
 
 def update_location(loc, msg):
     global locations
@@ -415,6 +437,8 @@ class Explore(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['found_hive', 'found_food'])
         self.locs = ['food', 'hive']
+        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client.wait_for_server()
 
     def execute(self, userdata):
         global found, received, closest
@@ -437,9 +461,11 @@ class Explore(smach.State):
                 for loc in self.locs:
                     print "asking ", self.closest, loc
                     request(self.closest, loc)
-            move_random()
+            move_random(self.client)
             rate.sleep()
+        self.client.cancel_all_goals()
         stop()
+        
         if found == 'hive':
             return 'found_hive'
         else:
@@ -450,6 +476,8 @@ class SearchLocations(smach.State):
     def __init__(self, looking_for):
         smach.State.__init__(self, outcomes=['found', 'not_found'])
         self.loc = looking_for
+        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client.wait_for_server()
 
     def execute(self, userdata):
         global found, received, closest
@@ -463,19 +491,24 @@ class SearchLocations(smach.State):
             self.closest = copy.deepcopy(closest)
 
             if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
+                self.client.cancel_all_goals()
                 stop()
                 return 'not_found'
             if received in self.loc:
                 print 'RECEIVED', received
                 if process_msg(received, received_msg):
+                    self.client.cancel_all_goals()
+                    stop()
                     return 'found'
             if not self.closest=='': # and self.closest not in send_msg:
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
                     request(self.closest, loc)
-            move_random()
+            move_random(client)
             rate.sleep()
+        self.client.cancel_all_goals()
+        stop()
         return 'found'
 
 class PreSearchLocation(smach.State):
