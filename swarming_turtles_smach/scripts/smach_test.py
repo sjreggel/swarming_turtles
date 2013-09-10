@@ -121,7 +121,7 @@ def connect(foreign_master_uri):
     
     cmd = ["rosrun", "foreign_relay", "foreign_relay", "adv", foreign_master_uri, topic_in, topic_out]
 
-    relay = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    relay = subprocess.Popen(cmd)
     
     global open_cons
     if not foreign_master_uri in open_cons.keys():
@@ -131,8 +131,10 @@ def connect(foreign_master_uri):
     
 def disconnect(foreign_master_uri):
     global open_cons
-
+    print "closing connection", foreign_master_uri
+       
     if foreign_master_uri in open_cons.keys():
+        print "closing connection", foreign_master_uri
         open_cons[foreign_master_uri]['process'].terminate()
         open_cons.pop(foreign_master_uri, None)
     
