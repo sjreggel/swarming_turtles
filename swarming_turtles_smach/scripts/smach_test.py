@@ -63,7 +63,7 @@ INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
 MIN_DIST = 2.0 #how close to include in asking?
 
-LAST_USED = 5.0 #how long vefore closing connection
+LAST_USED = 20.0 #how long vefore closing connection
 
 RATE = 10
 EPS = 0.1
@@ -155,7 +155,7 @@ def create_pose_msg_from_received(loc, pose_in):
     pose.pose.position.x = pose.pose.position.x + pose_in.pose.position.x
     pose.pose.position.y = pose.pose.position.y + pose_in.pose.position.y
     
-    yaw = get_jaw(pose.pose.orientation) + get_jaw(pose_in.orientation)
+    yaw = get_jaw(pose.pose.orientation) + get_jaw(pose_in.pose.orientation)
     q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
     pose.pose.orientation = Quaternion(*q)
     return pose
