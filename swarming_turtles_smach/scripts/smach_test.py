@@ -51,7 +51,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 1
+ROTATION_SPEED = 0.75
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
@@ -64,6 +64,8 @@ INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 MIN_DIST = 2.0 #how close to include in asking?
 
 LAST_USED = 20.0 #how long vefore closing connection
+
+MAX_RETRY = 0
 
 RATE = 10
 EPS = 0.1
@@ -181,9 +183,9 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
-    thread.start_new_thread(send,(receiver, msg))
+    #thread.start_new_thread(send,(receiver, msg))
 
-    #send(receiver, msg)
+    send(receiver, msg)
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
@@ -191,7 +193,8 @@ def request(receiver, loc_name):
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]
-    thread.start_new_thread(send,(receiver, msg))
+    #thread.start_new_thread(send,(receiver, msg))
+    send(receiver, msg)
     
 
 def send(receiver, msg):
@@ -495,7 +498,7 @@ class CheckIfAtLocation(smach.State):
     def rotate_to_ang(self, ang):
         twist = Twist()
         twist.linear.x = 0
-        twist.angular.z = self.rotate_side(ang) * 2 * ROTATION_SPEED
+        twist.angular.z = self.rotate_side(ang) * 1.5
         cmd_pub.publish(twist)
         
     def rotate_side(self, ang):
@@ -579,7 +582,8 @@ class MoveToLocation(smach.State):
         self.client.send_goal(goal)
 
         rate = rospy.Rate(RATE)
-        
+
+        self.retry = 0
         while True:
             if (dist_vec(locations[self.loc]['pose'].pose.position, target.pose.position) > EPS_TARGETS):
 
@@ -594,7 +598,11 @@ class MoveToLocation(smach.State):
                 return 'success'
             if self.client.get_state() == GoalStatus.PREEMPTED:
                 self.client.cancel_all_goals()
-                return 'failed'
+                if self.retry < MAX_RETRY:
+                    self.retry +=1
+                    self.client.send_goal(goal)
+                else:                    
+                    return 'failed'
             rate.sleep()
     
 def main():
