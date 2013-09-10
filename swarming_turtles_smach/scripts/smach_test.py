@@ -288,7 +288,7 @@ def move_random(client):
     
     #cmd_pub.publish(twist)
     
-    if bumper || client.get_state() == GoalStatus.SUCCEEDED || GoalStatus.PREEMPTED:
+    if bumper or client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
         dist, ang = get_random_walk()
