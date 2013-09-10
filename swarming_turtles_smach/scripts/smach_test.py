@@ -181,7 +181,9 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
-    send(receiver, msg)
+    thread.start_new_thread(send,(receiver, msg))
+
+    #send(receiver, msg)
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
@@ -189,7 +191,7 @@ def request(receiver, loc_name):
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]
-    send(receiver, msg)
+    thread.start_new_thread(send,(receiver, msg))
     
 
 def send(receiver, msg):
@@ -201,7 +203,7 @@ def send(receiver, msg):
             if connect(foreign_master_uri):
                 print "connected"
                 open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
-                rospy.sleep(0.5)
+                rospy.sleep(1.0)
             else:
                 print "failed"
         for i in xrange(2):
