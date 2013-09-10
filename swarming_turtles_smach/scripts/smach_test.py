@@ -295,13 +295,15 @@ def move_random(client):
         client.cancel_all_goals()
         goal = get_own_pose()
         dist, ang = get_random_walk()
+        print "random walk dist, ang", dist, ang
 
+        
         v = Vector3()
         v.x = dist
         vect = rotate_vec_by_angle(v, ang)
 
-        goal.pose.position.x += v.x
-        goal.pose.position.y += v.y
+        goal.pose.position.x += vect.x
+        goal.pose.position.y += vect.y
 
         goal = create_goal_message(goal)
         client.send_goal(goal)
@@ -457,13 +459,14 @@ class Explore(smach.State):
 
         goal = get_own_pose()
         dist, ang = get_random_walk()
+        print "dist, ang", dist, ang
 
         v = Vector3()
         v.x = dist
         vect = rotate_vec_by_angle(v, ang)
 
-        goal.pose.position.x += v.x
-        goal.pose.position.y += v.y
+        goal.pose.position.x += vect.x
+        goal.pose.position.y += vect.y
 
         goal = create_goal_message(goal)
         self.client.send_goal(goal)
@@ -510,12 +513,14 @@ class SearchLocations(smach.State):
         goal = get_own_pose()
         dist, ang = get_random_walk()
 
+        print "dist, ang", dist, ang
+
         v = Vector3()
         v.x = dist
         vect = rotate_vec_by_angle(v, ang)
 
-        goal.pose.position.x += v.x
-        goal.pose.position.y += v.y
+        goal.pose.position.x += vect.x
+        goal.pose.position.y += vect.y
 
         goal = create_goal_message(goal)
         self.client.send_goal(goal)
