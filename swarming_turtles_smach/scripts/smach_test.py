@@ -67,7 +67,7 @@ MIN_DIST = 2.0 #how close to include in asking?
 
 LAST_USED = 10.0 #how long vefore closing connection
 
-MAX_RETRY = 0
+MAX_RETRY = 3
 
 RATE = 10
 EPS = 0.1
@@ -110,7 +110,6 @@ def init_globals():
     cmd = ["rosrun", "foreign_relay", "unreliable_relay", topic_in, topic]
     #print cmd
     subprocess.Popen(cmd, stdout=subprocess.PIPE)
-
     thread.start_new_thread(check_open_connections, ())
 
 def connect(foreign_master_uri):
@@ -131,12 +130,14 @@ def connect(foreign_master_uri):
     
 def disconnect(foreign_master_uri):
     global open_cons
-    print "closing connection", foreign_master_uri
+    #print "closing connection", foreign_master_uri
        
-    #if foreign_master_uri in open_cons.keys():
-    #    print "closing connection", foreign_master_uri
-    #    open_cons[foreign_master_uri]['process'].terminate()
-    #    open_cons.pop(foreign_master_uri, None)
+    if foreign_master_uri in open_cons.keys():
+        print "closing connection", foreign_master_uri
+        open_cons[foreign_master_uri]['process'].kill()
+        open_cons[foreign_master_uri]['process'].wait()
+
+        open_cons.pop(foreign_master_uri, None)
     
 def check_open_connections():
     global open_cons
@@ -215,7 +216,7 @@ def send(receiver, msg):
                 print "failed"
         for i in xrange(2):
             comm_pub.publish(msg)
-            rospy.sleep(0.1)
+            rospy.sleep(0.2)
         open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
        
     except Exception as e:
@@ -683,6 +684,16 @@ class MoveToLocation(smach.State):
                     self.client.send_goal(goal)
                 else:                    
                     return 'failed'
+            if bumper:
+                self.client.cancel_all_goals()
+                twist = Twist()
+
+                while bumper:
+                    twist.angular.z = ROTATION_SPEED
+                    cmd_pub.publish(twist)
+                
+                self.client.send_goal(goal)
+                
             rate.sleep()
     
 def main():
