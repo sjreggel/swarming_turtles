@@ -65,7 +65,7 @@ INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
 MIN_DIST = 2.0 #how close to include in asking?
 
-LAST_USED = 20.0 #how long vefore closing connection
+LAST_USED = 10.0 #how long vefore closing connection
 
 MAX_RETRY = 0
 
@@ -133,10 +133,10 @@ def disconnect(foreign_master_uri):
     global open_cons
     print "closing connection", foreign_master_uri
        
-    if foreign_master_uri in open_cons.keys():
-        print "closing connection", foreign_master_uri
-        open_cons[foreign_master_uri]['process'].terminate()
-        open_cons.pop(foreign_master_uri, None)
+    #if foreign_master_uri in open_cons.keys():
+    #    print "closing connection", foreign_master_uri
+    #    open_cons[foreign_master_uri]['process'].terminate()
+    #    open_cons.pop(foreign_master_uri, None)
     
 def check_open_connections():
     global open_cons
@@ -292,7 +292,8 @@ def move_random(client):
         
     
     #cmd_pub.publish(twist)
-    
+        
+       
     if bumper or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
@@ -308,6 +309,12 @@ def move_random(client):
         goal.pose.position.y += vect.y
 
         goal = create_goal_message(goal)
+
+        
+        while bumper:
+            cmd_pub.publish(twist)
+            rospy.sleep(0.1)
+            
         client.send_goal(goal)
         
 
