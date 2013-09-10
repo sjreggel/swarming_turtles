@@ -394,7 +394,7 @@ def process_msg(loc, msg):
     if not loc in locations:
         locations[loc] = {}
     locations[loc]['frame'] = odom
-    locations[loc]['pose'] = msg.location.header.frame_id #transformPose(res_pose)
+    locations[loc]['pose'] = msg.location #transformPose(res_pose)
     locations[loc]['time'] = msg.location.header.stamp
 
     if loc == 'hive':
