@@ -57,7 +57,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 1.5
+ROTATION_SPEED = 2.0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
@@ -590,6 +590,7 @@ class CheckIfAtLocation(smach.State):
         own_pose = get_own_pose()
         quat = [own_pose.pose.orientation.x, own_pose.pose.orientation.y, own_pose.pose.orientation.z,own_pose.pose.orientation.w]
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
+        print ang-theta
         if (ang - theta) < 0:
             return -1
         else:
