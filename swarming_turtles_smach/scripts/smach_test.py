@@ -91,6 +91,8 @@ turtles = {}
 
 open_cons = {}
 
+min_dist_laser = 0
+
 def init_globals():
     global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
     markers['food'] = [201, 202]
