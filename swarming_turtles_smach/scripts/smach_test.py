@@ -541,7 +541,7 @@ class Explore(smach.State):
                 if process_msg(received, received_msg):
                     print 'RECEIVED', received
                     return 'found_%s'%(received)
-            if not self.closest=='':#and closest not in send_msg:
+            if not self.closest=='' and closest not in send_msg:
                 send_msg.append(self.closest)
                 for loc in self.locs:
                     print "asking ", self.closest, loc
