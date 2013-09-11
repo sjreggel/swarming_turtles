@@ -341,24 +341,10 @@ def move_random(client):
     
     if sum(bumpers)>0 or min_dist_laser < 0.5 or client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
-        goal = get_own_pose()
-        dist, ang = get_random_walk()
-        print "random walk dist, ang", dist, ang
-
-        
-        v = Vector3()
-        v.x = dist
-        vect = rotate_vec_by_angle(v, ang)
-
-        goal.pose.position.x += vect.x
-        goal.pose.position.y += vect.y
-
-        goal = create_goal_message(goal)
-
         twist = Twist()
         twist.linear.x = 0
     
-        while sum(bumpers) > 0:
+        while sum(bumpers) > 0 or min_dist_laser < 0.5:
             if bumpers[LEFT]:
                 twist.angular.z = -ROTATION_SPEED
             else:
@@ -368,7 +354,21 @@ def move_random(client):
                 cmd_pub.publish(twist)
             
             rospy.sleep(0.1)
-            
+
+        goal = get_own_pose()
+        dist, ang = get_random_walk()
+        print "random walk dist, ang", dist, ang
+       
+        v = Vector3()
+        v.x = dist
+        vect = rotate_vec_by_angle(v, ang)
+
+        goal.pose.position.x += vect.x
+        goal.pose.position.y += vect.y
+
+        goal = create_goal_message(goal)
+
+
         client.send_goal(goal)
         
 
