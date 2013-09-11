@@ -195,7 +195,7 @@ def answer(receiver, loc_name, pose):
     msg.location = pose
     #thread.start_new_thread(send,(receiver, msg))
 
-    send(receiver, msg)
+    #send(receiver, msg)
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
@@ -204,7 +204,7 @@ def request(receiver, loc_name):
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]
     #thread.start_new_thread(send,(receiver, msg))
-    send(receiver, msg)
+    #send(receiver, msg)
     
 
 def send(receiver, msg):
