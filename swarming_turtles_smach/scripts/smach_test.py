@@ -38,7 +38,11 @@ received_msg = None
 
 markers = {}
 
-bumper = False
+LEFT = 0
+CENTER = 1
+RIGHT = 2
+
+bumpers = [False] * 3
 tfListen = None
 cmd_pub = None
 
@@ -244,12 +248,13 @@ def diff_vec(a,b):
     return res
 
 def cb_sensors(msg):
-    global bumper
-    if msg.bumper > 0:
-        bumper = True
-    else:
-        bumper = False
+    global bumpers
+    left = 
     
+    bumpers[LEFT] = msg.bumper >> 2 & 1
+    bumpers[CENTER] = msg.bumper >> 1 & 1
+    bumpers[RIGHT] = msg.bumper & 1
+
 
 def cb_ar_marker(msg):
     global found
@@ -283,19 +288,12 @@ def get_random_walk():
 
 def move_random(client):
         #todo move forward turn on bumper detect
-    twist = Twist()
-    if bumper or True:
-        twist.linear.x = 0
-        twist.angular.z = ROTATION_SPEED
-    else:
-       twist.linear.x = FORWARD_SPEED
-       twist.angular.z = 0
-        
+            
     
     #cmd_pub.publish(twist)
         
        
-    if bumper or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
+    if sum(bumpers)>0 or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
         dist, ang = get_random_walk()
@@ -311,8 +309,15 @@ def move_random(client):
 
         goal = create_goal_message(goal)
 
-        
-        while bumper:
+        twist = Twist()
+        twist.linear.x = 0
+    
+        while sum(bumpers) > 0:
+            if bumpers[LEFT]:
+                twist.angular.z = -ROTATION_SPEED
+            else:
+                twist.angular.z = ROTATION_SPEED
+
             cmd_pub.publish(twist)
             rospy.sleep(0.1)
             
@@ -579,7 +584,7 @@ class CheckIfAtLocation(smach.State):
     def rotate_to_ang(self, ang):
         twist = Twist()
         twist.linear.x = 0
-        twist.angular.z = self.rotate_side(ang) * 1.5
+        twist.angular.z = self.rotate_side(ang) * 1
         cmd_pub.publish(twist)
         
     def rotate_side(self, ang):
@@ -603,11 +608,12 @@ class CheckIfAtLocation(smach.State):
 
         own_pose = get_own_pose()
         target = copy.deepcopy(locations[self.loc]['pose'])
-        diff_x = target.pose.position.x - own_pose.pose.position.x
-        diff_y = target.pose.position.y - own_pose.pose.position.y
+        #diff_x = target.pose.position.x - own_pose.pose.position.x
+        #diff_y = target.pose.position.y - own_pose.pose.position.y
 
-        ang = math.atan2(diff_y, diff_x)
+        #ang = math.atan2(diff_y, diff_x)
 
+        ang = get_jaw(target.pose.orientation)
         rate = rospy.Rate(RATE)
 
         while not found == self.loc:
@@ -684,12 +690,15 @@ class MoveToLocation(smach.State):
                     self.client.send_goal(goal)
                 else:                    
                     return 'failed'
-            if bumper:
+            if sum(bumper)>0:
                 self.client.cancel_all_goals()
                 twist = Twist()
 
-                while bumper:
-                    twist.angular.z = ROTATION_SPEED
+                while sum(bumpers) > 0:
+                    if bumpers[LEFT]:
+                        twist.angular.z = -ROTATION_SPEED
+                    else:
+                        twist.angular.z = ROTATION_SPEED
                     cmd_pub.publish(twist)
                 
                 self.client.send_goal(goal)
