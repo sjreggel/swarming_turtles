@@ -61,14 +61,14 @@ ROTATION_SPEED = 2.0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
-LAST_SEEN = 1.0 #check last seen for other turtle
+LAST_SEEN = 3.0 #check last seen for other turtle
 
-EPS_TARGETS = 0.1 #if targets are further away than that resend goal
+EPS_TARGETS = 0.2 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 Y_OFFSET = 0.3
 
-MIN_DIST = 1.5 #how close to include in asking?
+MIN_DIST = 2.0 #how close to include in asking?
 
 LAST_USED = 20.0 #how long vefore closing connection
 
@@ -471,6 +471,7 @@ def process_msg(loc, msg):
         return False
     turtle = turtles[msg.sender]
     if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
+        print 'message too old'
         return False
         #turtle pose in base_link
     #pose = transform_to_baseframe(turtle)
@@ -544,7 +545,10 @@ class Explore(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.locs:
                     print "asking ", self.closest, loc
+                    self.client.cancel_all_goals()
                     request(self.closest, loc)
+                    rospy.sleep(2)
+                    self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
@@ -595,8 +599,8 @@ class SearchLocations(smach.State):
                 stop()
                 return 'not_found'
             if received in self.loc:
-                print 'RECEIVED', received
                 if process_msg(received, received_msg):
+                    print 'RECEIVED', received
                     self.client.cancel_all_goals()
                     stop()
                     return 'found'
@@ -604,7 +608,10 @@ class SearchLocations(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
+                    self.client.cancel_all_goals()
                     request(self.closest, loc)
+                    rospy.sleep(2)
+                    self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
