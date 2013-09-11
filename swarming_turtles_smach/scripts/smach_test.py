@@ -664,7 +664,7 @@ class MoveToOutLocation(smach.State):
 
 
         goal = move_location(target, y = -2 *Y_OFFSET)
-        goal = create_goal_message(target)
+        goal = create_goal_message(goal)
 
         self.client.send_goal(goal)
 
