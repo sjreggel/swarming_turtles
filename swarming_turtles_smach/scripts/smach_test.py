@@ -583,15 +583,20 @@ class CheckIfAtLocation(smach.State):
     def rotate_to_ang(self, ang):
         twist = Twist()
         twist.linear.x = 0
-        twist.angular.z = self.rotate_side(ang) * 1
+        twist.angular.z = self.rotate_side(ang) * ROTATION_SPEED
         cmd_pub.publish(twist)
         
     def rotate_side(self, ang):
         own_pose = get_own_pose()
         quat = [own_pose.pose.orientation.x, own_pose.pose.orientation.y, own_pose.pose.orientation.z,own_pose.pose.orientation.w]
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
-        print ang-theta
-        if (ang - theta) < 0:
+        
+        res = ang - theta
+        if res > math.pi:
+            res -= 2 * math.pi
+        if res < -math.pi:
+            res += 2* math.pi
+        if (res) < 0:
             return -1
         else:
             return 1
