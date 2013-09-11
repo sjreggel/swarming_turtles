@@ -178,7 +178,7 @@ def cb_communication(msg):
     if not msg.receiver == name:
         return
     req = msg.request.split(' ')
-    if "request" == req[0]: #handle reqest
+    if "request" == req[0] and not sending: #handle reqest
         if req[1] in locations.keys():
             pose = create_pose_msg_from_received(req[1], msg.location)
             answer(msg.sender, req[1], pose)
@@ -222,7 +222,7 @@ def send(receiver, msg):
             else:
                 print "failed"
 
-        rospy.sleep(1)
+        rospy.sleep(0.5)
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.2)
