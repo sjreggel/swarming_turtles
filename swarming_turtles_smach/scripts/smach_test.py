@@ -84,6 +84,7 @@ base_frame = "/base_link"
 found = ''
 closest = ''
 received = ''
+sending = False
 
 turtles = {}
 
@@ -195,7 +196,7 @@ def answer(receiver, loc_name, pose):
     msg.location = pose
     #thread.start_new_thread(send,(receiver, msg))
 
-    #send(receiver, msg)
+    send(receiver, msg)
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
@@ -204,11 +205,12 @@ def request(receiver, loc_name):
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]
     #thread.start_new_thread(send,(receiver, msg))
-    #send(receiver, msg)
+    send(receiver, msg)
     
 
 def send(receiver, msg):
-    global open_cons 
+    global open_cons, sending
+    sending = True
     foreign_master_uri = make_master_uri(receiver)
     try:
         print open_cons
@@ -216,7 +218,7 @@ def send(receiver, msg):
             if connect(foreign_master_uri):
                 print "connected"
                 open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
-                rospy.sleep(1.0)
+                rospy.sleep(2.0)
             else:
                 print "failed"
         for i in xrange(2):
@@ -226,7 +228,7 @@ def send(receiver, msg):
        
     except Exception as e:
         print "exception", e
-
+    sending = False
         
 def rotate_vec_by_angle(v, ang):
     res = Vector3()
@@ -292,7 +294,29 @@ def move_random(client):
     
     #cmd_pub.publish(twist)
         
+    if sending:
+        client.cancel_all_goals()
+        stop()
+        while sending:
+            rospy.sleep(0.1)
+
+        goal = get_own_pose()
+        dist, ang = get_random_walk()
+        print "random walk dist, ang", dist, ang
+
+        
+        v = Vector3()
+        v.x = dist
+        vect = rotate_vec_by_angle(v, ang)
+
+        goal.pose.position.x += vect.x
+        goal.pose.position.y += vect.y
+
+        goal = create_goal_message(goal)
+        client.send_goal(goal)
        
+        
+    
     if sum(bumpers)>0 or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
@@ -663,7 +687,7 @@ class MoveToOutLocation(smach.State):
         target = copy.deepcopy(locations[self.loc]['pose'])
 
 
-        goal = move_location(target, y = -2 *Y_OFFSET)
+        goal = move_location(target, y = -3 *Y_OFFSET)
         goal = create_goal_message(goal)
 
         self.client.send_goal(goal)
@@ -741,6 +765,13 @@ class MoveToLocation(smach.State):
 
         self.retry = 0
         while True:
+            if sending:
+                self.client.cancel_all_goals()
+                stop()
+                while sending:
+                    rate.sleep()
+                self.client.send_goal(goal)
+                
             if (dist_vec(locations[self.loc]['pose'].pose.position, target.pose.position) > EPS_TARGETS):
 
                 print "resending goal"
