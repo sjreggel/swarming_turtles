@@ -57,7 +57,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 0.75
+ROTATION_SPEED = 1.5
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
@@ -69,7 +69,7 @@ INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 
 MIN_DIST = 2.0 #how close to include in asking?
 
-LAST_USED = 10.0 #how long vefore closing connection
+LAST_USED = 20.0 #how long vefore closing connection
 
 MAX_RETRY = 3
 
@@ -114,7 +114,7 @@ def init_globals():
     cmd = ["rosrun", "foreign_relay", "unreliable_relay", topic_in, topic]
     #print cmd
     subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    thread.start_new_thread(check_open_connections, ())
+    #thread.start_new_thread(check_open_connections, ())
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
@@ -699,6 +699,7 @@ class MoveToLocation(smach.State):
                     else:
                         twist.angular.z = ROTATION_SPEED
                     cmd_pub.publish(twist)
+                    rate.sleep()
                 
                 self.client.send_goal(goal)
                 
