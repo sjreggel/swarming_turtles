@@ -249,7 +249,6 @@ def diff_vec(a,b):
 
 def cb_sensors(msg):
     global bumpers
-    left = 
     
     bumpers[LEFT] = msg.bumper >> 2 & 1
     bumpers[CENTER] = msg.bumper >> 1 & 1
