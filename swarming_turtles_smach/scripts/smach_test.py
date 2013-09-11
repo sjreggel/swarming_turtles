@@ -21,6 +21,7 @@ from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
 from actionlib_msgs.msg import *
 from move_base_msgs.msg import *
+from sensor_msgs.msg import LaserScan
 
 from swarming_turtles_msgs.msg import Turtles, Turtle, CommunicationProtocol
 from swarming_turtles_communicate.communicate  import make_master_uri
@@ -110,6 +111,9 @@ def init_globals():
     rospy.Subscriber('ar_pose_marker', AlvarMarkers, cb_ar_marker)
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)
     rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)
+
+    rospy.Subscriber('/scan_obst', LaserScan, cb_laser_scan)
+
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
@@ -172,7 +176,22 @@ def create_pose_msg_from_received(loc, pose_in):
     q = tf.transformations.quaternion_from_euler(0,0,yaw, axes = "sxyz")
     pose.pose.orientation = Quaternion(*q)
     return pose
-        
+
+def cb_laser_scan(msg):
+    global min_dist_laser
+    min_dist_laser_tmp = 4.0
+    #ang_min = msg.angle_min
+    #ang_max = msg.angle_max
+
+    #angle_inc = msg.angle_increment
+
+    #view_range = 10. / 180. * math.pi
+    
+    for i in msg.ranges:
+        if i < min_dist_laser_tmp:
+            min_dist_laser_tmp = i
+    min_dist_laser = min_dist_laser_tmp
+            
 def cb_communication(msg):
     global received, received_msg, location_received
     if not msg.receiver == name:
@@ -318,7 +337,7 @@ def move_random(client):
        
         
     
-    if sum(bumpers)>0 or  client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
+    if sum(bumpers)>0 or min_dist_laser < 0.5 or client.get_state() == GoalStatus.SUCCEEDED or client.get_state == GoalStatus.PREEMPTED:
         client.cancel_all_goals()
         goal = get_own_pose()
         dist, ang = get_random_walk()
