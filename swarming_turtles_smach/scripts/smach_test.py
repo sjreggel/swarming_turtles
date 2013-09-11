@@ -689,7 +689,7 @@ class MoveToLocation(smach.State):
                     self.client.send_goal(goal)
                 else:                    
                     return 'failed'
-            if sum(bumper)>0:
+            if sum(bumpers)>0:
                 self.client.cancel_all_goals()
                 twist = Twist()
 
