@@ -68,7 +68,7 @@ EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
 Y_OFFSET = 0.3
 
-MIN_DIST = 2.0 #how close to include in asking?
+MIN_DIST = 1.5 #how close to include in asking?
 
 LAST_USED = 20.0 #how long vefore closing connection
 
@@ -116,7 +116,7 @@ def init_globals():
     cmd = ["rosrun", "foreign_relay", "unreliable_relay", topic_in, topic]
     #print cmd
     subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    #thread.start_new_thread(check_open_connections, ())
+    thread.start_new_thread(check_open_connections, ())
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
@@ -218,9 +218,11 @@ def send(receiver, msg):
             if connect(foreign_master_uri):
                 print "connected"
                 open_cons[foreign_master_uri]['last_used'] = rospy.Time.now()
-                rospy.sleep(2.0)
+                rospy.sleep(1.5)
             else:
                 print "failed"
+
+        rospy.sleep(1)
         for i in xrange(2):
             comm_pub.publish(msg)
             rospy.sleep(0.2)
@@ -228,6 +230,7 @@ def send(receiver, msg):
        
     except Exception as e:
         print "exception", e
+
     sending = False
         
 def rotate_vec_by_angle(v, ang):
@@ -302,9 +305,7 @@ def move_random(client):
 
         goal = get_own_pose()
         dist, ang = get_random_walk()
-        print "random walk dist, ang", dist, ang
-
-        
+                
         v = Vector3()
         v.x = dist
         vect = rotate_vec_by_angle(v, ang)
@@ -342,7 +343,9 @@ def move_random(client):
             else:
                 twist.angular.z = ROTATION_SPEED
 
-            cmd_pub.publish(twist)
+            if not sending:
+                cmd_pub.publish(twist)
+            
             rospy.sleep(0.1)
             
         client.send_goal(goal)
@@ -670,7 +673,8 @@ class CheckIfAtLocation(smach.State):
             if self.rotation_aligned(ang):
                 return 'failed'
             else:
-                self.rotate_to_ang(ang)
+                if not sending:
+                    self.rotate_to_ang(ang)
             rate.sleep()
         return 'success'
 
@@ -799,7 +803,9 @@ class MoveToLocation(smach.State):
                         twist.angular.z = -ROTATION_SPEED
                     else:
                         twist.angular.z = ROTATION_SPEED
-                    cmd_pub.publish(twist)
+
+                    if not sending:
+                        cmd_pub.publish(twist)
                     rate.sleep()
                 
                 self.client.send_goal(goal)

@@ -119,7 +119,7 @@ def create_pose_msg(own_pose, t):
     return msg
     
 def predict_pos_vel(poses, times, steps = 5):
-    if len(poses) == 1:
+    if True or len(poses) == 1:
         pos = Vector3()
         pos.x = poses[-1].position.x
         pos.y = poses[-1].position.y
