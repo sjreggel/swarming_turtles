@@ -404,7 +404,7 @@ def move_location_inwards(pose, dist):
     ang = get_jaw(pose.pose.orientation)
     vec = Vector3()
     vec.x = dist
-    vec.y = -Y_OFFSET
+    #vec.y = -Y_OFFSET
     vec = rotate_vec_by_angle(vec, ang-math.pi/2.0)
 
     pose_stamped.pose.position.x = pose.pose.position.x + vec.x
