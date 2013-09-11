@@ -196,7 +196,7 @@ def answer(receiver, loc_name, pose):
     msg.location = pose
     #thread.start_new_thread(send,(receiver, msg))
 
-    send(receiver, msg)
+    #send(receiver, msg)
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
@@ -205,7 +205,7 @@ def request(receiver, loc_name):
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]
     #thread.start_new_thread(send,(receiver, msg))
-    send(receiver, msg)
+    #send(receiver, msg)
     
 
 def send(receiver, msg):
@@ -545,10 +545,10 @@ class Explore(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.locs:
                     print "asking ", self.closest, loc
-                    self.client.cancel_all_goals()
-                    request(self.closest, loc)
-                    rospy.sleep(2)
-                    self.client.send_goal(goal)
+                    #self.client.cancel_all_goals()
+                    #request(self.closest, loc)
+                    #rospy.sleep(2)
+                    #self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
@@ -608,10 +608,10 @@ class SearchLocations(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
-                    self.client.cancel_all_goals()
-                    request(self.closest, loc)
-                    rospy.sleep(2)
-                    self.client.send_goal(goal)
+                    #self.client.cancel_all_goals()
+                    #request(self.closest, loc)
+                    #rospy.sleep(2)
+                    #self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
