@@ -604,7 +604,7 @@ class SearchLocations(smach.State):
                     self.client.cancel_all_goals()
                     stop()
                     return 'found'
-            if not self.closest=='': # and self.closest not in send_msg:
+            if not self.closest=='' and self.closest not in send_msg:
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
