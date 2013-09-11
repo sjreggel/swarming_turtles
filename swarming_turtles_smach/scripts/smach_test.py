@@ -66,6 +66,7 @@ LAST_SEEN = 1.0 #check last seen for other turtle
 EPS_TARGETS = 0.1 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
+Y_OFFSET = 0.2
 
 MIN_DIST = 2.0 #how close to include in asking?
 
@@ -350,6 +351,25 @@ def get_jaw(orientation):
     r,p,theta = tf.transformations.euler_from_quaternion(quat)
     return theta
 
+
+def move_location(pose, x = 0, y = 0):
+    pose_stamped = PoseStamped()
+    pose_stamped.header.frame_id = pose.header.frame_id
+    ang = get_jaw(pose.pose.orientation)
+    vec = Vector3()
+    vec.x = x
+    vec.y = y
+    vec = rotate_vec_by_angle(vec, ang)
+
+    
+    pose_stamped.pose.position.x = pose.pose.position.x + vec.x
+    pose_stamped.pose.position.y = pose.pose.position.y + vec.y
+    pose_stamped.pose.orientation = pose.pose.orientation
+        
+    return pose_stamped
+
+                   
+
     
 def move_location_inwards(pose, dist):
     pose_stamped = PoseStamped()
@@ -357,6 +377,7 @@ def move_location_inwards(pose, dist):
     ang = get_jaw(pose.pose.orientation)
     vec = Vector3()
     vec.x = dist
+    vec.y = Y_OFFSET
     vec = rotate_vec_by_angle(vec, ang-math.pi/2.0)
 
     pose_stamped.pose.position.x = pose.pose.position.x + vec.x
@@ -630,6 +651,49 @@ class CheckIfAtLocation(smach.State):
         return 'success'
 
     
+class MoveToOutLocation(smach.State):
+    def __init__(self, loc):
+        smach.State.__init__(self, outcomes=['failed', 'success'])
+        self.loc = loc
+        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client.wait_for_server()
+
+    def execute(self, userdata):
+        own_pose = get_own_pose()
+        target = copy.deepcopy(locations[self.loc]['pose'])
+
+
+        goal = move_location(target, y = -Y_OFFSET)
+        goal = create_goal_message(target)
+
+        self.client.send_goal(goal)
+
+        rate = rospy.Rate(RATE)
+
+        while True:
+            if self.client.get_state() == GoalStatus.SUCCEEDED:
+                self.client.cancel_all_goals()
+                return 'success'
+            if self.client.get_state() == GoalStatus.PREEMPTED:
+                return 'failed'
+            if sum(bumpers)>0:
+                self.client.cancel_all_goals()
+                twist = Twist()
+
+                while sum(bumpers) > 0:
+                    if bumpers[LEFT]:
+                        twist.angular.z = -ROTATION_SPEED
+                    else:
+                        twist.angular.z = ROTATION_SPEED
+                    cmd_pub.publish(twist)
+                    rate.sleep()
+                
+                self.client.send_goal(goal)
+                
+            rate.sleep()
+       
+
+    
 class MoveToLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
@@ -731,14 +795,16 @@ def main():
         smach.StateMachine.add("PreSearchHive", PreSearchLocation('hive'), transitions = {'known':'GoToHive', 'not_known':'SearchHive'})
         smach.StateMachine.add("SearchHive", SearchLocations(['hive']), transitions = {'found':'GoToHive', 'not_found':'SearchHive'})
         smach.StateMachine.add("GoToHive", MoveToLocation('hive'), transitions = {'failed':'SearchHive', 'success':'AtHive'})
-        smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'PreSearchFood'})
+        smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'GoToHiveOut'})
+        smach.StateMachine.add("GoToHiveOut", MoveToOutLocation('hive'), transitions = {'failed':'PreSearchFood', 'success':'PreSearchFood'})
         
         
         # #food states
         smach.StateMachine.add("PreSearchFood", PreSearchLocation('food'), transitions = {'known':'GoToFood', 'not_known':'SearchFood'})
         smach.StateMachine.add("SearchFood", SearchLocations(['food']), transitions = {'found':'GoToFood', 'not_found':'SearchFood'})
         smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'SearchFood', 'success':'AtFood'})
-        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'PreSearchHive'})
+        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'})
+        smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'PreSearchHive', 'success':'PreSearchHive'})
 
         
         #smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
