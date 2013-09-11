@@ -145,8 +145,12 @@ def predict_pos_vel(poses, times, steps = 5):
             print steps, time_dif
             time_dif = 0.001
         #print times
-        avg_lin_speed += 1./(steps-1) * dist_between(cur, prev)/time_dif
-        avg_rot_speed += 1./(steps-1) * (get_jaw(cur.orientation) - get_jaw(prev.orientation))/time_dif
+        avg_lin_speed += 1./(steps-1) * min(dist_between(cur, prev)/time_dif, 0.5)
+        rot = (get_jaw(cur.orientation) - get_jaw(prev.orientation))/time_dif
+        speed = min(abs(rot), 1.5)
+        if rot < 0:
+            speed *= -1 
+        avg_rot_speed += 1./(steps-1) * speed
 
 
     time_to_now = (rospy.Time.now() - times[-1]).to_sec()
