@@ -566,10 +566,10 @@ class Explore(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.locs:
                     print "asking ", self.closest, loc
-                    #self.client.cancel_all_goals()
-                    #request(self.closest, loc)
-                    #rospy.sleep(2)
-                    #self.client.send_goal(goal)
+                    self.client.cancel_all_goals()
+                    request(self.closest, loc)
+                    rospy.sleep(2)
+                    self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
@@ -629,10 +629,10 @@ class SearchLocations(smach.State):
                 send_msg.append(self.closest)
                 for loc in self.loc:
                     print "asking ", self.closest, loc
-                    #self.client.cancel_all_goals()
-                    #request(self.closest, loc)
-                    #rospy.sleep(2)
-                    #self.client.send_goal(goal)
+                    self.client.cancel_all_goals()
+                    request(self.closest, loc)
+                    rospy.sleep(2)
+                    self.client.send_goal(goal)
             move_random(self.client)
             rate.sleep()
         self.client.cancel_all_goals()
