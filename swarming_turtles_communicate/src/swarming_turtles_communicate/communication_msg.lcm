@@ -1,0 +1,6 @@
+package msg;
+
+struct communication_msg
+{
+    string buffer;
+}
