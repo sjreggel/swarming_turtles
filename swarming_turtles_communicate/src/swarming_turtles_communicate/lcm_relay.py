@@ -25,7 +25,6 @@ def init_globals():
     rospy.Subscriber(topic, CommunicationProtocol, handle_msg)
 
 def udp_callback(channel, data):
-    #udp_msg = communication_msg.decode(data)
     msg = CommunicationProtocol()
     msg.deserialize(data)
     pub.publish(msg)
@@ -46,12 +45,8 @@ def main():
 
 
 def send(msg, repeats = 3):
-    #send = communication_msg()
-    #print send
     buff = StringIO.StringIO()
     msg.serialize(buff)
-    print buff.getvalue()
-    #send.buffer = buff.getvalue()
     for i in xrange(repeats):
         lc.publish(msg.receiver, buff.getvalue())
     
