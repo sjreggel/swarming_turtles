@@ -119,10 +119,10 @@ def init_globals():
     
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
-    cmd = ["rosrun", "foreign_relay", "unreliable_relay", topic_in, topic]
+    #cmd = ["rosrun", "foreign_relay", "unreliable_relay", topic_in, topic]
     #print cmd
-    subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    thread.start_new_thread(check_open_connections, ())
+    #subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    #thread.start_new_thread(check_open_connections, ())
 
 def connect(foreign_master_uri):
     #master_uri = make_master_uri(foreign_master)
