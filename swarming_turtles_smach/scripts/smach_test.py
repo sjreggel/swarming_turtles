@@ -102,7 +102,7 @@ def init_globals():
     name = gethostname()
     rospy.sleep(1)
 
-    comm_pub = rospy.Publisher(topic_out, CommunicationProtocol)
+    comm_pub = rospy.Publisher(topic, CommunicationProtocol)
 
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
 
