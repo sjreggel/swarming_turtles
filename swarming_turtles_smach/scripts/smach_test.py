@@ -216,6 +216,7 @@ def answer(receiver, loc_name, pose):
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
     #thread.start_new_thread(send,(receiver, msg))
+    comm_pub.publish(msg)
 
     #send(receiver, msg)
    
@@ -227,6 +228,7 @@ def request(receiver, loc_name):
     msg.location = turtles[receiver]
     #thread.start_new_thread(send,(receiver, msg))
     #send(receiver, msg)
+    comm_pub.publish(msg)
     
 
 def send(receiver, msg):
@@ -542,6 +544,9 @@ class Explore(smach.State):
 
 
         goal = get_own_pose()
+        while goal is None:
+            goal = get_own_pose()
+
         dist, ang = get_random_walk()
         print "dist, ang", dist, ang
 
