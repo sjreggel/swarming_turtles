@@ -33,6 +33,7 @@
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/GridCells.h>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -52,6 +53,7 @@
 #include <swarming_turtles_msgs/PositionShares.h>
 
 #include <swarming_turtles_navigation/Agent.h>
+#include <swarming_turtles_navigation/GetCollvoidTwist.h>
 
 
 namespace collvoid {
@@ -87,6 +89,9 @@ namespace collvoid {
     void addNHConstraints(double min_dist, Vector2 pref_velocity);
 
     void computeObstacles();
+
+    void computeObstaclesFromCostmap();
+    void obstaclesCallback(const nav_msgs::GridCells::ConstPtr& msg);
 
     
     bool compareNeighborsPositions(const AgentPtr& agent1, const AgentPtr& agent2); 
@@ -173,6 +178,8 @@ namespace collvoid {
 
     void executeCB(const move_base_msgs::MoveBaseGoalConstPtr& goal);
 
+    bool serviceCB(swarming_turtles_navigation::GetCollvoidTwist::Request &req, swarming_turtles_navigation::GetCollvoidTwist::Response &res);
+
     //config
     double publish_positions_period_;
     double publish_me_period_;
@@ -239,6 +246,8 @@ namespace collvoid {
     //Actionserver
     actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
     
+    ros::ServiceServer service_;
+    
     ros::Time last_seen_;
     nav_msgs::Odometry base_odom_; 
     
@@ -257,7 +266,7 @@ namespace collvoid {
     
     //subscribers and publishers
     ros::Publisher lines_pub_, neighbors_pub_, polygon_pub_, vo_pub_, me_pub_, samples_pub_, speed_pub_, position_share_pub_, obstacles_pub_, twist_pub_;
-    ros::Subscriber amcl_posearray_sub_, position_share_sub_, odom_sub_;
+    ros::Subscriber amcl_posearray_sub_, position_share_sub_, odom_sub_, obstacles_sub_;
 
     
   };

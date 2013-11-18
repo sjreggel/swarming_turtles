@@ -4,7 +4,7 @@ project(swarming_turtles_navigation)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs move_base_msgs geometry_msgs laser_geometry)
+find_package(catkin REQUIRED COMPONENTS actionlib rosconsole roscpp roscpp_serialization roslib rospy tf visualization_msgs move_base_msgs geometry_msgs nav_msgs laser_geometry)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -27,16 +27,16 @@ catkin_python_setup()
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
+ add_service_files(
+   FILES
+   GetCollvoidTwist.srv
 #   Service2.srv
-# )
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   visualization_msgs
-# )
+ )
+# Generate added messages and services with any dependencies listed here
+ generate_messages(
+   DEPENDENCIES
+   geometry_msgs
+ )
 
 ###################################
 ## catkin specific configuration ##

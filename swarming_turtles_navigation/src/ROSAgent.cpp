@@ -35,6 +35,7 @@
 
 #include "swarming_turtles_navigation/ROSAgent.h"
 
+
 #include "swarming_turtles_navigation/orca.h"
 #include "swarming_turtles_navigation/collvoid_publishers.h"
 
@@ -78,6 +79,8 @@ namespace collvoid{
     standalone_ = getParamDef(private_nh, "standalone", true);
 
     as_ = new actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>(private_nh, "swarm_nav_goal", boost::bind(&ROSAgent::executeCB, this, _1), false);
+
+    service_ = private_nh.advertiseService("get_collvoid_twist", &ROSAgent::serviceCB,this);
     
     ros::NodeHandle nh;
     id_ = nh.getNamespace();
@@ -119,6 +122,33 @@ namespace collvoid{
     as_->start();
     initialized_ = true;
 
+  }
+
+  bool ROSAgent::serviceCB(swarming_turtles_navigation::GetCollvoidTwist::Request &req, swarming_turtles_navigation::GetCollvoidTwist::Response &res) {
+    tf::Stamped<tf::Pose> goal_pose, global_pose;
+    tf::poseStampedMsgToTF(req.goal, goal_pose);
+
+    //just get the latest available transform... for accuracy they should send
+    //goals in the frame of the planner
+    goal_pose.stamp_ = ros::Time();
+
+    try{
+      tf_->transformPose(global_frame_, goal_pose, global_pose);
+    }
+    catch(tf::TransformException& ex){
+      ROS_WARN("Failed to transform the goal pose from %s into the %s frame: %s",
+	       goal_pose.frame_id_.c_str(), global_frame_.c_str(), ex.what());
+      return false;
+    }
+
+    geometry_msgs::PoseStamped global_pose_msg;
+    tf::poseStampedTFToMsg(global_pose, global_pose_msg);
+
+    Vector2 goal = Vector2(global_pose_msg.pose.position.x, global_pose_msg.pose.position.y);
+    double ang = tf::getYaw(global_pose_msg.pose.orientation);
+
+    res.twist = computeVelocityCommand(goal, ang);
+    return true;
   }
 
   void ROSAgent::executeCB(const move_base_msgs::MoveBaseGoalConstPtr& msg){
@@ -265,7 +295,8 @@ namespace collvoid{
     //Subscribers
     odom_sub_ = nh.subscribe("odom",1, &ROSAgent::odomCallback, this);
     position_share_sub_ = nh.subscribe("position_share", 1, &ROSAgent::positionShareCallback, this);
-
+    obstacles_sub_ = nh.subscribe("costmap_node/costmap/obstacles",1,&ROSAgent::obstaclesCallback,this);
+    
     laser_scan_sub_.subscribe (nh, "scan_obst", 1);
     laser_notifier.reset(new tf::MessageFilter<sensor_msgs::LaserScan>(laser_scan_sub_, *tf_, global_frame_, 10));
 
@@ -377,6 +408,7 @@ namespace collvoid{
     //addAccelerationConstraintsXY(max_vel_x_,acc_lim_x_, max_vel_y_, acc_lim_y_, velocity_, heading_, sim_period_, holo_robot_, additional_orca_lines_);
 
     computeObstacles();
+    computeObstaclesFromCostmap();
     
     if (orca_){
       computeOrcaVelocity(pref_velocity);
@@ -735,52 +767,55 @@ namespace collvoid{
   }
 
   
-  // void ROSAgent::computeObstacleLines(){
-  //   std::vector<int> delete_points;
-  //   for(size_t i = 0; i< obstacle_points_.size(); i++){
-  //     //ROS_DEBUG("obstacle at %f %f dist %f",obstacle_points_[i].x(),obstacle_points_[i].y(),collvoid::abs(position_-obstacle_points_[i]));
-  //     if (pointInNeighbor(obstacle_points_[i])){
-  // 	delete_points.push_back((int)i);
-  // 	continue;
-  //     }
-  //     double dist = collvoid::abs(position_ - obstacle_points_[i]);
-  //     Line line;
-  //     Vector2 relative_position = obstacle_points_[i] - position_;
-  //     double dist_to_footprint;
-  //     if (!has_polygon_footprint_)
-  // 	dist_to_footprint = footprint_radius_;
-  //     else {
-  // 	dist_to_footprint = getDistToFootprint(relative_position);
-  // 	if (dist_to_footprint == -1){
-  // 	  dist_to_footprint = footprint_radius_;
-  // 	}
-  //     }
-  //     dist = std::min(dist - dist_to_footprint - 0.01, (double)max_vel_with_obstacles_);
-  //     //if (dist < (double)max_vel_with_obstacles_){
-  //     //  dist *= dist;
-  //     //} 
-  //     //    line.point = normalize(relative_position) * (dist - dist_to_footprint - 0.03);
-  //     line.point = normalize(relative_position) * (dist); 
-  //     line.dir = Vector2 (-normalize(relative_position).y(),normalize(relative_position).x()) ; 
+  void ROSAgent::computeObstaclesFromCostmap(){
+    boost::mutex::scoped_lock lock(obstacle_lock_);
 
-  //     //TODO relatvie velocity instead of velocity!!
-  //     if (dist > time_horizon_obst_ * collvoid::abs(velocity_))
-  // 	return;
+    std::vector<int> delete_points;
+    sortObstacleLines();
+    for(size_t i = 0; i< obstacle_points_.size(); i++){
+      //ROS_DEBUG("obstacle at %f %f dist %f",obstacle_points_[i].x(),obstacle_points_[i].y(),collvoid::abs(position_-obstacle_points_[i]));
+      if (pointInNeighbor(obstacle_points_[i])){
+  	delete_points.push_back((int)i);
+  	continue;
+      }
+      double dist = collvoid::abs(position_ - obstacle_points_[i]);
+      Line line;
+      Vector2 relative_position = obstacle_points_[i] - position_;
+      double dist_to_footprint;
+      if (!has_polygon_footprint_)
+  	dist_to_footprint = footprint_radius_;
+      else {
+  	dist_to_footprint = getDistToFootprint(relative_position);
+  	if (dist_to_footprint == -1){
+  	  dist_to_footprint = footprint_radius_;
+  	}
+      }
+      dist = std::min(dist - dist_to_footprint - 0.03, (double)max_vel_with_obstacles_);
+      //if (dist < (double)max_vel_with_obstacles_){
+      //  dist *= dist;
+      //} 
+      //    line.point = normalize(relative_position) * (dist - dist_to_footprint - 0.03);
+      line.point = normalize(relative_position) * (dist); 
+      line.dir = Vector2 (-normalize(relative_position).y(),normalize(relative_position).x()) ; 
+
+      //TODO relatvie velocity instead of velocity!!
+      //if (dist > time_horizon_obst_ * collvoid::abs(velocity_))
+      //return;
 
       
-  //     additional_orca_lines_.push_back(line);
+      additional_orca_lines_.push_back(line);
     
-  //   }
-  //   if (delete_observations_) 
-  //     return;
-  //   else {
-  //     while(!delete_points.empty()){
-  // 	int del = delete_points.back();
-  // 	obstacle_points_.erase(obstacle_points_.begin()+del);
-  // 	delete_points.pop_back();
-  //     }
-  //   }
-  // }
+    }
+    if (!delete_observations_) 
+      return;
+    else {
+      while(!delete_points.empty()){
+  	int del = delete_points.back();
+  	obstacle_points_.erase(obstacle_points_.begin()+del);
+  	delete_points.pop_back();
+      }
+    }
+  }
  
   void ROSAgent::setFootprint(geometry_msgs::PolygonStamped footprint ){
     if (footprint.polygon.points.size() < 2) {
@@ -1065,6 +1100,33 @@ namespace collvoid{
     return result;
   }
 
+
+
+  void ROSAgent::obstaclesCallback(const nav_msgs::GridCells::ConstPtr& msg){
+    size_t num_obst = msg->cells.size();
+    boost::mutex::scoped_lock lock(obstacle_lock_);
+    obstacle_points_.clear();
+    
+    for (size_t i = 0; i < num_obst; i++) {
+      geometry_msgs::PointStamped in, result;
+      in.header = msg->header;
+      in.point = msg->cells[i];
+      //ROS_DEBUG("obstacle at %f %f",msg->cells[i].x,msg->cells[i].y);
+      try {
+	tf_->waitForTransform(global_frame_, base_frame_, msg->header.stamp, ros::Duration(0.2));
+
+	tf_->transformPoint(global_frame_, in, result);
+      }
+      catch (tf::TransformException ex){
+	ROS_ERROR("%s",ex.what());
+	return;
+      };
+
+      obstacle_points_.push_back(collvoid::Vector2(result.point.x,result.point.y));
+    }
+  }
+
+  
 
   void ROSAgent::baseScanCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
     sensor_msgs::PointCloud cloud;
