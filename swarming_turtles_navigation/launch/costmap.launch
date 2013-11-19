@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="costmap_2d" type="costmap_2d_node" name="costmap_node" output="screen" >
+	<rosparam command="load" file="$(find swarming_turtles_navigation)/config/costmap.yaml" ns="costmap" />
+  </node>
+</launch>

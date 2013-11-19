@@ -67,7 +67,7 @@ LAST_SEEN = 3.0 #check last seen for other turtle
 EPS_TARGETS = 0.2 #if targets are further away than that resend goal
 
 INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
-Y_OFFSET = 0.3
+Y_OFFSET = 0.5
 
 MIN_DIST = 2.0 #how close to include in asking?
 
@@ -724,7 +724,7 @@ class MoveToOutLocation(smach.State):
         target = copy.deepcopy(locations[self.loc]['pose'])
 
 
-        goal = move_location(target, y = -3 *Y_OFFSET)
+        goal = move_location(target, y = Y_OFFSET)
         goal = create_goal_message(goal)
 
         self.client.send_goal(goal)

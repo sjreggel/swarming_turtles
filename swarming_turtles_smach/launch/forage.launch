@@ -1,5 +1,7 @@
 <launch>
   <include file="$(find swarming_turtles_bringup)/launch/detect_and_visualize.launch"/>
+  <include file="$(find swarming_turtles_navigation)/launch/costmap.launch"/>
+
   <include file="$(find swarming_turtles_navigation)/launch/navigation.launch"/>
   <node name="smach_comm" pkg="swarming_turtles_communicate" type="lcm_relay.py" output="screen"/>
   
