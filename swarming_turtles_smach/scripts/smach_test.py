@@ -58,7 +58,7 @@ food_pub = None
 comm_pub = None
 
 #config
-ROTATION_SPEED = 2.0
+ROTATION_SPEED = 1.0
 FORWARD_SPEED = 0.3
 SEARCH_TIMEOUT = 15
 
@@ -307,7 +307,7 @@ def stop():
         cmd_pub.publish(Twist())
 
 def get_random_walk():
-    dist = random.random() * 1.5
+    dist = random.random() * 2.5
     ang = random.random() * 2. * math.pi 
     return dist, ang
 
