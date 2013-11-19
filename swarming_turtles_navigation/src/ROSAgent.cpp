@@ -771,7 +771,7 @@ namespace collvoid{
     boost::mutex::scoped_lock lock(obstacle_lock_);
 
     std::vector<int> delete_points;
-    sortObstacleLines();
+    //sortObstacleLines();
     for(size_t i = 0; i< obstacle_points_.size(); i++){
       //ROS_DEBUG("obstacle at %f %f dist %f",obstacle_points_[i].x(),obstacle_points_[i].y(),collvoid::abs(position_-obstacle_points_[i]));
       if (pointInNeighbor(obstacle_points_[i])){
@@ -806,7 +806,7 @@ namespace collvoid{
       additional_orca_lines_.push_back(line);
     
     }
-    if (!delete_observations_) 
+    if (delete_observations_) 
       return;
     else {
       while(!delete_points.empty()){
