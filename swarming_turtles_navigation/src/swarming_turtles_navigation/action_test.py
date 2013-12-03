@@ -35,6 +35,7 @@ def main():
     client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
     client.wait_for_server()
 
+    print "done"
     goal = PoseStamped()
 
     theta = math.pi
