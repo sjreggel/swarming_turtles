@@ -86,12 +86,19 @@ class DetectFood:
     
         
     def calc_position(self,markers_detected):
-        global transform
+        global food_locations
         #put here the prediction for multiple markers
         for marker in markers_detected:
             if not self.check_distance(marker['pose']):
                 return
             pose = marker['pose']
+
+            quat = quat_msg_to_array(pose.orientation)
+            r,p,theta = tf.transformations.euler_from_quaternion(quat)
+            q = tf.transformations.quaternion_from_euler(0, 0, theta)
+
+            pose.pose.position.z = 0
+            pose.pose.orientation = Quaternion(*q)
             pose = self.transform_pose(pose)
             
             food_locations[marker['name']] = pose
@@ -103,6 +110,7 @@ def main():
     global transform
     rospy.init_node("detect_food")
     detect = DetectFood()
+
     rospy.spin()
     
 

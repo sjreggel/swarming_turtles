@@ -95,9 +95,15 @@ class DetectHive:
             if not self.check_distance(marker['pose']):
                 return
 
-            pose = marker['pose'].pose
-            transform['pose'] = (pose.position.x, pose.position.y, 0)
-            transform['orientation'] = tuple(quat_msg_to_array(pose.orientation))
+            pose = marker['pose']
+            pose = self.transform_pose(pose)
+            transform['pose'] = (pose.pose.position.x, pose.pose.position.y, 0)
+
+            quat = quat_msg_to_array(pose.pose.orientation)
+            r,p,theta = tf.transformations.euler_from_quaternion(quat)
+            q = tf.transformations.quaternion_from_euler(0, 0, theta)
+
+            transform['orientation'] = tuple(q)
     
 
 def main():
