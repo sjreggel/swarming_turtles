@@ -61,24 +61,23 @@ class DetectHive:
                 continue
             m_detect = {}
             m_detect['id'] = 200 - marker.id #position hack
-            m_detect['frame'] = marker.header.frame_id
             m_detect['pose'] = marker.pose
             m_detect['pose'].header = marker.header
-            m_detect['time'] = marker.header.stamp
             markers_detected.append(m_detect)
-
         self.calc_position(markers_detected)
 
 
     def check_distance(self, marker):
+        print 'check'
         pose = self.transform_pose(marker, output_frame = base_frame)
-        r,p,theta = tf.transformations.euler_from_quaternion(marker.pose.orientation)
 
-        print pose
+        r,p,theta = tf.transformations.euler_from_quaternion(pose.pose.orientation)
+        d = marker.pose.position
+
+        print pose, d, theta
         if abs(theta) > MAX_ANGLE:
             return False
 
-        d = marker.pose.position
 
         if math.sqrt(d.x * d.x + d.y * d.y) > MAX_DIST:
             return False
