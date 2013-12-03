@@ -103,7 +103,7 @@ class DetectHive:
             r,p,theta = tf.transformations.euler_from_quaternion(quat)
             q = tf.transformations.quaternion_from_euler(0, 0, theta)
 
-            transform['orientation'] = tuple(q)
+            transform['quat'] = tuple(q)
     
 
 def main():
