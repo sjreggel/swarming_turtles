@@ -17,8 +17,8 @@ markers_hive = [200, 199, 198, 197] #front, right, back, left
 MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
-MAX_ANGLE = math.pi / 4.0
-MAX_DIST = 1.0
+MAX_ANGLE = math.pi / 8.0
+MAX_DIST = 0.7
 
 def quat_msg_to_array(quat):
     return [quat.x, quat.y, quat.z, quat.w]
@@ -68,7 +68,6 @@ class DetectHive:
 
 
     def check_distance(self, marker):
-        print 'check'
         pose = self.transform_pose(marker, output_frame = base_frame)
 
         if pose is None:
@@ -77,9 +76,8 @@ class DetectHive:
         quat = quat_msg_to_array(pose.pose.orientation)
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
-        d = pose.position
+        d = pose.pose.position
 
-        print d, theta+math.pi/2.0
         if abs(theta+math.pi/2.0) > MAX_ANGLE:
             return False
 
@@ -89,9 +87,6 @@ class DetectHive:
 
         return True
     
-        
-
-        
         
     def calc_position(self,markers_detected):
         global transform
