@@ -77,7 +77,7 @@ class DetectHive:
         quat = quat_msg_to_array(pose.pose.orientation)
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
-        d = marker.pose.position
+        d = pose.position
 
         print d, theta+math.pi/2.0
         if abs(theta+math.pi/2.0) > MAX_ANGLE:
