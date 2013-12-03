@@ -17,7 +17,7 @@ markers_hive = [200, 199, 198, 197] #front, right, back, left
 MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
-MAX_ANGLE = math.pi / 2
+MAX_ANGLE = math.pi / 4.0
 MAX_DIST = 1.0
 
 def quat_msg_to_array(quat):
@@ -79,8 +79,8 @@ class DetectHive:
 
         d = marker.pose.position
 
-        print d, theta
-        if abs(theta) > MAX_ANGLE:
+        print d, theta+math.pi/2.0
+        if abs(theta+math.pi/2.0) > MAX_ANGLE:
             return False
 
 
