@@ -71,12 +71,15 @@ class DetectHive:
         print 'check'
         pose = self.transform_pose(marker, output_frame = base_frame)
 
+        if pose is None:
+            return False
+        
         quat = quat_msg_to_array(pose.pose.orientation)
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
         d = marker.pose.position
 
-        print pose, d, theta
+        print d, theta
         if abs(theta) > MAX_ANGLE:
             return False
 
