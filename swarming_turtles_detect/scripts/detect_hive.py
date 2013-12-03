@@ -17,7 +17,7 @@ markers_hive = [200, 199, 198, 197] #front, right, back, left
 MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
-MAX_ANGLE = math.pi / 4
+MAX_ANGLE = math.pi / 2
 MAX_DIST = 1.0
 
 def quat_msg_to_array(quat):
@@ -29,7 +29,7 @@ class DetectHive:
     def __init__(self):
  
         self.tfListen = tf.TransformListener()
-        rospy.sleep(0.1)
+        rospy.sleep(0.5)
         rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
 
     def get_own_pose(self):
