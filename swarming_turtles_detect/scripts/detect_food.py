@@ -5,6 +5,7 @@ import math
 from ar_track_alvar.msg import AlvarMarkers
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 import cv2.cv as cv
+from swarming_turtles_detect.srv import *
 
 odom = "/odom"
 hive = "/hive"
@@ -57,7 +58,17 @@ class DetectFood:
         cv.SetIdentity(self.kalman.process_noise_cov, cv.RealScalar(1e-3))
         cv.SetIdentity(self.kalman.measurement_noise_cov, cv.RealScalar(1e-1))
         cv.SetIdentity(self.kalman.error_cov_post, cv.RealScalar(1))
-        
+
+        self.get_loc = rospy.Service('get_location', GetLocation, self.get_location)
+        self.forget_loc = rospy.Service('forget_location', ForgetLocation, self.forget_location)
+
+
+    def get_location(self, req):
+        pass
+
+    def forget_location(self, req):
+        pass
+    
     def get_own_pose(self):
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
