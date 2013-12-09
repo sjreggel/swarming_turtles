@@ -168,6 +168,7 @@ class DetectFood:
         q = tf.transformations.quaternion_from_euler(0, 0, point[2])
         pose.pose.orientation = Quaternion(*q)
 
+        pose.header.stamp = rospy.Time.now()
         
         return pose
         
@@ -195,7 +196,6 @@ class DetectFood:
 
 
 def main():
-    global transform
     rospy.init_node("detect_food")
     detect = DetectFood()
 

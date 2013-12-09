@@ -44,7 +44,7 @@ def main():
 
 
 
-def send(msg, repeats = 3):
+def send(msg, repeats = 1):
     buff = StringIO.StringIO()
     msg.serialize(buff)
     for i in xrange(repeats):
