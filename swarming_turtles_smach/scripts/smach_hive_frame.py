@@ -12,8 +12,6 @@ import copy
 from socket import gethostname
 
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
-from kobuki_msgs.msg import SensorState
-from sensor_msgs.msg import LaserScan
 
 from swarming_turtles_msgs.msg import Turtles, Turtle
 from swarming_turtles_navigation.srv import GetCollvoidTwist
@@ -27,8 +25,6 @@ tfListen = None
 name = '' #hostname used for communication
 
 #config
-ROTATION_SPEED = 1.0
-FORWARD_SPEED = 0.3
 
 SEARCH_TIMEOUT = 15
 ASK_TIMEOUT = 1.0 

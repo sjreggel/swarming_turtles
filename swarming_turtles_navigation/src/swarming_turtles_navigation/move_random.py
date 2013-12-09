@@ -2,6 +2,9 @@
 import rospy
 import random
 
+from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
+from kobuki_msgs.msg import SensorState
+from sensor_msgs.msg import LaserScan
 
 from swarming_turtles_navigation.srv import GetCollvoidTwist
 
@@ -12,13 +15,17 @@ RIGHT = 2
 ROTATE_RIGHT = -1
 ROTATE_LEFT = 1
 
+#config
+ROTATION_SPEED = 1.3
+FORWARD_SPEED = 0.3
 
-get_twist = None
+
+get_twist_srv = None
 cmd_pub = None
 cur_goal = None
 
 MIN_DIST_LASER = 0.5
-EPS_ALIGN_THETA = 0.1 #alignment precision
+EPS_ALIGN_THETA = 0.2 #alignment precision
 EPS_ALIGN_XY = 0.1 #alignment precision
 
 active = False
@@ -33,7 +40,7 @@ count_low_speed = 0
 def init_globals():
     global get_twist, cmd_pub
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist) #publish Twist
-    get_twist = rospy.ServiceProxy('get_collvoid_twist', GetCollvoidTwist)
+    get_twist_srv = rospy.ServiceProxy('get_collvoid_twist', GetCollvoidTwist)
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors) #for bumpers
     rospy.Subscriber('/scan_obst', LaserScan, cb_laser_scan) #for min dist
 
@@ -108,9 +115,8 @@ def get_jaw(orientation):
 def rotate_to_ang(ang):
     twist = Twist()
     twist.linear.x = 0
-    while active and not rotation_aligned(ang):
-        twist.angular.z = rotate_side(ang) * ROTATION_SPEED
-        cmd_pub.publish(twist)
+    twist.angular.z = rotate_side(ang) * ROTATION_SPEED
+    cmd_pub.publish(twist)
             
 def rotate_side(ang):
     own_pose = get_own_pose()
@@ -174,19 +180,42 @@ def reset_counts():
 
 def move_random():
     reset_counts()
-    dist, ang = get_random_walk()
-    rotate_to_ang(ang)
 
-    req = create_goal(dist)
+    dist, ang = get_random_walk()
+
+    jaw = get_jaw(get_own_pose().pose.orientation)
+
+    print dist, ang, jaw
+    
+    while active and not rotation_aligned(ang):
+        rotate_to_ang(ang)
+
+    create_goal(dist)
+    r = rospy.Rate(RATE)
 
     while active and not at_goal():
-        twist = move_to_goal()
+        twist = get_twist()
 
-        while obstacle:
-            
-
-def move_to_goal():
-    
+        if obstacle():
+            twist = Twist()
+            while obstacle():
+                if obstacle_left():
+                    twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
+                else:
+                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+                cmd_pub.publish(twist)
+                r.sleep()
+            return
+        cmd_pub.publish(twist)
+        r.sleep()
+        
+def get_twist():
+    try:
+        twist = get_twist_srv(cur_goal)
+    except:
+        print "get twist call failed"
+        twist = Twist()
+    return twist
         
         
 def move_random_start(req):
