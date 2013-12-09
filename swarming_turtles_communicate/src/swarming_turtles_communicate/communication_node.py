@@ -59,7 +59,7 @@ def answer(receiver, loc_name, pose):
 
 def get_received_location(req):
     res = GetLocationResponse()
-    if location_received is not None:
+    if location_received is not None and 'from' in location_received.keys():
         res.res = location_received['from']
         res.pose = location_received['pose']
     return res

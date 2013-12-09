@@ -58,7 +58,7 @@ def init_globals():
 #helpers
 def transformPose(pose_in, time_in = None, frame = hive):
     if tfListen.frameExists(pose_in.header.frame_id) and tfListen.frameExists(frame):
-        time = tfListen.getLatestCommonTime(odom, pose_in.header.frame_id)
+        time = tfListen.getLatestCommonTime(frame, pose_in.header.frame_id)
         if not time_in:
             pose_in.header.stamp = time
         else:
