@@ -64,10 +64,27 @@ class DetectFood:
 
 
     def get_location(self, req):
-        pass
+        res = GetLocationResponse()
+        if req.location == '':
+            for l in food_locations.keys():
+                if food_locations[l] is not None:
+                    res.res = l
+                    res.pose = food_locations[l]
+        else:
+            if req.location in food_locations.keys():
+                res.res = req.location
+                res.pose = food_locations[req.location]
+        return res
+                    
 
     def forget_location(self, req):
-        pass
+        global food_locations
+        if req.location == '':
+            food_locations = {}
+        else:
+            if req.location in food_locations.keys():
+                food_locations[req.location] = None
+        return ForgetLocationResponse()
     
     def get_own_pose(self):
         pose_stamped = PoseStamped()
