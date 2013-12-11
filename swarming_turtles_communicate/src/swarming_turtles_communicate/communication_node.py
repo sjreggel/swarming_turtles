@@ -9,7 +9,7 @@ topic = '/communication'
 MAX_TIME = 1.0
 location_received = {} 
 name = ''
-
+comm_pub = ''
 
 def cb_communication(msg):
     global received, received_msg, location_received
@@ -85,12 +85,13 @@ def request(receiver, loc_name):
 
 
 def main():
-    global get_food_srv, name
+    global get_food_srv, name, comm_pub
     name = gethostname()
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
 
+    comm_pub = rospy.Publisher(topic, CommunicationProtocol)
 
     ask_food_srv = rospy.Service('ask_food', GetLocation, ask_food)
     ask_hive_srv = rospy.Service('ask_hive', GetLocation, ask_hive)
