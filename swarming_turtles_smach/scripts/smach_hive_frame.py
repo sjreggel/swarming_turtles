@@ -166,7 +166,8 @@ class SearchFood(smach.State):
         found = False
         
         move_random_start()
-
+        userdata.pose_out = None
+        pose = None
         while not found:
             if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
                 self.move_random_stop()
@@ -182,6 +183,8 @@ class SearchFood(smach.State):
                 print "asking ", closest 
                 self.ask_food(closest)
             rate.sleep()
+
+        userdata.pose_out = pose
 
         move_random_stop()
         return 'found'
@@ -315,6 +318,10 @@ class MoveToFoodLocation(smach.State):
         
     def execute(self, userdata):
         target = get_food()
+
+        if target is None and userdata.pose_in is not None:
+            target = userdata.pose_in
+
         if target is None:
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target))
@@ -350,7 +357,7 @@ def main():
     init_globals()
     # create a SMACH state machine
     sm = smach.StateMachine(outcomes=['end'])
-
+    sm.userdata.pose = None
     with sm:
         #Hive states
         smach.StateMachine.add("SearchHive", SearchHive(), transitions = {'success':'GoToHive'})
@@ -361,8 +368,8 @@ def main():
         
         # #food states
         smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(), transitions = {'known':'GoToFood', 'not_known':'SearchFood'})
-        smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFood', 'not_found':'SearchFood'})
-        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'})
+        smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFood', 'not_found':'SearchFood'}, remapping = {'pose_out':'pose'})
+        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'}, remapping = {'pose_in':'pose'}))
         smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'})
         smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'GoToHive', 'success':'GoToHive'})
 
