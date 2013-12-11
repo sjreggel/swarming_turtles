@@ -4,6 +4,8 @@ import tf
 import math
 from ar_track_alvar.msg import AlvarMarkers
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
+from swarming_turtles_detect.srv import *
+
 import cv2.cv as cv
 
 
@@ -23,10 +25,11 @@ MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 MAX_ANGLE = math.pi / 8.0
 MAX_DIST = 0.7
 
+last_seen = None
+
+
 def quat_msg_to_array(quat):
     return [quat.x, quat.y, quat.z, quat.w]
-
-
 
 class DetectHive:
     def __init__(self):
@@ -62,6 +65,15 @@ class DetectHive:
         cv.SetIdentity(self.kalman.process_noise_cov, cv.RealScalar(1e-3))
         cv.SetIdentity(self.kalman.measurement_noise_cov, cv.RealScalar(1e-1))
         cv.SetIdentity(self.kalman.error_cov_post, cv.RealScalar(1))
+
+        
+        self.get_hive = rospy.Service('get_hive', GetLocation, self.get_hive)
+        
+    def get_hive(self, req):
+        res = GetLocationResponse()
+        res.res = "last_seen"
+        res.pose.header.stamp = transform['stamp']
+        return res
 
         
     def get_own_pose(self):
@@ -172,7 +184,7 @@ class DetectHive:
 
             transform['pose'] = (pose.pose.position.x, pose.pose.position.y, 0)
             transform['quat'] = tuple(quat_msg_to_array(pose.pose.orientation))
-    
+            transform['stamp'] = rospy.Time.now()
 
 def main():
     global transform
@@ -180,6 +192,7 @@ def main():
     tf_br = tf.TransformBroadcaster()
     transform['pose'] = (0,0,0)
     transform['quat'] = (0,0,0,1)
+    transform['stamp'] = rospy.Time.now()
     
     detect = DetectHive()
 

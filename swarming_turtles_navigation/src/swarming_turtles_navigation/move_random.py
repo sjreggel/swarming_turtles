@@ -49,6 +49,7 @@ obstacle_front_bool = False
 
 MIN_BELOW_MAX = 20
 
+
 def init_globals():
     global tfListen, get_twist_srv, cmd_pub
     tfListen = tf.TransformListener()
@@ -198,7 +199,17 @@ def diff_vec(a,b):
     res.y = b.y - a.y
     return res
 
-    
+def rotate_vec_by_angle(v, ang):
+    res = Vector3()
+    cos_a = math.cos(ang)
+    sin_a = math.sin(ang)
+    res.x = cos_a * v.x - sin_a * v.y
+    res.y = cos_a * v.y + sin_a * v.x
+    return res
+
+
+
+
 def at_goal():
     own_pose = get_own_pose()
     goal = cur_goal.goal
@@ -273,6 +284,47 @@ def move_random_stop(req):
     global active
     active = False
     return EmptyResponse()
+
+
+def move_location(pose, x = 0, y = 0):
+    pose_stamped = PoseStamped()
+    pose_stamped.header.frame_id = pose.header.frame_id
+    ang = get_jaw(pose.pose.orientation)
+    vec = Vector3()
+    vec.x = x
+    vec.y = y
+    vec = rotate_vec_by_angle(vec, ang)
+    
+    pose_stamped.pose.position.x = pose.pose.position.x + vec.x
+    pose_stamped.pose.position.y = pose.pose.position.y + vec.y
+    pose_stamped.pose.orientation = pose.pose.orientation
+        
+    return pose_stamped
+    
+def move_location_inwards(pose, dist):
+    pose_stamped = PoseStamped()
+    pose_stamped.header.frame_id = pose.header.frame_id
+    ang = get_jaw(pose.pose.orientation)
+    vec = Vector3()
+    vec.x = dist
+    #vec.y = -Y_OFFSET
+    vec = rotate_vec_by_angle(vec, ang-math.pi/2.0)
+
+    pose_stamped.pose.position.x = pose.pose.position.x + vec.x
+    pose_stamped.pose.position.y = pose.pose.position.y + vec.y
+
+    q = tf.transformations.quaternion_from_euler(0,0,ang+math.pi/2.0,axes = 'sxyz')
+   
+    pose_stamped.pose.orientation = Quaternion(*q)
+        
+    return pose_stamped
+
+def create_goal_message(goal):
+    goal_msg = MoveBaseGoal()
+    goal_msg.target_pose.pose = goal.pose
+    goal_msg.target_pose.header.frame_id = hive
+    goal_msg.target_pose.header.stamp = rospy.Time.now()
+    return goal_msg
 
     
 def main():
