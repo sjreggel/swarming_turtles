@@ -171,7 +171,7 @@ class SearchFood(smach.State):
         pose = None
         while not found:
             if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
-                self.move_random_stop()
+                move_random_stop()
                 return 'not_found'
             pose = get_food()
             if pose is not None:

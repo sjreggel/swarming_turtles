@@ -212,7 +212,7 @@ def at_goal():
     dist = dist_vec(own_pose.pose.position, goal.pose.position)
     ang = get_jaw(goal.pose.orientation)
 
-    print dist
+    #print dist
     
     return dist < EPS_ALIGN_XY and rotation_aligned(ang)
     
@@ -229,7 +229,7 @@ def move_random():
 
     jaw = get_jaw(get_own_pose().pose.orientation)
 
-    print dist, ang, jaw
+    #print dist, ang, jaw
 
     r = rospy.Rate(RATE)
 
@@ -245,7 +245,7 @@ def move_random():
         if obstacle():
             twist = Twist()
             while active and obstacle():
-                print "obstacle"
+                #print "obstacle"
                 if obstacle_left():
                     twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
                 else:
