@@ -12,10 +12,11 @@ import copy
 from socket import gethostname
 
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
+from move_base_msgs.msg import *
 
 from swarming_turtles_msgs.msg import Turtles, Turtle
 from swarming_turtles_navigation.srv import GetCollvoidTwist
-
+from std_srvs.srv import Empty
 
 turtles = {}
 closest = ''
@@ -124,8 +125,7 @@ def move_location_inwards(pose, dist):
     pose_stamped.pose.orientation = Quaternion(*q)
         
     return pose_stamped
-
-                   
+                  
 
 def cb_found_turtles(msg):
     global closest, turtles
@@ -152,7 +152,10 @@ class SearchFood(smach.State):
         self.get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
         self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation)
         self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation)
-       
+
+        self.move_random_start = rospy.ServiceProxy('move_random_start', Empty)
+        self.move_random_stop = rospy.ServiceProxy('move_random_stop', Empty)
+        
         rospy.wait_for_service(self.get_food_srv)
         rospy.wait_for_service(self.get_received_location_srv)
 
@@ -162,7 +165,7 @@ class SearchFood(smach.State):
             resp = self.ask_food_srv(location = name)
             return resp.pose
         except:
-            print "service call failed"
+            rospy.logerr("service call ask food failed")
             return None
 
         
@@ -171,7 +174,7 @@ class SearchFood(smach.State):
             resp = self.get_food_srv()
             return resp.pose
         except:
-            print "service call failed"
+            rospy.logerr("service call to get food failed")
             return None
 
     def get_received_location(self,asked_turtles):
@@ -182,7 +185,7 @@ class SearchFood(smach.State):
             else:
                 return None
         except:
-            print "service call failed"
+            rospy.logerr("service call to receive locaiton failed")
             return None
 
         
@@ -193,17 +196,17 @@ class SearchFood(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         found = False
-
-        move_random_start()
+        
+        self.move_random_start()
 
         while not found:
             if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
-                move_random_stop()
+                self.move_random_stop()
                 return 'not_found'
-            pose = get_food()
+            pose = self.get_food()
             if pose is not None:
                 found = True
-            pose = get_received_location()
+            pose = self.get_received_location()
             if pose is not None:
                 found = True
             if not closest==''  and closest not in asked_turtles:
@@ -212,7 +215,7 @@ class SearchFood(smach.State):
                 self.ask_food(closest)
             rate.sleep()
 
-        move_random_stop()
+        self.move_random_stop()
         userdata.pose_out = pose
         return 'found'
            
@@ -258,19 +261,25 @@ class CheckIfAtLocation(smach.State):
             rate.sleep()
         return 'success'
 
+def create_goal_message(goal):
+    goal_msg = MoveBaseGoal()
+    goal_msg.target_pose.pose = goal.pose
+  
+    goal_msg.target_pose.header.frame_id = odom
+    goal_msg.target_pose.header.stamp = rospy.Time.now()
+    return goal_msg
+
     
-class MoveToOutLocation(smach.State):
+class MoveToHiveOut(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.loc = loc
         self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
         self.client.wait_for_server()
 
     def execute(self, userdata):
         own_pose = get_own_pose()
-        target = copy.deepcopy(locations[self.loc]['pose'])
-
-
+        target = 
+        
         goal = move_location(target, y = Y_OFFSET)
         goal = create_goal_message(goal)
 
