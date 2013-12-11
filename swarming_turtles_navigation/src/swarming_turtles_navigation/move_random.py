@@ -62,11 +62,6 @@ def init_globals():
     #rospy.wait_for_service(get_twist_srv)
     rospy.loginfo("done")
 
-    rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors) #for bumpers
-    rospy.Subscriber('/scan_obst', LaserScan, cb_laser_scan) #for min dist
-
-    rospy.Service('move_random_start', Empty, move_random_start)
-    rospy.Service('move_random_stop', Empty, move_random_stop)
 
     
 def cb_laser_scan(msg):
@@ -331,6 +326,13 @@ def create_goal_message(goal):
 def main():
     rospy.init_node("move_random")
     init_globals()
+
+    rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors) #for bumpers
+    rospy.Subscriber('/scan_obst', LaserScan, cb_laser_scan) #for min dist
+
+    rospy.Service('move_random_start', Empty, move_random_start)
+    rospy.Service('move_random_stop', Empty, move_random_stop)
+
     r = rospy.Rate(RATE)
 
     while not rospy.is_shutdown():
