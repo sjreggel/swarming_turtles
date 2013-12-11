@@ -13,6 +13,9 @@ from socket import gethostname
 
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from move_base_msgs.msg import *
+from actionlib_msgs.msg import *
+
+from swarming_turtles_detect.srv import GetLocation
 
 from swarming_turtles_msgs.msg import Turtles, Turtle
 from swarming_turtles_navigation.srv import GetCollvoidTwist
@@ -60,7 +63,7 @@ def init_globals():
 
 
     hive_loc = PoseStamped()
-    hive_loc.header.frame = hive
+    hive_loc.header.frame_id = hive
     hive_loc.pose.orientation.w = 1
     hive_loc = utils.move_location_inwards(hive_loc, INWARDS)
     
@@ -79,7 +82,7 @@ def init_globals():
 def at_hive():
     try:
         resp = get_hive_srv()
-        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT:
+        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT
     except:
         rospy.logerr("service call to get hive failed")
         return False
@@ -88,7 +91,7 @@ def at_hive():
 def at_food():
     try:
         resp = get_food_srv()
-        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT:
+        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT
     except:
         rospy.logerr("service call to get food failed")
         return False
@@ -130,8 +133,8 @@ class SearchFood(smach.State):
         self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation)
 
         
-        rospy.wait_for_service(self.get_food_srv)
-        rospy.wait_for_service(self.get_received_location_srv)
+        #rospy.wait_for_service(self.ask_food_srv)
+        #rospy.wait_for_service(self.get_received_location_srv)
 
         
     def ask_food(self, name):
@@ -204,7 +207,7 @@ class CheckIfAtLocation(smach.State):
         target = None
         found = None
         if self.loc =='hive':
-            target = hive
+            target = hive_loc
             found = at_hive
         else: #food
             target = get_food()
@@ -251,7 +254,7 @@ class MoveToOutLocation(smach.State):
     def execute(self, userdata):
         target = None
         if self.loc =='hive':
-            target = hive
+            target = hive_loc
         else:
             target = get_food()
             if target is None:
@@ -274,13 +277,13 @@ class MoveToOutLocation(smach.State):
             rate.sleep()
        
 class MoveToHiveLocation(smach.State):
-    def __init__(self, loc):
+    def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
         self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
         self.client.wait_for_server()
 
     def execute(self, userdata):
-        target = hive
+        target = hive_loc
         goal = utils.create_goal_message(target)
         self.client.send_goal(goal)
         rate = rospy.Rate(RATE)
@@ -303,9 +306,8 @@ class MoveToHiveLocation(smach.State):
             
     
 class MoveToFoodLocation(smach.State):
-    def __init__(self, loc):
+    def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.loc = loc
         self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.forget_food = rospy.ServiceProxy('forget_location', GetLocation)
@@ -351,18 +353,18 @@ def main():
 
     with sm:
         #Hive states
-        smach.StateMachine.add("SearchHive", SearchHive), transitions = {'found':'GoToHive', 'not_found':'SearchHive'})
-        smach.StateMachine.add("GoToHive", MoveToLocation('hive'), transitions = {'failed':'SearchHive', 'success':'AtHive'})
+        smach.StateMachine.add("SearchHive", SearchHive(), transitions = {'success':'GoToHive'})
+        smach.StateMachine.add("GoToHive", MoveToHiveLocation(), transitions = {'failed':'SearchHive', 'success':'AtHive'})
         smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'GoToHiveOut'})
         smach.StateMachine.add("GoToHiveOut", MoveToOutLocation('hive'), transitions = {'failed':'PreSearchFood', 'success':'PreSearchFood'})
         
         
         # #food states
-        smach.StateMachine.add("PreSearchFood", PreSearchLocation('food'), transitions = {'known':'GoToFood', 'not_known':'SearchFood'})
-        smach.StateMachine.add("SearchFood", SearchFood), transitions = {'found':'GoToFood', 'not_found':'SearchFood'})
-        smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'SearchFood', 'success':'AtFood'})
+        smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(), transitions = {'known':'GoToFood', 'not_known':'SearchFood'})
+        smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFood', 'not_found':'SearchFood'})
+        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'})
         smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'})
-        smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'PreSearchHive', 'success':'PreSearchHive'})
+        smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'GoToHive', 'success':'GoToHive'})
 
         
         #smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})

@@ -7,6 +7,7 @@ import tf
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
 from sensor_msgs.msg import LaserScan
+from move_base_msgs.msg import *
 
 from std_srvs.srv import *
 from swarming_turtles_navigation.srv import *

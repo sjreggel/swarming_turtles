@@ -2,12 +2,13 @@
 import rospy
 from swarming_turtles_msgs.msg import CommunicationProtocol
 from swarming_turtles_detect.srv import *
+from socket import gethostname
 
 
 topic = '/communication'
 MAX_TIME = 1.0
 location_received = {} 
-
+name = ''
 
 
 def cb_communication(msg):
@@ -78,13 +79,14 @@ def request(receiver, loc_name):
     msg.sender = name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
-    msg.location = turtles[receiver]
+    #msg.location = get_own_pose()
 
     comm_pub.publish(msg)
 
 
 def main():
-    global get_food_srv
+    global get_food_srv, name
+    name = gethostname()
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation)

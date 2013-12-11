@@ -35,9 +35,8 @@ class DetectHive:
     def __init__(self):
  
         self.tfListen = tf.TransformListener()
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
 
-        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
         self.kalman = cv.CreateKalman(6,3,0)
         self.kalman_state = cv.CreateMat(6,1, cv.CV_32FC1)
         self.kalman_process_noise = cv.CreateMat(6,1, cv.CV_32FC1)
@@ -68,6 +67,7 @@ class DetectHive:
 
         
         self.get_hive = rospy.Service('get_hive', GetLocation, self.get_hive)
+        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
         
     def get_hive(self, req):
         res = GetLocationResponse()
