@@ -36,7 +36,7 @@ get_food_srv = None
 get_hive_srv = None
 
 #config
-MAX_RETRY = 3
+MAX_RETRY = 5
 SEARCH_TIMEOUT = 15
 ASK_TIMEOUT = 1.0 
 
@@ -299,7 +299,7 @@ class MoveToHiveLocation(smach.State):
                 return 'success'
             if self.client.get_state() == GoalStatus.PREEMPTED:
                 self.client.cancel_all_goals()
-                if self.retry < MAX_RETRY:
+                if self.retry < 2*MAX_RETRY:
                     self.retry +=1
                     self.client.send_goal(goal)
                 else:
