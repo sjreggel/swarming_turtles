@@ -136,7 +136,7 @@ class DetectHive:
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
         if theta < 0:
-            theta += 2.* math.pi
+            theta += 2.*math.pi
             
         if self.kalman.state_pre[0,0] == 0 and self.kalman.state_pre[1,0] == 0:
             self.kalman.state_pre[0,0] = pose.pose.position.x
@@ -174,6 +174,7 @@ class DetectHive:
 
             pose = marker['pose']
 
+            pose = self.transform_pose(pose)
             
             quat = quat_msg_to_array(pose.pose.orientation)
             r,p,theta = tf.transformations.euler_from_quaternion(quat)
@@ -181,7 +182,6 @@ class DetectHive:
             pose.pose.orientation = Quaternion(*q)
             pose.pose.position.z = 0
             
-            pose = self.transform_pose(pose)
 
             pose = self.predict_pose(pose)
 
