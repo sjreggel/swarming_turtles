@@ -23,13 +23,16 @@ def quat_msg_to_array(quat):
 def get_jaw(orientation):
     quat = quat_msg_to_array(orientation)
     r,p,theta = tf.transformations.euler_from_quaternion(quat)
+    #if theta < 0:
+    #    theta += 2. * math.pi
     return theta
 
+
 def limit_ang(ang):
-    while ang > math.pi:
-        ang -= 2*math.pi
-    while ang < -math.pi:
-        ang += math.pi
+    while ang < 0:
+        ang += 2*math.pi
+    while ang > 2*math.pi:
+        ang -= math.pi
     return ang
 
 class DetectTurtles:

@@ -103,7 +103,7 @@ class DetectFood:
         return transformPose(self,pose_stamped)
         
         
-    def transform_pose(self,pose_in, output_frame = hive):
+    def transform_pose(self,pose_in, time_in = None, output_frame = hive):
         if pose_in.header.frame_id == output_frame:
             return pose_in
         
@@ -152,6 +152,9 @@ class DetectFood:
         quat = quat_msg_to_array(pose.pose.orientation)
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
+        if theta < 0:
+            theta += 2.*math.pi
+        
         if self.kalman.state_pre[0,0] == 0 and self.kalman.state_pre[1,0] == 0:
             self.kalman.state_pre[0,0] = pose.pose.position.x
             self.kalman.state_pre[1,0] = pose.pose.position.y
@@ -187,13 +190,37 @@ class DetectFood:
                 return
             pose = marker['pose']
 
+            #pose = PoseStamped()
+            #pose.pose.orientation.w = 1
+            #pose.header.stamp = rospy.Time.now()
+            #pose.header.frame_id = "/ar_marker_%s"%marker['name']
+            
+            pose = self.transform_pose(pose)
+            #a = pose.pose.position
+            #pose2 = PoseStamped()
+            #pose2.pose.position.x = 1.
+            #pose2.pose.orientation.w = 1
+            #pose2.header.stamp = rospy.Time.now()
+            #pose2.header.frame_id = "/ar_marker_%s"%marker['name']
+            
+            #pose2 = self.transform_pose(pose2)
+            #b = pose2.pose.position
+
+            #print a, b
+            #theta_calc = math.atan2(b.y - a.y, b.x - a.x)
+
+            #if theta_calc < 0:
+            #    theta_calc += 2 * math.pi
+
             quat = quat_msg_to_array(pose.pose.orientation)
             r,p,theta = tf.transformations.euler_from_quaternion(quat)
+
+            #print r,p,theta, theta_calc
+
             q = tf.transformations.quaternion_from_euler(0, 0, theta)
 
             pose.pose.position.z = 0
             pose.pose.orientation = Quaternion(*q)
-            pose = self.transform_pose(pose)
 
             pose = self.predict_pose(pose)
 

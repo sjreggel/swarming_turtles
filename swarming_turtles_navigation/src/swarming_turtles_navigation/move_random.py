@@ -252,7 +252,8 @@ def move_random():
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
                 cmd_pub.publish(twist)
                 r.sleep()
-            return
+            create_goal(dist)
+            twist = get_twist()
         cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
             count_low_speed +=1
