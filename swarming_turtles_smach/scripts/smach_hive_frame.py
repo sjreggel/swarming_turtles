@@ -15,7 +15,7 @@ from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from move_base_msgs.msg import *
 from actionlib_msgs.msg import *
 
-from swarming_turtles_detect.srv import GetLocation
+from swarming_turtles_detect.srv import GetLocation, ForgetLocation
 
 from swarming_turtles_msgs.msg import Turtles, Turtle
 from swarming_turtles_navigation.srv import GetCollvoidTwist
@@ -319,7 +319,7 @@ class MoveToFoodLocation(smach.State):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'])
         self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
         self.client.wait_for_server()
-        self.forget_food = rospy.ServiceProxy('forget_location', GetLocation)
+        self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
       
         
     def execute(self, userdata):
