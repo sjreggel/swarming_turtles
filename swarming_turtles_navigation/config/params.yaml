@@ -24,7 +24,7 @@ SwarmCollvoid:
   xy_goal_tolerance: 0.2
   
   yaw_goal_tolerance: 0.3
-
+  left_pref: 0.0
   sim_period: 0.2
   use_obstacles: true
 
