@@ -240,8 +240,13 @@ class SearchHive(smach.State):
         
     def execute(self, userdata):
         rate = rospy.Rate(RATE)
+        start = rospy.Time.now()
         move_random_start()
         while True:
+            if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
+                move_random_stop()
+                return 'success'
+         
             if at_hive():
                 move_random_stop()
                 return 'success'
@@ -315,7 +320,7 @@ class MoveToFoodLocation(smach.State):
         self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.forget_food = rospy.ServiceProxy('forget_location', GetLocation)
-
+      
         
     def execute(self, userdata):
         target = get_food()
@@ -349,7 +354,10 @@ class MoveToFoodLocation(smach.State):
                     self.retry +=1
                     self.client.send_goal(goal)
                 else:
-                    self.forget_food()
+                    try:
+                        self.forget_food(location = "")
+                    except:
+                        print "forget_food failed"
                     return 'failed'
             rate.sleep()
 

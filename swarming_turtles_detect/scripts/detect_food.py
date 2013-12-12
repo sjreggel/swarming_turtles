@@ -31,6 +31,15 @@ class DetectFood:
         rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
         self.food_pub = rospy.Publisher('cur_food', PoseStamped)
 
+        self.init_kalman()
+
+        self.get_loc = rospy.Service('get_location', GetLocation, self.get_location)
+        self.forget_loc = rospy.Service('forget_location', ForgetLocation, self.forget_location)
+
+
+
+
+    def init_kalman(self):
         self.kalman = cv.CreateKalman(6,3,0)
         self.kalman_state = cv.CreateMat(6,1, cv.CV_32FC1)
         self.kalman_process_noise = cv.CreateMat(6,1, cv.CV_32FC1)
@@ -59,10 +68,7 @@ class DetectFood:
         cv.SetIdentity(self.kalman.measurement_noise_cov, cv.RealScalar(1e-1))
         cv.SetIdentity(self.kalman.error_cov_post, cv.RealScalar(1))
 
-        self.get_loc = rospy.Service('get_location', GetLocation, self.get_location)
-        self.forget_loc = rospy.Service('forget_location', ForgetLocation, self.forget_location)
-
-
+        
     def get_location(self, req):
         res = GetLocationResponse()
         if req.location == '':
@@ -81,9 +87,11 @@ class DetectFood:
         global food_locations
         if req.location == '':
             food_locations = {}
+            self.init_kalman()
         else:
             if req.location in food_locations.keys():
                 food_locations[req.location] = None
+                self.init_kalman()
         return ForgetLocationResponse()
     
     def get_own_pose(self):
@@ -93,7 +101,6 @@ class DetectFood:
         pose_stamped.pose.orientation.w = 1.0
        
         return transformPose(self,pose_stamped)
-
         
         
     def transform_pose(self,pose_in, output_frame = hive):

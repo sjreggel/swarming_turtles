@@ -17,13 +17,15 @@ def cb_communication(msg):
         return
     req = msg.request.split(' ')
     if "request" == req[0]: #handle reqest
+        pose = None
         if req[1] == 'food':
             pose = get_food()
             if pose is None:
                 return
         else: #hive asked do nothing yet hive in baseframe
             return
-        answer(msg.sender, req[1], pose)
+        if pose is not None:
+            answer(msg.sender, req[1], pose)
             
     elif "answer" == req[0]:
         print "GOT ANSWER", req[1]
@@ -43,6 +45,8 @@ def process_msg(msg):
 def get_food():
     try:
         resp = get_food_srv()
+        if resp.res == '':
+            return None
         return resp.pose
     except:
         print "service call failed"
