@@ -206,7 +206,8 @@ class CheckIfAtLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
         self.loc = loc
-
+        self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
+      
     def execute(self, userdata):
         target = None
         found = None
@@ -216,6 +217,10 @@ class CheckIfAtLocation(smach.State):
         else: #food
             target = get_food()
             if target is None:
+                try:
+                    self.forget_food()
+                except:
+                    print "forget_food failed"
                 return 'failed'
             found = at_food
             target = utils.move_location_inwards(target, INWARDS)
@@ -226,6 +231,12 @@ class CheckIfAtLocation(smach.State):
 
         while not found():
             if utils.rotation_aligned(ang):
+                if self.loc == 'food':
+                    try:
+                        self.forget_food()
+                    except:
+                        print "forget_food failed"
+
                 return 'failed'
             utils.rotate_to_ang(ang)
             rate.sleep()
