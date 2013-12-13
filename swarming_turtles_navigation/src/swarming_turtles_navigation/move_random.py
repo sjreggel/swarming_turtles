@@ -224,7 +224,9 @@ def dist_aligned():
     return dist < EPS_ALIGN_XY
 
 def at_goal():
-    own_pose = get_own_pose()
+    #own_pose = get_own_pose()
+    goal = cur_goal.goal
+
     ang = get_jaw(goal.pose.orientation)
 
     return dist_aligned() and rotation_aligned(ang)
@@ -278,7 +280,7 @@ def move_random():
 
 def move_to_goal_cb(goal):
     global action_server
-    reset_counts()
+    count_low_speed = 0
     create_goal_from_pose(goal.target_pose)
     r = rospy.Rate(RATE)
 
@@ -299,7 +301,7 @@ def move_to_goal_cb(goal):
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
                 cmd_pub.publish(twist)
                 r.sleep()
-            create_goal_from_pose(goal.target)
+            create_goal_from_pose(goal.target_pose)
 
         twist = get_twist()
         cmd_pub.publish(twist)
