@@ -193,6 +193,7 @@ class FilterMarkers:
 
             marker_msg = AlvarMarker()
             marker_msg.pose = pose
+            marker_msg.header = pose.header
             marker_msg.id = int(marker['name'])
             msg.markers.append(marker_msg)
             pose_array.poses.append(pose.pose)
