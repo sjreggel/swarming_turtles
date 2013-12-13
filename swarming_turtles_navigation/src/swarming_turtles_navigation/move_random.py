@@ -41,7 +41,7 @@ EPS_ALIGN_THETA = 0.2 #alignment precision
 EPS_ALIGN_XY = 0.25 #alignment precision
 
 active = False
-RATE = 20
+RATE = 10
 base_frame = '/base_link'
 hive = '/hive'
 
@@ -235,8 +235,6 @@ def at_goal():
 def reset_counts():
     global count_low_speed
     count_low_speed = 0
-
-
 
     
 def move_random():
