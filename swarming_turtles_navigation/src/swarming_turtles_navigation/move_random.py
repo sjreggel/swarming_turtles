@@ -279,7 +279,7 @@ def move_random():
 def move_to_goal_cb(goal):
     global action_server
     reset_counts()
-    create_goal_from_pose(goal.target)
+    create_goal_from_pose(goal.target_pose)
     r = rospy.Rate(RATE)
 
     while not dist_aligned():
