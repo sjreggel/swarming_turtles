@@ -254,7 +254,7 @@ class SearchHive(smach.State):
         start = rospy.Time.now()
         move_random_start()
         while True:
-            if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
+            if (rospy.Time.now()-start).to_sec() > 2*SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'success'
          
@@ -267,7 +267,7 @@ class SearchHive(smach.State):
 class MoveToOutLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.loc = loc
         
@@ -299,7 +299,7 @@ class MoveToOutLocation(smach.State):
 class MoveToHiveLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
 
     def execute(self, userdata):
@@ -328,7 +328,7 @@ class MoveToHiveLocation(smach.State):
 class MoveToFoodLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'])
-        self.client = actionlib.SimpleActionClient('SwarmCollvoid/swarm_nav_goal', MoveBaseAction)
+        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
       

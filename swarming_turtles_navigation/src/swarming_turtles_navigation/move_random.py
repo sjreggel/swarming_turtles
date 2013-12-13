@@ -4,6 +4,9 @@ import random
 import math
 import tf
 
+from actionlib_msgs.msg import *
+
+
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
 from sensor_msgs.msg import LaserScan
@@ -31,6 +34,8 @@ get_twist_srv = None
 cmd_pub = None
 cur_goal = None
 
+action_server = None
+
 MIN_DIST_LASER = 0.5
 EPS_ALIGN_THETA = 0.2 #alignment precision
 EPS_ALIGN_XY = 0.2 #alignment precision
@@ -43,7 +48,7 @@ hive = '/hive'
 min_dist_laser = 2*MIN_DIST_LASER
 
 count_low_speed = 0
-MAX_COUNT = 20
+MAX_COUNT = 10
 EPS_SPEED = 0.1
 
 obstacle_front_bool = False
@@ -172,6 +177,13 @@ def get_random_walk():
     return dist, ang
 
 
+def create_goal_from_pose(pose):
+    global cur_goal
+    req = GetCollvoidTwistRequest()
+    req.goal = transformPose(pose)
+    cur_goal = req
+
+
 def create_goal(dist):
     global cur_goal
     req = GetCollvoidTwistRequest()
@@ -205,22 +217,26 @@ def rotate_vec_by_angle(v, ang):
 
 
 
-
-def at_goal():
+def dist_aligned():
     own_pose = get_own_pose()
     goal = cur_goal.goal
     dist = dist_vec(own_pose.pose.position, goal.pose.position)
+    return dist < EPS_ALIGN_XY
+
+def at_goal():
+    own_pose = get_own_pose()
     ang = get_jaw(goal.pose.orientation)
 
-    #print dist
-    
-    return dist < EPS_ALIGN_XY and rotation_aligned(ang)
+    return dist_aligned() and rotation_aligned(ang)
     
 
 def reset_counts():
     global count_low_speed
     count_low_speed = 0
 
+
+
+    
 def move_random():
     global count_low_speed
     reset_counts()
@@ -240,8 +256,6 @@ def move_random():
     create_goal(dist)
 
     while active and not at_goal() and not count_low_speed > MAX_COUNT:
-        twist = get_twist()
-
         if obstacle():
             twist = Twist()
             while active and obstacle():
@@ -252,13 +266,51 @@ def move_random():
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
                 cmd_pub.publish(twist)
                 r.sleep()
+
+            dist, ang = get_random_walk()
             create_goal(dist)
-            twist = get_twist()
+        twist = get_twist()
         cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
             count_low_speed +=1
         
         r.sleep()
+
+def move_to_goal_cb(goal):
+    global action_server
+    reset_counts()
+    create_goal_from_pose(goal.target)
+    r = rospy.Rate(RATE)
+
+    while not dist_aligned():
+        if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
+            action_server.set_preempted()
+            #action_server.set_aborted()
+            stop()
+            return
+            
+        if obstacle():
+            twist = Twist()
+            while obstacle():
+                #print "obstacle"
+                if obstacle_left():
+                    twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
+                else:
+                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+                cmd_pub.publish(twist)
+                r.sleep()
+            create_goal_from_pose(goal.target)
+
+        twist = get_twist()
+        cmd_pub.publish(twist)
+        if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
+            count_low_speed +=1
+        r.sleep()
+
+
+    action_server.set_succeeded()
+
+
         
 def get_twist():
     try:
@@ -323,8 +375,10 @@ def create_goal_message(goal):
     goal_msg.target_pose.header.stamp = rospy.Time.now()
     return goal_msg
 
-    
+        
+        
 def main():
+    global action_server
     rospy.init_node("move_random")
     init_globals()
 
@@ -335,6 +389,9 @@ def main():
     rospy.Service('move_random_stop', Empty, move_random_stop)
 
     r = rospy.Rate(RATE)
+    action_server = actionlib.simple_action_server.SimpleActionServer('move_to_goal', MoveBaseAction, move_to_goal_cb, False)
+    action_server.start()
+
 
     while not rospy.is_shutdown():
         if active:
