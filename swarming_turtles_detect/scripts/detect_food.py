@@ -40,27 +40,19 @@ class DetectFood:
 
 
     def init_kalman(self):
-        self.kalman = cv.CreateKalman(6,3,0)
-        self.kalman_state = cv.CreateMat(6,1, cv.CV_32FC1)
-        self.kalman_process_noise = cv.CreateMat(6,1, cv.CV_32FC1)
+        self.kalman = cv.CreateKalman(3,3,0)
+        self.kalman_state = cv.CreateMat(3,1, cv.CV_32FC1)
+        self.kalman_process_noise = cv.CreateMat(3,1, cv.CV_32FC1)
         self.kalman_measurement = cv.CreateMat(3,1, cv.CV_32FC1)
         
         self.kalman.state_pre[0,0]  = 0 #first x
         self.kalman.state_pre[1,0]  = 0 #first y
         self.kalman.state_pre[2,0]  = 0 #first theta
 
-        self.kalman.state_pre[3,0]  = 0
-        self.kalman.state_pre[4,0]  = 0
-        self.kalman.state_pre[5,0]  = 0
-
         # set kalman transition matrix
         self.kalman.transition_matrix[0,0] = 1
         self.kalman.transition_matrix[1,1] = 1
         self.kalman.transition_matrix[2,2] = 1
-        self.kalman.transition_matrix[3,3] = 1
-        self.kalman.transition_matrix[4,4] = 1
-        self.kalman.transition_matrix[5,5] = 1
-
         
         # set Kalman Filter
         cv.SetIdentity(self.kalman.measurement_matrix, cv.RealScalar(1))
@@ -147,23 +139,39 @@ class DetectFood:
             return False
 
         return True
+
+
+    def wrap_theta(self, previous, theta):
+        if previous - theta > math.pi:
+            theta += 2.*math.pi
+        if previous - theta < -math.pi:
+            theta -= 2. * math.pi
+        return theta
+
+    def wrap_ang(self, ang):
+        while ang > 2.*math.pi:
+            ang -= 2. * math.pi
+        while ang < -2.*math.pi:
+            ang += 2. * math.pi
+        return ang
+
     
     def predict_pose(self, pose):
         quat = quat_msg_to_array(pose.pose.orientation)
         r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
-        if theta < 0:
-            theta += 2.*math.pi
-        
-        if self.kalman.state_pre[0,0] == 0 and self.kalman.state_pre[1,0] == 0:
-            self.kalman.state_pre[0,0] = pose.pose.position.x
-            self.kalman.state_pre[1,0] = pose.pose.position.y
-            self.kalman.state_pre[2,0] = theta
+        if self.kalman.state_post[0,0] == 0 and self.kalman.state_post[1,0] == 0:
+            self.kalman.state_post[0,0] = pose.pose.position.x
+            self.kalman.state_post[1,0] = pose.pose.position.y
+            self.kalman.state_post[2,0] = theta
 
-            
+
+
+        self.kalman.state_post[2,0] = self.wrap_ang(self.kalman.state_post[2,0])
+        theta = self.wrap_theta(self.kalman.state_post[2,0], theta)
+
         kalman_prediction = cv.KalmanPredict(self.kalman)
-        
-        
+
         self.kalman_measurement[0,0] = pose.pose.position.x
         self.kalman_measurement[1,0] = pose.pose.position.y
         self.kalman_measurement[2,0] = theta
@@ -190,32 +198,11 @@ class DetectFood:
                 return
             pose = marker['pose']
 
-            #pose = PoseStamped()
-            #pose.pose.orientation.w = 1
-            #pose.header.stamp = rospy.Time.now()
-            #pose.header.frame_id = "/ar_marker_%s"%marker['name']
-            
             pose = self.transform_pose(pose)
-            #a = pose.pose.position
-            #pose2 = PoseStamped()
-            #pose2.pose.position.x = 1.
-            #pose2.pose.orientation.w = 1
-            #pose2.header.stamp = rospy.Time.now()
-            #pose2.header.frame_id = "/ar_marker_%s"%marker['name']
-            
-            #pose2 = self.transform_pose(pose2)
-            #b = pose2.pose.position
-
-            #print a, b
-            #theta_calc = math.atan2(b.y - a.y, b.x - a.x)
-
-            #if theta_calc < 0:
-            #    theta_calc += 2 * math.pi
 
             quat = quat_msg_to_array(pose.pose.orientation)
             r,p,theta = tf.transformations.euler_from_quaternion(quat)
 
-            #print r,p,theta, theta_calc
 
             q = tf.transformations.quaternion_from_euler(0, 0, theta)
 
