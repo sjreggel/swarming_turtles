@@ -38,7 +38,7 @@ action_server = None
 
 MIN_DIST_LASER = 0.5
 EPS_ALIGN_THETA = 0.2 #alignment precision
-EPS_ALIGN_XY = 0.2 #alignment precision
+EPS_ALIGN_XY = 0.25 #alignment precision
 
 active = False
 RATE = 20
@@ -291,9 +291,9 @@ def move_to_goal_cb(goal):
             stop()
             return
             
-        if obstacle():
+        if sum(bumpers)>0:
             twist = Twist()
-            while obstacle():
+            while sum(bumpers)>0:
                 #print "obstacle"
                 if obstacle_left():
                     twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
