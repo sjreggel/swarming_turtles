@@ -2,8 +2,8 @@ SwarmCollvoid:
   holo_robot: false
   wheel_base: 0.25
   
-  max_vel_x: 0.4
-  max_vel_th: 1.0
+  max_vel_x: 0.5
+  max_vel_th: 1.3
   min_vel_x: 0.1
   min_vel_th: 0.2
   min_vel_y: 0.0
@@ -24,7 +24,7 @@ SwarmCollvoid:
   xy_goal_tolerance: 0.2
   
   yaw_goal_tolerance: 0.3
-  left_pref: 0.0
+  left_pref: 0.04
   sim_period: 0.2
   use_obstacles: true
 

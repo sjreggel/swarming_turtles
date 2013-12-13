@@ -23,7 +23,7 @@ MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
 MAX_ANGLE = math.pi / 4.0
-MAX_DIST = 2.0
+MAX_DIST = 1.7
 
 last_seen = None
 

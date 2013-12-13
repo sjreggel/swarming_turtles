@@ -23,8 +23,8 @@ ROTATE_LEFT = 1
 tfListen = None
 
 #config
-ROTATION_SPEED = 1.3
-FORWARD_SPEED = 0.3
+ROTATION_SPEED = 1.5
+
 
 
 get_twist_srv = None
