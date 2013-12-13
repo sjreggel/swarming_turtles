@@ -2,7 +2,9 @@
   <node pkg="swarming_turtles_detect" type="detect_turtles.py" name="detect_turtles" output="screen" />
   <node pkg="swarming_turtles_detect" type="detect_hive.py" name="detect_hive" output="screen" />
   <node pkg="swarming_turtles_detect" type="detect_food.py" name="detect_food" output="screen" />
+  <node pkg="swarming_turtles_detect" type="filter_markers.py" name="filter_markers" output="screen" />
 
+  
   <node pkg="swarming_turtles_detect" type="visualize_turtles.py" name="visualize_turtles" output="screen" />
   
 </launch>
