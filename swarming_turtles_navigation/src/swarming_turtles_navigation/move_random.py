@@ -57,15 +57,10 @@ MIN_BELOW_MAX = 20
 
 
 def init_globals():
-    global tfListen, get_twist_srv, cmd_pub
+    global tfListen, cmd_pub
     tfListen = tf.TransformListener()
     rospy.sleep(1)
-    
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist) #publish Twist
-    get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist)
-    rospy.loginfo("wait for service")
-    #rospy.wait_for_service(get_twist_srv)
-    rospy.loginfo("done")
 
 
     
@@ -321,8 +316,11 @@ def get_twist():
     except rospy.ServiceException as exc:
         print("Service did not process request: " + str(exc))
         print "get twist call failed"
-        get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist)
-
+        get_twist_srv.close()
+        print 'reconnecting'
+        rospy.wait_for_service('SwarmCollvoid/get_collvoid_twist')
+        get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist, persistent = True)
+        print 'done'
         twist = Twist()
     return twist
         
@@ -381,7 +379,7 @@ def create_goal_message(goal):
         
         
 def main():
-    global action_server
+    global action_server, get_twist_srv
     rospy.init_node("move_random")
     init_globals()
 
@@ -391,16 +389,24 @@ def main():
     rospy.Service('move_random_start', Empty, move_random_start)
     rospy.Service('move_random_stop', Empty, move_random_stop)
 
+    get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist, persistent = True)
+    rospy.loginfo("wait for service")
+    rospy.wait_for_service('SwarmCollvoid/get_collvoid_twist')
+    rospy.loginfo("done")
+
+    
     r = rospy.Rate(RATE)
     action_server = actionlib.simple_action_server.SimpleActionServer('move_to_goal', MoveBaseAction, move_to_goal_cb, False)
     action_server.start()
 
+    
 
     while not rospy.is_shutdown():
         if active:
             move_random()
         r.sleep()
+        
+    get_twist_srv.close()
     
-
 if __name__ == "__main__":
     main()
