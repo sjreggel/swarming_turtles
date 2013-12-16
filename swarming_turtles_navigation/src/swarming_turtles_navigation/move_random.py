@@ -37,7 +37,7 @@ cur_goal = None
 action_server = None
 
 MIN_DIST_LASER = 0.5
-EPS_ALIGN_THETA = 0.2 #alignment precision
+EPS_ALIGN_THETA = 0.3 #alignment precision
 EPS_ALIGN_XY = 0.25 #alignment precision
 
 active = False

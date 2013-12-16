@@ -295,7 +295,7 @@ class MoveToInLocation(smach.State):
         if at_loc():
             return 'success'
         
-        goal = utils.move_location(target, x = -0.5, y = -0.5)
+        goal = utils.move_location(target, x = -1.0, y = -0.5)
         goal = utils.create_goal_message(goal)
 
         self.client.send_goal(goal)
@@ -322,7 +322,7 @@ class MoveToOutLocation(smach.State):
         self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.loc = loc
-        self.TIME_OUT = 5.0
+        self.TIME_OUT = 3.0
         
     def execute(self, userdata):
         target = None
