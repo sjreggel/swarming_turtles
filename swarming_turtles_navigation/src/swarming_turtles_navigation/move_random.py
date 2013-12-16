@@ -48,7 +48,7 @@ hive = '/hive'
 min_dist_laser = 2*MIN_DIST_LASER
 
 count_low_speed = 0
-MAX_COUNT = 10
+MAX_COUNT = 5
 EPS_SPEED = 0.1
 
 obstacle_front_bool = False
@@ -313,6 +313,7 @@ def move_to_goal_cb(goal):
 
         
 def get_twist():
+    global get_twist_srv
     try:
         res = get_twist_srv(cur_goal)
         #print res
@@ -320,6 +321,8 @@ def get_twist():
     except rospy.ServiceException as exc:
         print("Service did not process request: " + str(exc))
         print "get twist call failed"
+        get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist)
+
         twist = Twist()
     return twist
         
