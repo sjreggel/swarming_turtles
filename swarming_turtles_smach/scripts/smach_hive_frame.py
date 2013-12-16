@@ -97,7 +97,7 @@ def at_food():
     try:
         resp = get_food_srv()
         own_pose = utils.get_own_pose()
-        target = res.pose
+        target = resp.pose
         dist = utils.dist_vec(own_pose.pose.position, target.pose.position)
 
         return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT and dist < MAX_DIST
