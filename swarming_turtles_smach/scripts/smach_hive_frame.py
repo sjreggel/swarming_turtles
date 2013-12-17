@@ -42,7 +42,7 @@ ASK_TIMEOUT = 1.0
 
 STAND_STILL_TIMES = 10
 
-FIND_TIMEOUT = 0.5
+FIND_TIMEOUT = 1.0
 
 LAST_SEEN = 3.0 #check last seen for other turtle
 EPS_TARGETS = 0.2 #if targets are further away than that resend goal
@@ -83,6 +83,19 @@ def init_globals():
     rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles) #which turtles are near?
 
 
+def seen_hive():
+    global get_hive_srv
+    try:
+        resp = get_hive_srv()
+        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT
+    except:
+        rospy.logerr("service call to get hive failed")
+        get_hive_srv.close()
+        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
+
+        return False
+
+    
 def at_hive():
     global get_hive_srv
     try:
@@ -231,7 +244,7 @@ class PreSearchFoodLocation(smach.State):
 
 class CheckIfAtLocation(smach.State):
     def __init__(self, loc):
-        smach.State.__init__(self, outcomes=['failed', 'success'])
+        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'])
         self.loc = loc
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
       
@@ -243,6 +256,10 @@ class CheckIfAtLocation(smach.State):
             found = at_hive
         else: #food
             target = get_food()
+                        
+            if target is None and userdata.pose_in is not None:
+                target = userdata.pose_in
+                
             if target is None:
                 try:
                     self.forget_food()
@@ -285,7 +302,7 @@ class SearchHive(smach.State):
                 move_random_stop()
                 return 'success'
          
-            if at_hive():
+            if seen_hive():
                 move_random_stop()
                 return 'success'
             rate.sleep()
@@ -457,7 +474,7 @@ class MoveToHiveLocation(smach.State):
     
 class MoveToFoodLocation(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'])
+        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
         self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
@@ -468,6 +485,7 @@ class MoveToFoodLocation(smach.State):
 
         if target is None and userdata.pose_in is not None:
             target = userdata.pose_in
+            userdata.pose_out = target
 
         if target is None:
             try:
@@ -549,8 +567,8 @@ def main():
         smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFoodIn', 'not_found':'SearchFood'}, remapping = {'pose_out':'pose'})
 
         smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'), transitions = {'failed':'GoToFood', 'success':'GoToFood'}, remapping = {'pose_in': 'pose', 'pose_out':'pose'})
-        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'}, remapping = {'pose_in':'pose'})
-        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'})
+        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'}, remapping = {'pose_in':'pose', 'pose_out':'pose'})
+        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'}, remapping = {'pose_in':'pose'})
         smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'GoToHiveIn', 'success':'GoToHiveIn'})
 
         
