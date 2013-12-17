@@ -328,6 +328,7 @@ class MoveToInLocation(smach.State):
         while True:
             if stand_still > STAND_STILL_TIMES:
                 self.client.cancel_all_goals()
+                print "standing still too long for moviing to in location"
                 return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
@@ -415,7 +416,12 @@ class MoveToHiveLocation(smach.State):
         while True:
             if stand_still > STAND_STILL_TIMES:
                 self.client.cancel_all_goals()
-                return 'failed'
+                if at_hive():
+                    print 'standing still too long, but close to hive'
+                    return 'success'
+                else:
+                    print 'standing still to long'
+                    return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
@@ -464,7 +470,12 @@ class MoveToFoodLocation(smach.State):
         while True:
             if stand_still > STAND_STILL_TIMES:
                 self.client.cancel_all_goals()
-                return 'failed'
+                if at_food():
+                    print "standing still too long, but close to food"
+                    return 'success'
+                else:
+                    print "standing still too long, failed to go to food"
+                    return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
