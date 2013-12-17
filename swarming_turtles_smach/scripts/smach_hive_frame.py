@@ -457,6 +457,11 @@ class MoveToFoodLocation(smach.State):
             target = userdata.pose_in
 
         if target is None:
+            try:
+                self.forget_food(location = "")
+            except:
+                print "forget_food failed"
+
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
         self.client.send_goal(goal)
@@ -475,6 +480,10 @@ class MoveToFoodLocation(smach.State):
                     return 'success'
                 else:
                     print "standing still too long, failed to go to food"
+                    try:
+                        self.forget_food(location = "")
+                    except:
+                        print "forget_food failed"
                     return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
