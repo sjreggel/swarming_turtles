@@ -40,8 +40,8 @@ MIN_DIST_LASER = 0.5
 EPS_ALIGN_THETA = 0.3 #alignment precision
 EPS_ALIGN_XY = 0.25 #alignment precision
 
-STAND_STILL_XY = 0.05
-STAND_STILL_THETA = 0.05
+STAND_STILL_XY = 0.02
+STAND_STILL_THETA = 0.02
 
 active = False
 RATE = 10
