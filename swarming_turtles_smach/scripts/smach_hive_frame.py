@@ -421,7 +421,14 @@ class MoveToHiveLocation(smach.State):
                     return 'success'
                 else:
                     print 'standing still to long'
-                    return 'failed'
+                    self.client.cancel_all_goals()
+                    if self.retry < MAX_RETRY:
+                        self.retry +=1
+                        self.client.send_goal(goal)
+                    else:
+                        self.client.cancel_all_goals()
+                        return 'failed'
+        
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
@@ -461,7 +468,7 @@ class MoveToFoodLocation(smach.State):
                 self.forget_food(location = "")
             except:
                 print "forget_food failed"
-
+            print "target is None"
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
         self.client.send_goal(goal)
