@@ -138,6 +138,8 @@ namespace collvoid{
     catch(tf::TransformException& ex){
       ROS_WARN("Failed to transform the goal pose from %s into the %s frame: %s",
 	       goal_pose.frame_id_.c_str(), global_frame_.c_str(), ex.what());
+      geometry_msgs::Twist msg;
+      res.twist = msg;
       return false;
     }
 

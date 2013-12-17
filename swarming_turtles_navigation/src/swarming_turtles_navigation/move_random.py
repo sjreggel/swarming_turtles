@@ -40,6 +40,9 @@ MIN_DIST_LASER = 0.5
 EPS_ALIGN_THETA = 0.3 #alignment precision
 EPS_ALIGN_XY = 0.25 #alignment precision
 
+STAND_STILL_XY = 0.05
+STAND_STILL_THETA = 0.05
+
 active = False
 RATE = 10
 base_frame = '/base_link'
@@ -210,7 +213,11 @@ def rotate_vec_by_angle(v, ang):
     res.y = cos_a * v.y + sin_a * v.x
     return res
 
-
+def standing_still(old_pose):
+    own_pose = get_own_pose()
+    dist = dist_vec(own_pose.pose.position, old_pose.pose.position)
+    ang = abs(get_jaw(own_pose.pose.orientation) - get_jaw(old_pose.pose.orientation))
+    return dist < STAND_STILL_XY and ang < STAND_STILL_THETA
 
 def dist_aligned():
     own_pose = get_own_pose()
@@ -334,6 +341,9 @@ def move_random_stop(req):
     global active
     active = False
     return EmptyResponse()
+
+    
+
 
 
 def move_location(pose, x = 0, y = 0):

@@ -40,6 +40,8 @@ MAX_RETRY = 5
 SEARCH_TIMEOUT = 15
 ASK_TIMEOUT = 1.0 
 
+STAND_STILL_TIMES = 10
+
 FIND_TIMEOUT = 0.5
 
 LAST_SEEN = 3.0 #check last seen for other turtle
@@ -96,7 +98,7 @@ def at_hive():
 
         return False
 
-
+    
 def at_food():
     global get_food_srv
     try:
@@ -320,9 +322,19 @@ class MoveToInLocation(smach.State):
         rate = rospy.Rate(RATE)
 
         start = rospy.Time.now()
-        
+        stand_still = 0
+        old_pose = utils.get_own_pose()
         
         while True:
+            if stand_still > STAND_STILL_TIMES:
+                self.client.cancel_all_goals()
+                return 'failed'
+            if utils.standing_still(old_pose):
+                stand_still += 1
+            else:
+                stand_still = 0
+                old_pose = utils.get_own_pose()
+                
             if self.client.get_state() == GoalStatus.SUCCEEDED:
                 self.client.cancel_all_goals()
                 return 'success'
@@ -360,8 +372,19 @@ class MoveToOutLocation(smach.State):
 
         start = rospy.Time.now()
         
+        stand_still = 0
+        old_pose = utils.get_own_pose()
         
         while True:
+            if stand_still > STAND_STILL_TIMES:
+                self.client.cancel_all_goals()
+                return 'failed'
+            if utils.standing_still(old_pose):
+                stand_still += 1
+            else:
+                stand_still = 0
+                old_pose = utils.get_own_pose()
+        
             if (rospy.Time.now()-start).to_sec() > self.TIME_OUT:
                 self.client.cancel_all_goals()
                 return 'failed' 
@@ -386,7 +409,18 @@ class MoveToHiveLocation(smach.State):
         rate = rospy.Rate(RATE)
 
         self.retry = 0
+        stand_still = 0
+        old_pose = utils.get_own_pose()
+        
         while True:
+            if stand_still > STAND_STILL_TIMES:
+                self.client.cancel_all_goals()
+                return 'failed'
+            if utils.standing_still(old_pose):
+                stand_still += 1
+            else:
+                stand_still = 0
+                old_pose = utils.get_own_pose()
             if self.client.get_state() == GoalStatus.SUCCEEDED:
                 self.client.cancel_all_goals()
                 return 'success'
@@ -424,7 +458,18 @@ class MoveToFoodLocation(smach.State):
         rate = rospy.Rate(RATE)
 
         self.retry = 0
+        stand_still = 0
+        old_pose = utils.get_own_pose()
+        
         while True:
+            if stand_still > STAND_STILL_TIMES:
+                self.client.cancel_all_goals()
+                return 'failed'
+            if utils.standing_still(old_pose):
+                stand_still += 1
+            else:
+                stand_still = 0
+                old_pose = utils.get_own_pose()
             pose = get_food()
             if pose is not None and (utils.dist_vec(pose.pose.position, target.pose.position) > EPS_TARGETS):
                 print "resending goal"
