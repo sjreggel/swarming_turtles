@@ -67,7 +67,7 @@ def init_globals():
 
 
     move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
-    move_action_server.client.wait_for_server()
+    move_action_server.wait_for_server()
 
 
     hive_loc = PoseStamped()
