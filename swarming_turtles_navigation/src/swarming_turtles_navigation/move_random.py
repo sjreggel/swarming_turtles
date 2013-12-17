@@ -32,6 +32,7 @@ ROTATION_SPEED = 1.5
 
 get_twist_srv = None
 cmd_pub = None
+goal_pub = None
 cur_goal = None
 
 action_server = None
@@ -64,7 +65,6 @@ def init_globals():
     tfListen = tf.TransformListener()
     rospy.sleep(1)
     cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist) #publish Twist
-
 
     
 def cb_laser_scan(msg):
@@ -178,9 +178,10 @@ def get_random_walk():
 def create_goal_from_pose(pose):
     global cur_goal
     req = GetCollvoidTwistRequest()
+    pose.header.stamp = rospy.Time.now()
     req.goal = transformPose(pose)
     cur_goal = req
-
+    goal_pub.publish(req.goal)
 
 def create_goal(dist):
     global cur_goal
@@ -194,7 +195,9 @@ def create_goal(dist):
     req.goal = transformPose(goal)
 
     cur_goal = req
+    goal_pub.publish(req.goal)
 
+    
 def dist_vec(a, b):
     d = diff_vec(a,b)
     return math.sqrt(d.x * d.x + d.y * d.y)
@@ -228,7 +231,6 @@ def dist_aligned():
 def at_goal():
     #own_pose = get_own_pose()
     goal = cur_goal.goal
-
     ang = get_jaw(goal.pose.orientation)
 
     return dist_aligned() and rotation_aligned(ang)
@@ -389,7 +391,7 @@ def create_goal_message(goal):
         
         
 def main():
-    global action_server, get_twist_srv
+    global action_server, get_twist_srv, goal_pub
     rospy.init_node("move_random")
     init_globals()
 
@@ -399,6 +401,7 @@ def main():
     rospy.Service('move_random_start', Empty, move_random_start)
     rospy.Service('move_random_stop', Empty, move_random_stop)
 
+    goal_pub = rospy.Publisher('cur_goal', PoseStamped)
     get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist, persistent = True)
     rospy.loginfo("wait for service")
     rospy.wait_for_service('SwarmCollvoid/get_collvoid_twist')
