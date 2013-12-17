@@ -294,18 +294,24 @@ class SearchHive(smach.State):
 
 class MoveToInLocation(smach.State):
     def __init__(self, loc):
-        smach.State.__init__(self, outcomes=['failed', 'success'])
+        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
         self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
         self.client.wait_for_server()
         self.loc = loc
         
     def execute(self, userdata):
         target = None
+
         if self.loc =='hive':
             target = hive_loc
             at_loc = at_hive
         else:
             target = get_food()
+            
+            if target is None and userdata.pose_in is not None:
+                target = userdata.pose_in
+                userdata.pose_out = target
+
             if target is None:
                 return 'failed'
             at_loc = at_food
@@ -542,7 +548,7 @@ def main():
         smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(), transitions = {'known':'GoToFoodIn', 'not_known':'SearchFood'})
         smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFoodIn', 'not_found':'SearchFood'}, remapping = {'pose_out':'pose'})
 
-        smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'), transitions = {'failed':'GoToFood', 'success':'GoToFood'})
+        smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'), transitions = {'failed':'GoToFood', 'success':'GoToFood'}, remapping = {'pose_in': 'pose', 'pose_out':'pose'})
         smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'}, remapping = {'pose_in':'pose'})
         smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'})
         smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'GoToHiveIn', 'success':'GoToHiveIn'})
