@@ -62,8 +62,12 @@ base_frame = "/base_link"
 MAX_DIST = 1.5
 
 def init_globals():
-    global name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv
+    global name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
     utils.init_globals()
+
+
+    move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
+    move_action_server.client.wait_for_server()
 
 
     hive_loc = PoseStamped()
@@ -216,9 +220,11 @@ class SearchFood(smach.State):
             pose = get_food()
             if pose is not None:
                 found = True
+                break
             pose = self.get_received_location(asked_turtles)
             if pose is not None:
                 found = True
+                break
             if not closest==''  and closest not in asked_turtles:
                 asked_turtles.append(closest)
                 print "asking ", closest 
@@ -312,8 +318,6 @@ class SearchHive(smach.State):
 class MoveToInLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
-        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
-        self.client.wait_for_server()
         self.loc = loc
         
     def execute(self, userdata):
@@ -340,7 +344,7 @@ class MoveToInLocation(smach.State):
         goal = utils.move_location(target, x = -1.0, y = -0.5)
         goal = utils.create_goal_message(goal)
 
-        self.client.send_goal(goal)
+        move_action_server.send_goal(goal)
 
         rate = rospy.Rate(RATE)
 
@@ -350,7 +354,7 @@ class MoveToInLocation(smach.State):
         
         while True:
             if stand_still > STAND_STILL_TIMES:
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 print "standing still too long for moviing to in location"
                 return 'failed'
             if utils.standing_still(old_pose):
@@ -359,11 +363,11 @@ class MoveToInLocation(smach.State):
                 stand_still = 0
                 old_pose = utils.get_own_pose()
                 
-            if self.client.get_state() == GoalStatus.SUCCEEDED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.SUCCEEDED:
+                move_action_server.cancel_all_goals()
                 return 'success'
-            if self.client.get_state() == GoalStatus.PREEMPTED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.PREEMPTED:
+                move_action_server.cancel_all_goals()
                 return 'failed'
             rate.sleep()
 
@@ -372,8 +376,6 @@ class MoveToInLocation(smach.State):
 class MoveToOutLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
-        self.client.wait_for_server()
         self.loc = loc
         self.TIME_OUT = 3.0
         
@@ -390,7 +392,7 @@ class MoveToOutLocation(smach.State):
         goal = utils.move_location(target, y = Y_OFFSET)
         goal = utils.create_goal_message(goal)
 
-        self.client.send_goal(goal)
+        move_action_server.send_goal(goal)
 
         rate = rospy.Rate(RATE)
 
@@ -401,7 +403,7 @@ class MoveToOutLocation(smach.State):
         
         while True:
             if stand_still > STAND_STILL_TIMES:
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
@@ -410,26 +412,24 @@ class MoveToOutLocation(smach.State):
                 old_pose = utils.get_own_pose()
         
             if (rospy.Time.now()-start).to_sec() > self.TIME_OUT:
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 return 'failed' 
-            if self.client.get_state() == GoalStatus.SUCCEEDED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.SUCCEEDED:
+                move_action_server.cancel_all_goals()
                 return 'success'
-            if self.client.get_state() == GoalStatus.PREEMPTED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.PREEMPTED:
+                move_action_server.cancel_all_goals()
                 return 'failed'
             rate.sleep()
        
 class MoveToHiveLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
-        self.client.wait_for_server()
 
     def execute(self, userdata):
         target = hive_loc
         goal = utils.create_goal_message(target)
-        self.client.send_goal(goal)
+        move_action_server.send_goal(goal)
         rate = rospy.Rate(RATE)
 
         self.retry = 0
@@ -438,18 +438,18 @@ class MoveToHiveLocation(smach.State):
         
         while True:
             if stand_still > STAND_STILL_TIMES:
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 if at_hive():
                     print 'standing still too long, but close to hive'
                     return 'success'
                 else:
                     print 'standing still to long'
-                    self.client.cancel_all_goals()
+                    move_action_server.cancel_all_goals()
                     if self.retry < MAX_RETRY:
                         self.retry +=1
-                        self.client.send_goal(goal)
+                        move_action_server.send_goal(goal)
                     else:
-                        self.client.cancel_all_goals()
+                        move_action_server.cancel_all_goals()
                         return 'failed'
         
             if utils.standing_still(old_pose):
@@ -457,16 +457,16 @@ class MoveToHiveLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
-            if self.client.get_state() == GoalStatus.SUCCEEDED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.SUCCEEDED:
+                move_action_server.cancel_all_goals()
                 return 'success'
-            if self.client.get_state() == GoalStatus.PREEMPTED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.PREEMPTED:
+                move_action_server.cancel_all_goals()
                 if self.retry < 2*MAX_RETRY:
                     self.retry +=1
-                    self.client.send_goal(goal)
+                    move_action_server.send_goal(goal)
                 else:
-                    self.client.cancel_all_goals()
+                    move_action_server.cancel_all_goals()
                     return 'failed'
             rate.sleep()
 
@@ -475,8 +475,6 @@ class MoveToHiveLocation(smach.State):
 class MoveToFoodLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
-        self.client = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
-        self.client.wait_for_server()
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
       
         
@@ -495,7 +493,7 @@ class MoveToFoodLocation(smach.State):
             print "target is None"
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
-        self.client.send_goal(goal)
+        move_action_server.send_goal(goal)
 
         rate = rospy.Rate(RATE)
 
@@ -505,7 +503,7 @@ class MoveToFoodLocation(smach.State):
         
         while True:
             if stand_still > STAND_STILL_TIMES:
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 if at_food():
                     print "standing still too long, but close to food"
                     return 'success'
@@ -524,19 +522,19 @@ class MoveToFoodLocation(smach.State):
             pose = get_food()
             if pose is not None and (utils.dist_vec(pose.pose.position, target.pose.position) > EPS_TARGETS):
                 print "resending goal"
-                self.client.cancel_all_goals()
+                move_action_server.cancel_all_goals()
                 target = pose
                 goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
-                self.client.send_goal(goal)
+                move_action_server.send_goal(goal)
                 
-            if self.client.get_state() == GoalStatus.SUCCEEDED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.SUCCEEDED:
+                move_action_server.cancel_all_goals()
                 return 'success'
-            if self.client.get_state() == GoalStatus.PREEMPTED:
-                self.client.cancel_all_goals()
+            if move_action_server.get_state() == GoalStatus.PREEMPTED:
+                move_action_server.cancel_all_goals()
                 if self.retry < MAX_RETRY:
                     self.retry +=1
-                    self.client.send_goal(goal)
+                    move_action_server.send_goal(goal)
                 else:
                     try:
                         self.forget_food(location = "")

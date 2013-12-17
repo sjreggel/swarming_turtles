@@ -290,7 +290,7 @@ def move_to_goal_cb(goal):
     while not dist_aligned():
         if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
             action_server.set_preempted()
-            action_server.set_aborted()
+            #action_server.set_aborted()
             stop()
             return
             
