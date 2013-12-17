@@ -69,8 +69,8 @@ def init_globals():
     hive_loc.pose.orientation.w = 1
     hive_loc = utils.move_location_inwards(hive_loc, INWARDS)
     
-    get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
-    get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation)
+    get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
+    get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
 
     move_random_start = rospy.ServiceProxy('move_random_start', Empty)
     move_random_stop = rospy.ServiceProxy('move_random_stop', Empty)
@@ -82,6 +82,7 @@ def init_globals():
 
 
 def at_hive():
+    global get_hive_srv
     try:
         resp = get_hive_srv()
         own_pose = utils.get_own_pose()
@@ -90,10 +91,14 @@ def at_hive():
         return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT and dist < MAX_DIST
     except:
         rospy.logerr("service call to get hive failed")
+        get_hive_srv.close()
+        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
+
         return False
 
 
 def at_food():
+    global get_food_srv
     try:
         resp = get_food_srv()
         own_pose = utils.get_own_pose()
@@ -103,9 +108,12 @@ def at_food():
         return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT and dist < MAX_DIST
     except:
         rospy.logerr("service call to get food failed")
+        get_food_srv.close()
+        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
         return False
 
 def get_food():
+    global get_food_srv
     try:
         resp = get_food_srv()
         if not resp.res == '':
@@ -115,6 +123,9 @@ def get_food():
             return None
     except:
         rospy.logerr("service call to get food failed")
+        get_food_srv.close()
+        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
+
         return None
 
     
@@ -138,8 +149,8 @@ def cb_found_turtles(msg):
 class SearchFood(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['found', 'not_found'], output_keys = ['pose_out'])
-        self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation)
-        self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation)
+        self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent = True)
+        self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent = True)
 
         
         #rospy.wait_for_service(self.ask_food_srv)
@@ -152,6 +163,9 @@ class SearchFood(smach.State):
             return resp.pose
         except:
             rospy.logerr("service call ask food failed")
+            self.ask_food_srv.close()
+            self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent = True)
+            
             return None
 
     def get_received_location(self,asked_turtles):
@@ -163,6 +177,9 @@ class SearchFood(smach.State):
                 return None
         except:
             rospy.logerr("service call to receive locaiton failed")
+            self.get_received_location_srv.close()
+            self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent = True)
+            
             return None
 
         
