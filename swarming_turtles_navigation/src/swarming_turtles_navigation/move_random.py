@@ -39,7 +39,7 @@ action_server = None
 
 MIN_DIST_LASER = 0.5
 EPS_ALIGN_THETA = 0.3 #alignment precision
-EPS_ALIGN_XY = 0.25 #alignment precision
+EPS_ALIGN_XY = 0.5 #alignment precision
 
 STAND_STILL_XY = 0.02
 STAND_STILL_THETA = 0.02
@@ -178,6 +178,7 @@ def get_random_walk():
 def create_goal_from_pose(pose):
     global cur_goal
     req = GetCollvoidTwistRequest()
+    print "creating goal from target"
     pose.header.stamp = rospy.Time.now()
     req.goal = transformPose(pose)
     cur_goal = req
@@ -289,7 +290,7 @@ def move_to_goal_cb(goal):
     while not dist_aligned():
         if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
             action_server.set_preempted()
-            #action_server.set_aborted()
+            action_server.set_aborted()
             stop()
             return
             
