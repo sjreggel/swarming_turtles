@@ -342,6 +342,8 @@ class MoveToInLocation(smach.State):
         self.loc = loc
         
     def execute(self, userdata):
+        global move_action_server
+
         target = None
 
         if self.loc =='hive':
@@ -378,7 +380,6 @@ class MoveToInLocation(smach.State):
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 print "standing still too long for moviing to in location"
-                global move_action_server
                 move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
                 move_action_server.wait_for_server()
 
@@ -460,6 +461,8 @@ class MoveToHiveLocation(smach.State):
         smach.State.__init__(self, outcomes=['failed', 'success'])
 
     def execute(self, userdata):
+        global move_action_server
+
         target = hive_loc
         goal = utils.create_goal_message(target)
         move_action_server.send_goal(goal)
@@ -478,7 +481,6 @@ class MoveToHiveLocation(smach.State):
                 else:
                     print 'standing still to long'
                     move_action_server.cancel_all_goals()
-                    global move_action_server
                     move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
                     move_action_server.wait_for_server()
 
@@ -516,6 +518,8 @@ class MoveToFoodLocation(smach.State):
       
         
     def execute(self, userdata):
+        global move_action_server
+
         target = get_food()
 
         if target is None and userdata.pose_in is not None:
@@ -541,7 +545,6 @@ class MoveToFoodLocation(smach.State):
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
-                global move_action_server
                 move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
                 move_action_server.wait_for_server()
 
