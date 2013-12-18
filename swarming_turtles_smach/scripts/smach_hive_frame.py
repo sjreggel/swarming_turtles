@@ -313,7 +313,25 @@ class SearchHive(smach.State):
                 return 'success'
             rate.sleep()
 
+class InitHive(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['success'])
+        
+    def execute(self, userdata):
+        rate = rospy.Rate(RATE)
+        start = rospy.Time.now()
+        twist = Twist()
+        twist.angular.x = utils.ROTATION_SPEED
+        while True:
+            if seen_hive():
+                utils.stop()
+                rospy.sleep(1.0)
+                return 'success'
+            utils.cmd_pub.publish(twist)
+            rate.sleep()
 
+
+            
 
 class MoveToInLocation(smach.State):
     def __init__(self, loc):
@@ -551,6 +569,7 @@ def main():
     sm.userdata.pose = None
     with sm:
         #Hive states
+        smach.StateMachine.add("InitHive", InitHive(), transitions = {'success': 'GoToHiveOut'})
         smach.StateMachine.add("SearchHive", SearchHive(), transitions = {'success':'GoToHiveIn'})
 
         smach.StateMachine.add("GoToHiveIn", MoveToInLocation('hive'), transitions = {'failed':'GoToHive', 'success':'GoToHive'})
