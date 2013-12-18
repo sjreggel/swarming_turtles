@@ -289,10 +289,14 @@ def move_to_goal_cb(goal):
 
     while not dist_aligned():
         if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
-            action_server.set_preempted()
-            #action_server.set_aborted()
-            stop()
-            return
+            if action_server.is_new_goal_available():
+                goal = action_server.accept_new_goal()
+                create_goal_from_pose(goal.target_pose)
+            else:
+                action_server.set_preempted()
+                #action_server.set_aborted()
+                stop()
+                return
             
         if sum(bumpers)>0:
             twist = Twist()
