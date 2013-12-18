@@ -369,11 +369,16 @@ class MoveToInLocation(smach.State):
         start = rospy.Time.now()
         stand_still = 0
         old_pose = utils.get_own_pose()
-        
+
+        retry = MAX_RETRY - 2
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 print "standing still too long for moviing to in location"
+                global move_action_server
+                move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
+                move_action_server.wait_for_server()
+
                 return 'failed'
             if utils.standing_still(old_pose):
                 stand_still += 1
@@ -386,7 +391,14 @@ class MoveToInLocation(smach.State):
                 return 'success'
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
-                return 'failed'
+                if retry > MAX_RETRY:
+                    return 'failed'
+                else:
+                    retry += 1
+                    move_random_start()
+                    rospy.sleep(MOVE_RANDOM_TIME)
+                    move_random_stop()
+                    move_action_server.send_goal(goal)
             rate.sleep()
 
 
@@ -463,6 +475,10 @@ class MoveToHiveLocation(smach.State):
                 else:
                     print 'standing still to long'
                     move_action_server.cancel_all_goals()
+                    global move_action_server
+                    move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
+                    move_action_server.wait_for_server()
+
                     if self.retry < MAX_RETRY:
                         self.retry +=1
                         move_action_server.send_goal(goal)
@@ -522,11 +538,16 @@ class MoveToFoodLocation(smach.State):
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
+                global move_action_server
+                move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
+                move_action_server.wait_for_server()
+
                 if at_food():
                     print "standing still too long, but close to food"
                     return 'success'
                 else:
                     print "standing still too long, failed to go to food"
+
                     try:
                         self.forget_food(location = "")
                     except:
