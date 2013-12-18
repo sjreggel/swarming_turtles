@@ -40,6 +40,8 @@ MAX_RETRY = 5
 SEARCH_TIMEOUT = 15
 ASK_TIMEOUT = 1.0 
 
+MOVE_RANDOM_TIME = 5.0
+
 STAND_STILL_TIMES = 10
 
 FIND_TIMEOUT = 1.0
@@ -60,6 +62,7 @@ odom = "/odom"
 base_frame = "/base_link"
 
 MAX_DIST = 1.5
+move_action_server = None
 
 def init_globals():
     global name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
