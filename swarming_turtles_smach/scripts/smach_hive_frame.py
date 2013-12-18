@@ -321,7 +321,7 @@ class InitHive(smach.State):
         rate = rospy.Rate(RATE)
         start = rospy.Time.now()
         twist = Twist()
-        twist.angular.x = utils.ROTATION_SPEED
+        twist.angular.z = utils.ROTATION_SPEED
         while True:
             if seen_hive():
                 utils.stop()
