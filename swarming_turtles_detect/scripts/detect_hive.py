@@ -22,7 +22,7 @@ markers_hive = [200, 199, 198, 197] #front, right, back, left
 MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
-MAX_ANGLE = math.pi / 4.0
+MAX_ANGLE = math.pi / 6.0
 MAX_DIST = 1.7
 
 last_seen = None
@@ -177,6 +177,7 @@ class DetectHive:
         #put here the prediction for multiple markers
         for marker in markers_detected:
             if not self.check_distance(marker['pose']):
+                transform['stamp'] = rospy.Time.now()
                 return
 
             pose = marker['pose']

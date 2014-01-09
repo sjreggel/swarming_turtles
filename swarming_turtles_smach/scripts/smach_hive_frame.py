@@ -423,7 +423,7 @@ class MoveToOutLocation(smach.State):
                 return 'failed'
             target = utils.move_location_inwards(target, INWARDS)
             
-        goal = utils.move_location(target, y = Y_OFFSET)
+        goal = utils.move_location(target, x = -0.2, y = Y_OFFSET)
         goal = utils.create_goal_message(goal)
 
         move_action_server.send_goal(goal)
