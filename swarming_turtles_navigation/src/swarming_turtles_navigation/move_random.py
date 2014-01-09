@@ -317,7 +317,14 @@ def move_to_goal_cb(goal):
 
         twist = get_twist()
         if abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
-            ang = get_jaw(goal.target_pose.pose.orientation)
+
+            own_pose = get_own_pose()
+            tmp_vecl = diff_vec(own_pose.pose.position, goal.target_pose.position)
+            #tmp_goal = transformPose(goal.target_pose, frame = base_frame)
+            ang = math.atan2(tmp_vec.y, tmp_vec.x)
+            
+            #ang = get_jaw(goal.target_pose.pose.orientation)
+            
             print "goal ang", ang, "own ang", get_jaw(get_own_pose().pose.orientation)
             rotate_to_ang(ang)
         else:
