@@ -315,7 +315,7 @@ def move_to_goal_cb(goal):
 
         twist = get_twist()
         if abs(abs(twist.angular.z) - 1.3) < 0.01:
-            ang = get_jaw(goal.target_pose)
+            ang = get_jaw(goal.target_pose.orientation)
             rotate_to_ang(ang)
         else:
             cmd_pub.publish(twist)
