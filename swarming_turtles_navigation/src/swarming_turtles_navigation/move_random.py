@@ -318,7 +318,7 @@ def move_to_goal_cb(goal):
         twist = get_twist()
         if abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
             ang = get_jaw(goal.target_pose.pose.orientation)
-            print "goal ang", ang, "own ang", get_jaw(get_own_pose().orientation)
+            print "goal ang", ang, "own ang", get_jaw(get_own_pose().pose.orientation)
             rotate_to_ang(ang)
         else:
             cmd_pub.publish(twist)
