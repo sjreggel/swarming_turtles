@@ -327,7 +327,10 @@ def move_to_goal_cb(goal):
             #ang = get_jaw(goal.target_pose.pose.orientation)
             
             print "goal ang", ang, "own ang", get_jaw(get_own_pose().pose.orientation)
-            rotate_to_ang(ang)
+            if rotation_aligned(ang, eps = 0.5):
+                cmd_pub.publish(twist)
+            else:
+                rotate_to_ang(ang)
         else:
             cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
