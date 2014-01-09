@@ -319,7 +319,7 @@ def move_to_goal_cb(goal):
         if abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
 
             own_pose = get_own_pose()
-            tmp_vecl = diff_vec(own_pose.pose.position, goal.target_pose.position)
+            tmp_vecl = diff_vec(own_pose.pose.position, goal.target_pose.pose.position)
             #tmp_goal = transformPose(goal.target_pose, frame = base_frame)
             ang = math.atan2(tmp_vec.y, tmp_vec.x)
             
