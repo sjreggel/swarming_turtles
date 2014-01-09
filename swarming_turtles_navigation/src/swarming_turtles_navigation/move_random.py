@@ -152,8 +152,10 @@ def rotate_side(ang):
     if res < -math.pi:
         res += 2* math.pi
     if (res) < 0:
+        print "right"
         return ROTATE_RIGHT
     else:
+        print "left"
         return ROTATE_LEFT
 
 def rotation_aligned(ang, eps = None):
@@ -314,7 +316,7 @@ def move_to_goal_cb(goal):
             create_goal_from_pose(goal.target_pose)
 
         twist = get_twist()
-        if abs(abs(twist.angular.z) - 1.3) < 0.01:
+        if abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
             ang = get_jaw(goal.target_pose.pose.orientation)
             rotate_to_ang(ang)
         else:
