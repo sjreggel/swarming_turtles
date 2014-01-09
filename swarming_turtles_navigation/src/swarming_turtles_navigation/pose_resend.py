@@ -15,7 +15,7 @@ tfListen = None
 turtles = {}
 
 RATE = 10
-RADIUS = 0.2
+RADIUS = 0.25
 
 MIN_SPEED = 0.1
 
