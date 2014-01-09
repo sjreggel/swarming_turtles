@@ -18,7 +18,7 @@ SwarmCollvoid:
   min_error_holo: 0.04
   max_error_holo: 0.15
 
-  max_vel_with_obstacles: 0.4
+  max_vel_with_obstacles: 0.5
   
   footprint_radius: 0.2 #was 0.17
   xy_goal_tolerance: 0.2

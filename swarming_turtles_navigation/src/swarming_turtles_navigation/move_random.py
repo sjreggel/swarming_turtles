@@ -156,7 +156,7 @@ def rotate_side(ang):
     else:
         return ROTATE_LEFT
 
-def rotation_aligned(ang):
+def rotation_aligned(ang, eps = None):
     own_pose = get_own_pose()
     theta = get_jaw(own_pose.pose.orientation)
 
@@ -167,8 +167,11 @@ def rotation_aligned(ang):
         diff -= 2*math.pi
 
     #print diff
-    return  abs(diff) < EPS_ALIGN_THETA
-        
+    if eps is None:
+        return  abs(diff) < EPS_ALIGN_THETA
+    else:
+        return  abs(diff) < eps
+    
 def get_random_walk():
     dist = random.random() * 2.5
     ang = random.random() * 2. * math.pi 
@@ -311,7 +314,11 @@ def move_to_goal_cb(goal):
             create_goal_from_pose(goal.target_pose)
 
         twist = get_twist()
-        cmd_pub.publish(twist)
+        if abs(abs(twist.angular.z) - 1.3) < 0.01:
+            ang = get_jaw(goal.target_pose)
+            rotate_to_ang(ang)
+        else:
+            cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
             count_low_speed +=1
         r.sleep()
