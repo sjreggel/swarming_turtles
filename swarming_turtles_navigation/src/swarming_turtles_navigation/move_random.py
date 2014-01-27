@@ -120,12 +120,12 @@ def transformPose(pose_in, time_in = None, frame = hive):
     return None
 
 
-def get_own_pose():
+def get_own_pose(frame = hive):
     pose_stamped = PoseStamped()
     pose_stamped.header.stamp = rospy.Time.now()
     pose_stamped.header.frame_id = base_frame
     pose_stamped.pose.orientation.w = 1.0
-    return transformPose(pose_stamped)
+    return transformPose(pose_stamped, frame)
 
     
 def quat_msg_to_array(quat):

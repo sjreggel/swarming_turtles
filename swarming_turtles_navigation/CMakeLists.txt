@@ -80,7 +80,7 @@ add_executable(SwarmCollvoid src/Agent.cpp src/ROSAgent.cpp src/orca.cpp src/col
 target_link_libraries(SwarmCollvoid
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES})
-#add_dependencies(SwarmCollvoid ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(SwarmCollvoid ${PROJECT_NAME}_gencpp)
 
 
 ## Add cmake target dependencies of the executable/library
@@ -107,11 +107,11 @@ target_link_libraries(SwarmCollvoid
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS swarming_turtles_navigation swarming_turtles_navigation_node
+ install(TARGETS SwarmCollvoid
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
