@@ -22,8 +22,8 @@ markers_hive = [200, 199, 198, 197] #front, right, back, left
 MARKER_ANGS = [0, 90, 180, 270]
 MARKER_VEC_TO_CENTER = [[0, 0.05],[0, 0.05],[0, 0.05],[0, 0.05]]
 
-MAX_ANGLE = math.pi / 8.0
-MAX_DIST = 1.
+MAX_ANGLE = math.pi / 4.0
+MAX_DIST = 1.5
 
 last_seen = None
 
@@ -193,6 +193,7 @@ class DetectHive:
             #print r,p,theta
 
             pose = self.predict_pose(pose)
+            
 
             transform['pose'] = (pose.pose.position.x, pose.pose.position.y, 0)
             transform['quat'] = tuple(quat_msg_to_array(pose.pose.orientation))

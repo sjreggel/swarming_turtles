@@ -17,7 +17,7 @@ food_locations = {}
 markers_food = [201]
 
 MAX_ANGLE = math.pi / 4.0
-MAX_DIST = 1.5
+MAX_DIST = 2
 
 def quat_msg_to_array(quat):
     return [quat.x, quat.y, quat.z, quat.w]

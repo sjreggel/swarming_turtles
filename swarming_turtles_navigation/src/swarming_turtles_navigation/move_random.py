@@ -109,12 +109,18 @@ def stop():
 
 #helpers
 def transformPose(pose_in, time_in = None, frame = hive):
+
     if tfListen.frameExists(pose_in.header.frame_id) and tfListen.frameExists(frame):
         time = tfListen.getLatestCommonTime(frame, pose_in.header.frame_id)
+        #time = rospy.Time()
+
+        #tfListen.waitForTransform(pose_in.header.frame_id, frame, rospy.Time(), rospy.Duration(0.5))
         if not time_in:
             pose_in.header.stamp = time
         else:
             pose_in.header.stamp = time_in
+        #print pose_in.header.stamp
+        
         pose = tfListen.transformPose(frame, pose_in)
         return pose
     return None
@@ -125,7 +131,7 @@ def get_own_pose(frame = hive):
     pose_stamped.header.stamp = rospy.Time.now()
     pose_stamped.header.frame_id = base_frame
     pose_stamped.pose.orientation.w = 1.0
-    return transformPose(pose_stamped, frame)
+    return transformPose(pose_stamped, frame = frame)
 
     
 def quat_msg_to_array(quat):
