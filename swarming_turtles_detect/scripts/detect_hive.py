@@ -59,7 +59,7 @@ class DetectHive:
 
         
         self.get_hive = rospy.Service('get_hive', GetLocation, self.get_hive)
-        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
+        rospy.Subscriber('large_markers', AlvarMarkers, self.cb_ar_marker)
         
     def get_hive(self, req):
         res = GetLocationResponse()
@@ -194,6 +194,8 @@ class DetectHive:
 
             pose = self.predict_pose(pose)
             
+
+            print pose.pose.position
 
             transform['pose'] = (pose.pose.position.x, pose.pose.position.y, 0)
             transform['quat'] = tuple(quat_msg_to_array(pose.pose.orientation))

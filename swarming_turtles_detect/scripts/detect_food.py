@@ -28,7 +28,7 @@ class DetectFood:
     def __init__(self):
         self.tfListen = tf.TransformListener()
         rospy.sleep(0.5)
-        rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.cb_ar_marker)
+        rospy.Subscriber('large_markers', AlvarMarkers, self.cb_ar_marker)
         self.food_pub = rospy.Publisher('cur_food', PoseStamped)
 
         self.init_kalman()
