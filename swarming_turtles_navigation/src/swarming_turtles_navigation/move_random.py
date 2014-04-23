@@ -158,10 +158,10 @@ def rotate_side(ang):
     if res < -math.pi:
         res += 2* math.pi
     if (res) < 0:
-        print "right"
+        #print "right"
         return ROTATE_RIGHT
     else:
-        print "left"
+        #print "left"
         return ROTATE_LEFT
 
 def rotation_aligned(ang, eps = None):
@@ -332,7 +332,7 @@ def move_to_goal_cb(goal):
             
             #ang = get_jaw(goal.target_pose.pose.orientation)
             
-            print "goal ang", ang, "own ang", get_jaw(get_own_pose().pose.orientation)
+            #print "goal ang", ang, "own ang", get_jaw(get_own_pose().pose.orientation)
             if rotation_aligned(ang, eps = 0.5):
                 cmd_pub.publish(twist)
             else:
