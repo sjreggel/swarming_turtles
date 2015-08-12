@@ -8,7 +8,7 @@ import tf
 import math
 import actionlib
 import copy
-from ar_track_alvar.msg import AlvarMarkers
+from ar_track_alvar_msgs.msg import AlvarMarkers
 from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
 from actionlib_msgs.msg import *

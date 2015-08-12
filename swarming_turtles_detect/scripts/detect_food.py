@@ -2,7 +2,7 @@
 import rospy
 import tf
 import math
-from ar_track_alvar.msg import AlvarMarkers
+from ar_track_alvar_msgs.msg import AlvarMarkers
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 import cv2.cv as cv
 from swarming_turtles_detect.srv import *

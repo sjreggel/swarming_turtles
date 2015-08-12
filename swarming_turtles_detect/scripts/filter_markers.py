@@ -2,7 +2,7 @@
 import rospy
 import tf
 import math
-from ar_track_alvar.msg import AlvarMarkers, AlvarMarker
+from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 from geometry_msgs.msg import PoseStamped, Quaternion, Point, PoseArray
 import cv2.cv as cv
 
