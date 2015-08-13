@@ -12,12 +12,12 @@ import StringIO
 
 lc = None
 topic = '/communication'
-name = None
+own_name = None
 lcm_sub = None
 pub = None
 
 def init_globals():
-    global lc, name, pub, lcm_sub
+    global lc, own_name, pub, lcm_sub
     lc = lcm.LCM("udpm://224.1.1.1:5007?ttl=2")
     name = gethostname()
     lcm_sub = lc.subscribe(name, udp_callback)
@@ -30,7 +30,7 @@ def udp_callback(channel, data):
     pub.publish(msg)
     
 def handle_msg(msg):
-    if msg.receiver == name:
+    if msg.receiver == own_name:
         return
     send(msg)
     

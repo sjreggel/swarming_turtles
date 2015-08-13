@@ -1,13 +1,16 @@
-from geometry_msgs.msg import PoseStamped
-import tf
+#!/usr/bin/env python
 __author__ = 'danielclaes'
 import rospy
+import tf
+from geometry_msgs.msg import PoseStamped
 from swarming_turtles_msgs.msg import Turtles, Turtle
 
 RATE = 20
 MAX_NUM_TURTLES = 10  # TODO Make param
 
-TARGET_FRAME = '/hive'
+TARGET_FRAME = rospy.get_param('hive_frame', '/hive')
+own_name = ''
+
 
 def quat_msg_to_array(quat):
     return [quat.x, quat.y, quat.z, quat.w]
@@ -16,7 +19,7 @@ def quat_msg_to_array(quat):
 class FakeTurtlesDetect(object):
     def __init__(self):
         self.tf = tf.TransformListener()
-        self.turtles_pub = rospy.Publisher('/found_turtles', Turtles, queue_size=1)
+        self.turtles_pub = rospy.Publisher('found_turtles', Turtles, queue_size=1)
 
     def publish_turtles(self):
         turtles_msg = Turtles()
@@ -28,6 +31,8 @@ class FakeTurtlesDetect(object):
                 break
             turtle = Turtle()
             turtle.name = 'robot_%d' % i
+            if own_name == turtle.name:
+                continue
             turtle.position = self.get_turtle_pose(frame, time)
             if turtle.position is not None:
                 turtles_msg.turtles.append(turtle)
@@ -42,9 +47,13 @@ class FakeTurtlesDetect(object):
             else:
                 pose_in.header.stamp = time_in
                 # print pose_in.header.stamp
-            self.tf.waitForTransform(pose_in.header.frame_id, frame, pose_in.header.stamp, rospy.Duration(0.2))
-            pose = self.tf.transformPose(frame, pose_in)
-            return pose
+            try:
+                self.tf.waitForTransform(pose_in.header.frame_id, frame, pose_in.header.stamp, rospy.Duration(0.2))
+                pose = self.tf.transformPose(frame, pose_in)
+                return pose
+            except tf.Exception as e:
+                rospy.logwarn("transform in Fake turtles detect failed: %s", e)
+                return None
         return None
 
     def get_turtle_pose(self, frame, time=None):
@@ -59,8 +68,13 @@ class FakeTurtlesDetect(object):
 
 
 def main():
+    global own_name
     rospy.init_node('fake_food_hive_detection')
     fake_turtles_detect = FakeTurtlesDetect()
+
+    own_name = rospy.get_namespace()
+    own_name = own_name.replace('/', '')
+
     r = rospy.Rate(RATE)
     while not rospy.is_shutdown():
         fake_turtles_detect.publish_turtles()

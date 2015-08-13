@@ -5,7 +5,7 @@ interval_sim 100 # simulation timestep in milliseconds
 window
 ( 
   size [ 958 263 ] 
-  scale 34.855 
+  scale 19.675 
 )
 
 define map model
@@ -111,18 +111,18 @@ define stick position
 )
 define obst model
 (
-  size [0.400 0.400 0.400]
+  size [0.400 0.300 0.400]
   origin [0.000 0.000 0.000 0.000]
   gui_nose 1
 )
 
-obst( pose [ -2.019 -1.272 0.000 93.702 ] name "hive" color "blue")
-obst( pose [ -2.402 4.582 0.000 7.758 ] name "food" color "red")
+obst( pose [ -2.204 -1.873 0.000 93.702 ] name "hive" color "blue")
+obst( pose [ -2.108 3.821 0.000 -95.374 ] name "food" color "red")
 
 # robots added here automatically
-roomba( pose [ -1.700 -0.480 0.000 135.000 ] name "robot_0" color "black")
-roomba( pose [ -1.802 0.262 0.000 -165.000 ] name "robot_1" color "SlateGray")
-roomba( pose [ -2.159 -0.213 0.000 -105.000 ] name "robot_2" color "LightGrey")
-roomba( pose [ -2.212 0.635 0.000 -45.000 ] name "robot_3" color "dark slate blue")
-roomba( pose [ -2.483 0.180 0.000 15.000 ] name "robot_4" color "royal blue")
-roomba( pose [ -2.585 -0.406 0.000 75.000 ] name "robot_5" color "LightSkyBlue")
+roomba( pose [ -1.682 0.095 0.000 -93.205 ] name "robot_0" color "black")
+roomba( pose [ -2.114 -0.795 0.000 -165.000 ] name "robot_1" color "SlateGray")
+#roomba( pose [ -2.159 -0.213 0.000 -105.000 ] name "robot_2" color "LightGrey")
+#roomba( pose [ -2.212 0.635 0.000 -45.000 ] name "robot_3" color "dark slate blue")
+#roomba( pose [ -2.483 0.180 0.000 15.000 ] name "robot_4" color "royal blue")
+#roomba( pose [ -2.585 -0.406 0.000 75.000 ] name "robot_5" color "LightSkyBlue")

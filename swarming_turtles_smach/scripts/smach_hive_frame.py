@@ -1,33 +1,25 @@
 #!/usr/bin/env python
+from socket import gethostname
+import math
 
 import rospy
 import smach
 import smach_ros
-import tf
-import math
-import random
 import actionlib
-import copy
-
-from socket import gethostname
-
-from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
+from geometry_msgs.msg import Twist, PoseStamped, Vector3
 from move_base_msgs.msg import *
 from actionlib_msgs.msg import *
-
 from swarming_turtles_detect.srv import GetLocation, ForgetLocation
-
-from swarming_turtles_msgs.msg import Turtles, Turtle
-from swarming_turtles_navigation.srv import GetCollvoidTwist
-import swarming_turtles_navigation.move_random as utils
+from swarming_turtles_msgs.msg import Turtles
 from std_srvs.srv import Empty
+import swarming_turtles_navigation.move_random as utils
 
 turtles = {}
 closest = ''
 
 tfListen = None
 
-name = ''  # hostname used for communication
+own_name = ''  # hostname used for communication
 
 hive_loc = None
 move_random_stop = None
@@ -49,24 +41,31 @@ FIND_TIMEOUT = 1.0
 LAST_SEEN = 3.0  # check last seen for other turtle
 EPS_TARGETS = 0.2  # if targets are further away than that resend goal
 
-INWARDS = 0.4  # move loc xx meters inwards from detected marker locations
+INWARDS = 0.8  # move loc xx meters inwards from detected marker locations
 
-Y_OFFSET = 1.5  # move loc xx towards exit
+Y_OFFSET_EXIT = -1.  # move loc xx towards exit
+X_OFFSET_EXIT = 0.5  # move loc xx towards exit
+
+Y_OFFSET_ENTRY = 1.  # move loc xx towards exit
+X_OFFSET_ENTRY = 0.5  # move loc xx towards exit
+
 
 MIN_DIST_ASK = 2.0  # how close to include in asking?
 
 RATE = 10
 
-hive = "/hive"
-odom = "/odom"
-base_frame = "/base_link"
+hive = rospy.get_param('hive_frame', '/hive')
+
+global_frame = rospy.get_param('global_frame', '/odom')
+base_frame = rospy.get_param('base_frame', '/base_link')
 
 MAX_DIST = 1.5
 move_action_server = None
 
+offset = rospy.get_param('marker_offset', math.pi/2.0)
 
 def init_globals():
-    global name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
+    global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
     utils.init_globals()
 
     move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
@@ -75,7 +74,7 @@ def init_globals():
     hive_loc = PoseStamped()
     hive_loc.header.frame_id = hive
     hive_loc.pose.orientation.w = 1
-    hive_loc = utils.move_location_inwards(hive_loc, INWARDS)
+    hive_loc = utils.move_location_inwards(hive_loc, INWARDS, offset=offset)
 
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent=True)
     get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent=True)
@@ -83,9 +82,14 @@ def init_globals():
     move_random_start = rospy.ServiceProxy('move_random_start', Empty)
     move_random_stop = rospy.ServiceProxy('move_random_stop', Empty)
 
-    name = gethostname()
+    own_name = rospy.get_namespace()
+    if own_name == "/":
+        own_name = gethostname()
+    else:
+        own_name = own_name.replace('/', '')
+    own_name = rospy.get_param('~name', own_name)
 
-    rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)  # which turtles are near?
+    rospy.Subscriber('found_turtles', Turtles, cb_found_turtles)  # which turtles are near?
 
 
 def seen_hive():
@@ -162,6 +166,9 @@ def cb_found_turtles(msg):
     closest_tmp = ''
     closest_dist = MIN_DIST_ASK
     for turtle in msg.turtles:
+        if turtle.name == own_name:
+            continue
+        # TODO: check angle if in view (for simulation)
         pose = utils.transformPose(turtle.position, frame=base_frame)
         dist = utils.dist_vec(pose.pose.position, Vector3())
         if dist < closest_dist:
@@ -277,7 +284,7 @@ class CheckIfAtLocation(smach.State):
                     print "forget_food failed"
                 return 'failed'
             found = at_food
-            target = utils.move_location_inwards(target, INWARDS)
+            target = utils.move_location_inwards(target, INWARDS, offset=offset)
 
         ang = utils.get_jaw(target.pose.orientation)
         rate = rospy.Rate(RATE)
@@ -356,12 +363,12 @@ class MoveToInLocation(smach.State):
             if target is None:
                 return 'failed'
             at_loc = at_food
-            target = utils.move_location_inwards(target, INWARDS)
+            target = utils.move_location_inwards(target, INWARDS, offset=offset)
 
         if at_loc():
             return 'success'
 
-        goal = utils.move_location(target, x=-1.0, y=-0.5)
+        goal = utils.move_location(target, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
         goal = utils.create_goal_message(goal)
 
         move_action_server.send_goal(goal)
@@ -417,9 +424,9 @@ class MoveToOutLocation(smach.State):
             target = get_food()
             if target is None:
                 return 'failed'
-            target = utils.move_location_inwards(target, INWARDS)
+            target = utils.move_location_inwards(target, INWARDS, offset)
 
-        goal = utils.move_location(target, x=-0.2, y=Y_OFFSET)
+        goal = utils.move_location(target, x=X_OFFSET_EXIT, y=Y_OFFSET_EXIT)
         goal = utils.create_goal_message(goal)
 
         move_action_server.send_goal(goal)
@@ -528,7 +535,7 @@ class MoveToFoodLocation(smach.State):
                 print "forget_food failed"
             print "target is None"
             return 'failed'
-        goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
+        goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS, offset=offset))
         move_action_server.send_goal(goal)
 
         rate = rospy.Rate(RATE)
@@ -564,7 +571,7 @@ class MoveToFoodLocation(smach.State):
                 print "resending goal"
                 move_action_server.cancel_all_goals()
                 target = pose
-                goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
+                goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS, offset=offset))
                 move_action_server.send_goal(goal)
 
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:

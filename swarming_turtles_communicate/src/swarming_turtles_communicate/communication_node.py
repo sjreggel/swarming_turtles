@@ -4,43 +4,41 @@ from swarming_turtles_msgs.msg import CommunicationProtocol
 from swarming_turtles_detect.srv import *
 from socket import gethostname
 
-
 topic = '/communication'
 MAX_TIME = 1.0
-location_received = {} 
-name = ''
-comm_pub = ''
+location_received = {}
+own_name = ''
+comm_pub = None
+get_food_srv = None
+
 
 def cb_communication(msg):
-    global received, received_msg, location_received
-    if not msg.receiver == name:
+    if not msg.receiver == own_name:
         return
     req = msg.request.split(' ')
-    if "request" == req[0]: #handle reqest
+    if "request" == req[0]:  # handle reqest
         pose = None
         if req[1] == 'food':
             pose = get_food()
             if pose is None:
                 return
-        else: #hive asked do nothing yet hive in baseframe
+        else:  # hive asked do nothing yet hive in baseframe
             return
         if pose is not None:
             answer(msg.sender, req[1], pose)
-            
     elif "answer" == req[0]:
         print "GOT ANSWER", req[1]
         process_msg(msg)
 
+
 def process_msg(msg):
     global location_received
-    #if msg.sender not in turtles.keys():
-    #    return False
-    #turtle = turtles[msg.sender]
-    #if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
+    # if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
     #    print 'message too old'
     #    return False
     location_received['from'] = msg.sender
-    location_received['pose'] = msg.location 
+    location_received['pose'] = msg.location
+
 
 def get_food():
     try:
@@ -48,15 +46,16 @@ def get_food():
         if resp.res == '':
             return None
         return resp.pose
-    except:
-        print "service call failed"
+    except rospy.ServiceException as e:
+        print "Communication service call to get food location failed", e
         return None
+
 
 def answer(receiver, loc_name, pose):
     msg = CommunicationProtocol()
-    msg.sender = name
+    msg.sender = own_name
     msg.receiver = receiver
-    msg.request = "answer %s"%(loc_name)
+    msg.request = "answer %s" % (loc_name)
     msg.location = pose
     msg.location.header.stamp = rospy.Time.now()
     comm_pub.publish(msg)
@@ -68,44 +67,52 @@ def get_received_location(req):
         res.res = location_received['from']
         res.pose = location_received['pose']
     return res
-    
+
 
 def ask_hive(req):
     request(req.location, 'hive')
     return GetLocationResponse()
-    
+
+
 def ask_food(req):
     request(req.location, 'food')
     return GetLocationResponse()
-    
+
+
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
-    msg.sender = name
+    msg.sender = own_name
     msg.receiver = receiver
-    msg.request = "request %s"%(loc_name)
-    #msg.location = get_own_pose()
+    msg.request = "request %s" % (loc_name)
+    # msg.location = get_own_pose()
 
     comm_pub.publish(msg)
 
 
 def main():
-    global get_food_srv, name, comm_pub
-    name = gethostname()
+    global get_food_srv, own_name, comm_pub
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
+
+    own_name = rospy.get_namespace()
+    if own_name == "/":
+        own_name = gethostname()
+    else:
+        own_name = own_name.replace('/', '')
+    own_name = rospy.get_param('~name', own_name)
+
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
 
-    comm_pub = rospy.Publisher(topic, CommunicationProtocol)
+    comm_pub = rospy.Publisher(topic, CommunicationProtocol, queue_size=1)
 
-    ask_food_srv = rospy.Service('ask_food', GetLocation, ask_food)
-    ask_hive_srv = rospy.Service('ask_hive', GetLocation, ask_hive)
+    rospy.Service('ask_food', GetLocation, ask_food)
+    rospy.Service('ask_hive', GetLocation, ask_hive)
 
-    
-    received_loc_srv = rospy.Service('get_received_location', GetLocation, get_received_location)
+    rospy.Service('get_received_location', GetLocation, get_received_location)
 
     rospy.wait_for_service(get_food_srv)
     rospy.spin()
-    
+
 
 if __name__ == "__main__":
     main()

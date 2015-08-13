@@ -42,8 +42,10 @@ STAND_STILL_THETA = 0.02
 
 active = False
 RATE = 10
-base_frame = '/base_link'
-hive = '/hive'
+
+base_frame = rospy.get_param('base_frame', '/base_link')
+
+hive = rospy.get_param('hive_frame', '/hive')
 
 min_dist_laser = 2 * MIN_DIST_LASER
 
@@ -60,7 +62,7 @@ def init_globals():
     global tfListen, cmd_pub
     tfListen = tf.TransformListener()
     rospy.sleep(1)
-    cmd_pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)  # publish Twist
+    cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)  # publish Twist
 
 
 def cb_laser_scan(msg):
@@ -159,7 +161,7 @@ def rotate_side(ang):
         res -= 2 * math.pi
     if res < -math.pi:
         res += 2 * math.pi
-    if (res) < 0:
+    if res < 0:
         # print "right"
         return ROTATE_RIGHT
     else:
@@ -303,7 +305,7 @@ def move_random():
 
 
 def move_to_goal_cb(goal):
-    global action_server
+    global action_server, count_low_speed
     count_low_speed = 0
     create_goal_from_pose(goal.target_pose)
     r = rospy.Rate(RATE)
@@ -402,19 +404,19 @@ def move_location(pose, x=0, y=0):
     return pose_stamped
 
 
-def move_location_inwards(pose, dist):
+def move_location_inwards(pose, dist, offset=math.pi/2.0):
     pose_stamped = PoseStamped()
     pose_stamped.header.frame_id = pose.header.frame_id
     ang = get_jaw(pose.pose.orientation)
     vec = Vector3()
     vec.x = dist
     # vec.y = -Y_OFFSET
-    vec = rotate_vec_by_angle(vec, ang - math.pi / 2.0)
+    vec = rotate_vec_by_angle(vec, ang - offset)
 
     pose_stamped.pose.position.x = pose.pose.position.x + vec.x
     pose_stamped.pose.position.y = pose.pose.position.y + vec.y
 
-    q = tf.transformations.quaternion_from_euler(0, 0, ang + math.pi / 2.0, axes='sxyz')
+    q = tf.transformations.quaternion_from_euler(0, 0, ang + offset, axes='sxyz')
 
     pose_stamped.pose.orientation = Quaternion(*q)
 
@@ -440,7 +442,7 @@ def main():
     rospy.Service('move_random_start', Empty, move_random_start)
     rospy.Service('move_random_stop', Empty, move_random_stop)
 
-    goal_pub = rospy.Publisher('cur_goal', PoseStamped)
+    goal_pub = rospy.Publisher('cur_goal', PoseStamped, queue_size=1)
     get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist, persistent=True)
     rospy.loginfo("wait for service")
     rospy.wait_for_service('SwarmCollvoid/get_collvoid_twist')

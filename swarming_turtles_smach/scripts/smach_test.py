@@ -47,7 +47,7 @@ bumpers = [False] * 3
 tfListen = None
 cmd_pub = None
 
-name = ''
+own_name = ''
 topic = '/communication'
 topic_in = '/communication_in'
 
@@ -94,7 +94,7 @@ open_cons = {}
 min_dist_laser = 0
 
 def init_globals():
-    global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, name
+    global markers, tfListen, cmd_pub, hive_pub, comm_pub, food_pub, own_name
     markers['food'] = [201, 202]
     markers['hive'] = [200, 199]
     tfListen = tf.TransformListener()
@@ -196,7 +196,7 @@ def cb_laser_scan(msg):
             
 def cb_communication(msg):
     global received, received_msg, location_received
-    if not msg.receiver == name:
+    if not msg.receiver == own_name:
         return
     req = msg.request.split(' ')
     if "request" == req[0] and not sending: #handle reqest
@@ -211,7 +211,7 @@ def cb_communication(msg):
 
 def answer(receiver, loc_name, pose):
     msg = CommunicationProtocol()
-    msg.sender = name
+    msg.sender = own_name
     msg.receiver = receiver
     msg.request = "answer %s"%(loc_name)
     msg.location = pose
@@ -222,7 +222,7 @@ def answer(receiver, loc_name, pose):
    
 def request(receiver, loc_name):
     msg = CommunicationProtocol()
-    msg.sender = name
+    msg.sender = own_name
     msg.receiver = receiver
     msg.request = "request %s"%(loc_name)
     msg.location = turtles[receiver]

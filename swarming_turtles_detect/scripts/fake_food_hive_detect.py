@@ -1,8 +1,8 @@
-from geometry_msgs.msg import PoseStamped
-import tf
-
+#!/usr/bin/env python
 __author__ = 'danielclaes'
 import rospy
+import tf
+from geometry_msgs.msg import PoseStamped
 from swarming_turtles_detect.srv import *
 from nav_msgs.msg import Odometry
 
@@ -10,7 +10,8 @@ HIVE_TOPIC = '/hive/base_pose_ground_truth'
 FOOD_TOPICS = ['/food/base_pose_ground_truth']
 
 WORLD_FRAME = '/world'
-HIVE_FRAME = '/hive'
+HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
+
 
 RATE = 20
 
@@ -23,6 +24,7 @@ def quat_msg_to_array(quat):
 
 class FakeFoodHiveDetect(object):
     def __init__(self):
+        self.tf = tf.TransformListener()
         self.food_locations = {}
         self.hive_location = PoseStamped()
         rospy.Subscriber(HIVE_TOPIC, Odometry, self.hive_cb)
@@ -41,9 +43,30 @@ class FakeFoodHiveDetect(object):
         :type idx: int
         """
         key = "food" + "_" + str(idx)
-        self.food_locations[key] = PoseStamped()
-        self.food_locations[key].pose = msg.pose.pose
-        self.food_locations[key].header = msg.header
+        p = PoseStamped()
+        p.pose = msg.pose.pose
+        p.header = msg.header
+        p = self.transform_pose(p, HIVE_FRAME, time_in=msg.header.stamp)
+        if p is not None:
+            self.food_locations[key] = p
+
+    def transform_pose(self, pose_in, frame, time_in=None):
+        if self.tf.frameExists(pose_in.header.frame_id) and self.tf.frameExists(frame):
+            #
+            if time_in is None:
+                pose_in.header.stamp = rospy.Time.now()
+            else:
+                pose_in.header.stamp = time_in
+                # print pose_in.header.stamp
+            try:
+                self.tf.waitForTransform(pose_in.header.frame_id, frame, pose_in.header.stamp, rospy.Duration(0.2))
+                pose = self.tf.transformPose(frame, pose_in)
+                return pose
+            except tf.Exception as e:
+                rospy.logwarn("transform in Fake turtles detect failed: %s", e)
+                return None
+        return None
+
 
     def hive_cb(self, msg):
         global transform
