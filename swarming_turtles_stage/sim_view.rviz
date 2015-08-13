@@ -102,7 +102,7 @@ Visualization Manager:
       Marker Topic: /robot_0/vo
       Name: Marker
       Namespaces:
-        {}
+        robot_0/base_link: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -110,17 +110,17 @@ Visualization Manager:
       Marker Topic: /robot_0/orca_lines
       Name: Marker
       Namespaces:
-        {}
+        robot_0/base_link: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /robot_0/samples
       Name: MarkerArray
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /robot_0/obstacles
