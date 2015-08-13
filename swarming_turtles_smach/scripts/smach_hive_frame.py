@@ -27,7 +27,7 @@ closest = ''
 
 tfListen = None
 
-name = '' #hostname used for communication
+name = ''  # hostname used for communication
 
 hive_loc = None
 move_random_stop = None
@@ -35,10 +35,10 @@ move_random_start = None
 get_food_srv = None
 get_hive_srv = None
 
-#config
+# config
 MAX_RETRY = 5
 SEARCH_TIMEOUT = 15
-ASK_TIMEOUT = 1.0 
+ASK_TIMEOUT = 1.0
 
 MOVE_RANDOM_TIME = 3.0
 
@@ -46,14 +46,14 @@ STAND_STILL_TIMES = 10
 
 FIND_TIMEOUT = 1.0
 
-LAST_SEEN = 3.0 #check last seen for other turtle
-EPS_TARGETS = 0.2 #if targets are further away than that resend goal
+LAST_SEEN = 3.0  # check last seen for other turtle
+EPS_TARGETS = 0.2  # if targets are further away than that resend goal
 
-INWARDS = 0.4 #move loc xx meters inwards from detected marker locations
+INWARDS = 0.4  # move loc xx meters inwards from detected marker locations
 
-Y_OFFSET = 1.5 #move loc xx towards exit
+Y_OFFSET = 1.5  # move loc xx towards exit
 
-MIN_DIST_ASK = 2.0 #how close to include in asking?
+MIN_DIST_ASK = 2.0  # how close to include in asking?
 
 RATE = 10
 
@@ -64,45 +64,43 @@ base_frame = "/base_link"
 MAX_DIST = 1.5
 move_action_server = None
 
+
 def init_globals():
     global name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
     utils.init_globals()
 
-
     move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
     move_action_server.wait_for_server()
-
 
     hive_loc = PoseStamped()
     hive_loc.header.frame_id = hive
     hive_loc.pose.orientation.w = 1
     hive_loc = utils.move_location_inwards(hive_loc, INWARDS)
-    
-    get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
-    get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
+
+    get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent=True)
+    get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent=True)
 
     move_random_start = rospy.ServiceProxy('move_random_start', Empty)
     move_random_stop = rospy.ServiceProxy('move_random_stop', Empty)
 
-    
     name = gethostname()
 
-    rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles) #which turtles are near?
+    rospy.Subscriber('/found_turtles', Turtles, cb_found_turtles)  # which turtles are near?
 
 
 def seen_hive():
     global get_hive_srv
     try:
         resp = get_hive_srv()
-        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT
+        return not resp.res == '' and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < FIND_TIMEOUT
     except:
         rospy.logerr("service call to get hive failed")
         get_hive_srv.close()
-        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
+        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent=True)
 
         return False
 
-    
+
 def at_hive():
     global get_hive_srv
     try:
@@ -110,15 +108,17 @@ def at_hive():
         own_pose = utils.get_own_pose()
         target = PoseStamped()
         dist = utils.dist_vec(own_pose.pose.position, target.pose.position)
-        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT and dist < MAX_DIST
+        return not resp.res == '' \
+            and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < FIND_TIMEOUT \
+            and dist < MAX_DIST
     except:
         rospy.logerr("service call to get hive failed")
         get_hive_srv.close()
-        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent = True)
+        get_hive_srv = rospy.ServiceProxy('get_hive', GetLocation, persistent=True)
 
         return False
 
-    
+
 def at_food():
     global get_food_srv
     try:
@@ -127,30 +127,33 @@ def at_food():
         target = resp.pose
         dist = utils.dist_vec(own_pose.pose.position, target.pose.position)
 
-        return not resp.res == '' and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < FIND_TIMEOUT and dist < MAX_DIST
+        return not resp.res == '' \
+            and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < FIND_TIMEOUT \
+            and dist < MAX_DIST
     except:
         rospy.logerr("service call to get food failed")
         get_food_srv.close()
-        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
+        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent=True)
         return False
+
 
 def get_food():
     global get_food_srv
     try:
         resp = get_food_srv()
         if not resp.res == '':
-            #pose = resp.pose
+            # pose = resp.pose
             return resp.pose
         else:
             return None
     except:
         rospy.logerr("service call to get food failed")
         get_food_srv.close()
-        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent = True)
+        get_food_srv = rospy.ServiceProxy('get_location', GetLocation, persistent=True)
 
         return None
 
-    
+
 def cb_found_turtles(msg):
     global closest, turtles
     if len(msg.turtles) == 0:
@@ -159,7 +162,7 @@ def cb_found_turtles(msg):
     closest_tmp = ''
     closest_dist = MIN_DIST_ASK
     for turtle in msg.turtles:
-        pose = utils.transformPose(turtle.position, frame = base_frame)
+        pose = utils.transformPose(turtle.position, frame=base_frame)
         dist = utils.dist_vec(pose.pose.position, Vector3())
         if dist < closest_dist:
             closest_dist = dist
@@ -170,41 +173,39 @@ def cb_found_turtles(msg):
 
 class SearchFood(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['found', 'not_found'], output_keys = ['pose_out'])
-        self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent = True)
-        self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent = True)
+        smach.State.__init__(self, outcomes=['found', 'not_found'], output_keys=['pose_out'])
+        self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent=True)
+        self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent=True)
 
-        
-        #rospy.wait_for_service(self.ask_food_srv)
-        #rospy.wait_for_service(self.get_received_location_srv)
 
-        
+        # rospy.wait_for_service(self.ask_food_srv)
+        # rospy.wait_for_service(self.get_received_location_srv)
+
     def ask_food(self, name):
         try:
-            resp = self.ask_food_srv(location = name)
+            resp = self.ask_food_srv(location=name)
             return resp.pose
         except:
             rospy.logerr("service call ask food failed")
             self.ask_food_srv.close()
-            self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent = True)
-            
+            self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent=True)
+
             return None
 
-    def get_received_location(self,asked_turtles):
+    def get_received_location(self, asked_turtles):
         try:
-            resp = self.get_received_location_srv(location = '')
-            if resp.res in asked_turtles and (rospy.Time.now()-resp.pose.header.stamp).to_sec() < ASK_TIMEOUT:
+            resp = self.get_received_location_srv(location='')
+            if resp.res in asked_turtles and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < ASK_TIMEOUT:
                 return resp.pose
             else:
                 return None
         except:
             rospy.logerr("service call to receive locaiton failed")
             self.get_received_location_srv.close()
-            self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent = True)
-            
+            self.get_received_location_srv = rospy.ServiceProxy('get_received_location', GetLocation, persistent=True)
+
             return None
 
-        
     def execute(self, userdata):
         global closest
         closest = ''
@@ -212,12 +213,12 @@ class SearchFood(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         found = False
-        
+
         move_random_start()
         userdata.pose_out = None
         pose = None
         while not found:
-            if (rospy.Time.now()-start).to_sec() > SEARCH_TIMEOUT:
+            if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'not_found'
             pose = get_food()
@@ -228,9 +229,9 @@ class SearchFood(smach.State):
             if pose is not None:
                 found = True
                 break
-            if not closest==''  and closest not in asked_turtles:
+            if not closest == '' and closest not in asked_turtles:
                 asked_turtles.append(closest)
-                print "asking ", closest 
+                print "asking ", closest
                 self.ask_food(closest)
             rate.sleep()
 
@@ -238,12 +239,12 @@ class SearchFood(smach.State):
 
         move_random_stop()
         return 'found'
-           
+
 
 class PreSearchFoodLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['known', 'not_known'])
-        
+
     def execute(self, userdata):
         if get_food() is not None:
             return 'known'
@@ -256,19 +257,19 @@ class CheckIfAtLocation(smach.State):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'])
         self.loc = loc
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
-      
+
     def execute(self, userdata):
         target = None
         found = None
-        if self.loc =='hive':
+        if self.loc == 'hive':
             target = hive_loc
             found = at_hive
-        else: #food
+        else:  # food
             target = get_food()
-                        
+
             if target is None and userdata.pose_in is not None:
                 target = userdata.pose_in
-                
+
             if target is None:
                 try:
                     self.forget_food()
@@ -277,7 +278,6 @@ class CheckIfAtLocation(smach.State):
                 return 'failed'
             found = at_food
             target = utils.move_location_inwards(target, INWARDS)
-        
 
         ang = utils.get_jaw(target.pose.orientation)
         rate = rospy.Rate(RATE)
@@ -296,30 +296,29 @@ class CheckIfAtLocation(smach.State):
         return 'success'
 
 
-
-
 class SearchHive(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['success'])
-        
+
     def execute(self, userdata):
         rate = rospy.Rate(RATE)
         start = rospy.Time.now()
         move_random_start()
         while True:
-            if (rospy.Time.now()-start).to_sec() > 2*SEARCH_TIMEOUT:
+            if (rospy.Time.now() - start).to_sec() > 2 * SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'success'
-         
+
             if seen_hive():
                 move_random_stop()
                 return 'success'
             rate.sleep()
 
+
 class InitHive(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['success'])
-        
+
     def execute(self, userdata):
         rate = rospy.Rate(RATE)
         start = rospy.Time.now()
@@ -334,24 +333,22 @@ class InitHive(smach.State):
             rate.sleep()
 
 
-            
-
 class MoveToInLocation(smach.State):
     def __init__(self, loc):
-        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
+        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.loc = loc
-        
+
     def execute(self, userdata):
         global move_action_server
 
         target = None
 
-        if self.loc =='hive':
+        if self.loc == 'hive':
             target = hive_loc
             at_loc = at_hive
         else:
             target = get_food()
-            
+
             if target is None and userdata.pose_in is not None:
                 target = userdata.pose_in
                 userdata.pose_out = target
@@ -363,8 +360,8 @@ class MoveToInLocation(smach.State):
 
         if at_loc():
             return 'success'
-        
-        goal = utils.move_location(target, x = -1.0, y = -0.5)
+
+        goal = utils.move_location(target, x=-1.0, y=-0.5)
         goal = utils.create_goal_message(goal)
 
         move_action_server.send_goal(goal)
@@ -389,7 +386,7 @@ class MoveToInLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
-                
+
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
                 return 'success'
@@ -406,24 +403,23 @@ class MoveToInLocation(smach.State):
             rate.sleep()
 
 
-            
 class MoveToOutLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
         self.loc = loc
         self.TIME_OUT = 3.0
-        
+
     def execute(self, userdata):
         target = None
-        if self.loc =='hive':
+        if self.loc == 'hive':
             target = hive_loc
         else:
             target = get_food()
             if target is None:
                 return 'failed'
             target = utils.move_location_inwards(target, INWARDS)
-            
-        goal = utils.move_location(target, x = -0.2, y = Y_OFFSET)
+
+        goal = utils.move_location(target, x=-0.2, y=Y_OFFSET)
         goal = utils.create_goal_message(goal)
 
         move_action_server.send_goal(goal)
@@ -431,10 +427,10 @@ class MoveToOutLocation(smach.State):
         rate = rospy.Rate(RATE)
 
         start = rospy.Time.now()
-        
+
         stand_still = 0
         old_pose = utils.get_own_pose()
-        
+
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
@@ -444,10 +440,10 @@ class MoveToOutLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
-        
-            if (rospy.Time.now()-start).to_sec() > self.TIME_OUT:
+
+            if (rospy.Time.now() - start).to_sec() > self.TIME_OUT:
                 move_action_server.cancel_all_goals()
-                return 'failed' 
+                return 'failed'
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
                 return 'success'
@@ -455,7 +451,8 @@ class MoveToOutLocation(smach.State):
                 move_action_server.cancel_all_goals()
                 return 'failed'
             rate.sleep()
-       
+
+
 class MoveToHiveLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
@@ -471,7 +468,7 @@ class MoveToHiveLocation(smach.State):
         self.retry = 0
         stand_still = 0
         old_pose = utils.get_own_pose()
-        
+
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
@@ -485,12 +482,12 @@ class MoveToHiveLocation(smach.State):
                     move_action_server.wait_for_server()
 
                     if self.retry < MAX_RETRY:
-                        self.retry +=1
+                        self.retry += 1
                         move_action_server.send_goal(goal)
                     else:
                         move_action_server.cancel_all_goals()
                         return 'failed'
-        
+
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
@@ -501,22 +498,20 @@ class MoveToHiveLocation(smach.State):
                 return 'success'
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
-                if self.retry < 2*MAX_RETRY:
-                    self.retry +=1
+                if self.retry < 2 * MAX_RETRY:
+                    self.retry += 1
                     move_action_server.send_goal(goal)
                 else:
                     move_action_server.cancel_all_goals()
                     return 'failed'
             rate.sleep()
 
-            
-    
+
 class MoveToFoodLocation(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys = ['pose_in'], output_keys = ['pose_out'])
+        smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
-      
-        
+
     def execute(self, userdata):
         global move_action_server
 
@@ -528,7 +523,7 @@ class MoveToFoodLocation(smach.State):
 
         if target is None:
             try:
-                self.forget_food(location = "")
+                self.forget_food(location="")
             except:
                 print "forget_food failed"
             print "target is None"
@@ -541,7 +536,7 @@ class MoveToFoodLocation(smach.State):
         self.retry = 0
         stand_still = 0
         old_pose = utils.get_own_pose()
-        
+
         while True:
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
@@ -555,7 +550,7 @@ class MoveToFoodLocation(smach.State):
                     print "standing still too long, failed to go to food"
 
                     try:
-                        self.forget_food(location = "")
+                        self.forget_food(location="")
                     except:
                         print "forget_food failed"
                     return 'failed'
@@ -571,22 +566,23 @@ class MoveToFoodLocation(smach.State):
                 target = pose
                 goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS))
                 move_action_server.send_goal(goal)
-                
+
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
                 return 'success'
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
                 if self.retry < MAX_RETRY:
-                    self.retry +=1
+                    self.retry += 1
                     move_action_server.send_goal(goal)
                 else:
                     try:
-                        self.forget_food(location = "")
+                        self.forget_food(location="")
                     except:
                         print "forget_food failed"
                     return 'failed'
             rate.sleep()
+
 
 def main():
     rospy.init_node('swarming_turtles_machine')
@@ -595,30 +591,44 @@ def main():
     sm = smach.StateMachine(outcomes=['end'])
     sm.userdata.pose = None
     with sm:
-        #Hive states
-        smach.StateMachine.add("InitHive", InitHive(), transitions = {'success': 'GoToHiveOut'})
-        smach.StateMachine.add("SearchHive", SearchHive(), transitions = {'success':'GoToHiveIn'})
+        # Hive states
+        smach.StateMachine.add("InitHive", InitHive(), transitions={'success': 'GoToHiveOut'})
+        smach.StateMachine.add("SearchHive", SearchHive(), transitions={'success': 'GoToHiveIn'})
 
-        smach.StateMachine.add("GoToHiveIn", MoveToInLocation('hive'), transitions = {'failed':'GoToHive', 'success':'GoToHive'})
-        smach.StateMachine.add("GoToHive", MoveToHiveLocation(), transitions = {'failed':'SearchHive', 'success':'AtHive'})
-       
-        smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'), transitions = {'failed':'SearchHive', 'success':'GoToHiveOut'})
-        smach.StateMachine.add("GoToHiveOut", MoveToOutLocation('hive'), transitions = {'failed':'PreSearchFood', 'success':'PreSearchFood'})
-        
-        
+        smach.StateMachine.add("GoToHiveIn", MoveToInLocation('hive'),
+                               transitions={'failed': 'GoToHive', 'success': 'GoToHive'})
+        smach.StateMachine.add("GoToHive", MoveToHiveLocation(),
+                               transitions={'failed': 'SearchHive', 'success': 'AtHive'})
+
+        smach.StateMachine.add("AtHive", CheckIfAtLocation('hive'),
+                               transitions={'failed': 'SearchHive', 'success': 'GoToHiveOut'})
+        smach.StateMachine.add("GoToHiveOut", MoveToOutLocation('hive'),
+                               transitions={'failed': 'PreSearchFood', 'success': 'PreSearchFood'})
+
+
         # #food states
-        smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(), transitions = {'known':'GoToFoodIn', 'not_known':'SearchFood'})
-        smach.StateMachine.add("SearchFood", SearchFood(), transitions = {'found':'GoToFoodIn', 'not_found':'SearchFood'}, remapping = {'pose_out':'pose'})
+        smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(),
+                               transitions={'known': 'GoToFoodIn', 'not_known': 'SearchFood'})
+        smach.StateMachine.add("SearchFood", SearchFood(),
+                               transitions={'found': 'GoToFoodIn', 'not_found': 'SearchFood'},
+                               remapping={'pose_out': 'pose'})
 
-        smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'), transitions = {'failed':'GoToFood', 'success':'GoToFood'}, remapping = {'pose_in': 'pose', 'pose_out':'pose'})
-        smach.StateMachine.add("GoToFood", MoveToFoodLocation(), transitions = {'failed':'SearchFood', 'success':'AtFood'}, remapping = {'pose_in':'pose', 'pose_out':'pose'})
-        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'), transitions = {'failed':'SearchFood', 'success':'GoToFoodOut'}, remapping = {'pose_in':'pose'})
-        smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'), transitions = {'failed':'GoToHiveIn', 'success':'GoToHiveIn'})
+        smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'),
+                               transitions={'failed': 'GoToFood', 'success': 'GoToFood'},
+                               remapping={'pose_in': 'pose', 'pose_out': 'pose'})
+        smach.StateMachine.add("GoToFood", MoveToFoodLocation(),
+                               transitions={'failed': 'SearchFood', 'success': 'AtFood'},
+                               remapping={'pose_in': 'pose', 'pose_out': 'pose'})
+        smach.StateMachine.add("AtFood", CheckIfAtLocation('food'),
+                               transitions={'failed': 'SearchFood', 'success': 'GoToFoodOut'},
+                               remapping={'pose_in': 'pose'})
+        smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'),
+                               transitions={'failed': 'GoToHiveIn', 'success': 'GoToHiveIn'})
 
-        
-        #smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
-       
-        
+
+        # smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
+
+
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/swarming_turtles')
     sis.start()
@@ -630,6 +640,6 @@ def main():
     rospy.spin()
     sis.stop()
 
-    
+
 if __name__ == '__main__':
     main()
