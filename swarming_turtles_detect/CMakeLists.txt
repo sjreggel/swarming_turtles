@@ -31,6 +31,7 @@ catkin_python_setup()
    FILES
    GetLocation.srv
    ForgetLocation.srv
+   SetHive.srv
  )
 
 ## Generate added messages and services with any dependencies listed here

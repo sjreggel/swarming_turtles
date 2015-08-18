@@ -2,7 +2,7 @@
     <param name="use_sim_time" value="true" />
 
     <node name="map_server" pkg="map_server" type="map_server" args="$(find swarming_turtles_stage)/world/swarmlab_map.yaml"/>
-    <node pkg="stage_ros" type="stageros" name="stageros" args="$(find swarming_turtles_stage)/world/swarmlab_created.world" respawn="false" output="screen" />
+    <node pkg="stage_ros" type="stageros" name="stageros" args="-g $(find swarming_turtles_stage)/world/swarmlab_created.world" respawn="false" output="screen" />
 
     <node pkg="tf" type="static_transform_publisher" name="tf_world_map" args="0 0 0 0 0 0 /map /world 100" respawn="false" output="screen" />
 
@@ -20,16 +20,16 @@
      <arg name="robot" value="robot_2" />
     </include>
 
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-     <arg name="robot" value="robot_3" />
-    </include>
+    <!-- <include file="$(find swarming_turtles_stage)/launch/robot.launch" > -->
+    <!--  <arg name="robot" value="robot_3" /> -->
+    <!-- </include> -->
 
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-     <arg name="robot" value="robot_4" />
-    </include>
+    <!-- <include file="$(find swarming_turtles_stage)/launch/robot.launch" > -->
+    <!--  <arg name="robot" value="robot_4" /> -->
+    <!-- </include> -->
 
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-     <arg name="robot" value="robot_5" />
-    </include>
+    <!-- <include file="$(find swarming_turtles_stage)/launch/robot.launch" > -->
+    <!--  <arg name="robot" value="robot_5" /> -->
+    <!-- </include> -->
 
 </launch>

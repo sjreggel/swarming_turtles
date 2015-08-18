@@ -1,4 +1,5 @@
 string sender
 string receiver
-geometry_msgs/PoseStamped location
+geometry_msgs/PoseStamped food_location
+geometry_msgs/PoseStamped robot_location
 string request

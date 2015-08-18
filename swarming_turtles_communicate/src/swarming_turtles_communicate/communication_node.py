@@ -10,7 +10,7 @@ location_received = {}
 own_name = ''
 comm_pub = None
 get_food_srv = None
-
+set_hive_srv = None
 
 def cb_communication(msg):
     if not msg.receiver == own_name:
@@ -29,6 +29,19 @@ def cb_communication(msg):
     elif "answer" == req[0]:
         print "GOT ANSWER", req[1]
         process_msg(msg)
+    elif "bob_message" == req[0]:
+        print "GOT MESSAGE FROM BOB", req[1:]
+        process_bob_msg(msg)
+
+
+def process_bob_msg(msg):
+    location_received['from'] = msg.sender
+    location_received['pose'] = msg.food_location
+    robot_location = msg.robot_location
+    try:
+        set_hive_srv(robot_location)
+    except rospy.ServiceException as e:
+        print "could not set Hive", e
 
 
 def process_msg(msg):
@@ -37,7 +50,7 @@ def process_msg(msg):
     #    print 'message too old'
     #    return False
     location_received['from'] = msg.sender
-    location_received['pose'] = msg.location
+    location_received['pose'] = msg.food_location
 
 
 def get_food():
@@ -56,8 +69,8 @@ def answer(receiver, loc_name, pose):
     msg.sender = own_name
     msg.receiver = receiver
     msg.request = "answer %s" % (loc_name)
-    msg.location = pose
-    msg.location.header.stamp = rospy.Time.now()
+    msg.food_location = pose
+    msg.food_location.header.stamp = rospy.Time.now()
     comm_pub.publish(msg)
 
 
@@ -90,7 +103,7 @@ def request(receiver, loc_name):
 
 
 def main():
-    global get_food_srv, own_name, comm_pub
+    global get_food_srv, own_name, comm_pub, set_hive_srv
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
@@ -102,6 +115,8 @@ def main():
     own_name = rospy.get_param('~name', own_name)
 
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
+    set_hive_srv = rospy.ServiceProxy('set_hive', SetHive)
+
 
     comm_pub = rospy.Publisher(topic, CommunicationProtocol, queue_size=1)
 

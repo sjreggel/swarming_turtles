@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import tf
+import tf.transformations
 import math
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
@@ -31,19 +32,37 @@ def quat_msg_to_array(quat):
 
 
 class DetectHive:
+    kalman = None
+    kalman_state = None
+    kalman_process_noise = None
+    kalman_measurement = None
+
     def __init__(self):
 
         self.tfListen = tf.TransformListener()
         rospy.sleep(1.0)
+        self.init_kalman()
 
+        self.get_hive = rospy.Service('get_hive', GetLocation, self.get_hive)
+        self.set_hive = rospy.Service('set_hive', SetHive, self.set_hive)
+        rospy.Subscriber('large_markers', AlvarMarkers, self.cb_ar_marker)
+
+    def init_kalman(self, pose=None):
         self.kalman = cv.CreateKalman(3, 3, 0)
         self.kalman_state = cv.CreateMat(3, 1, cv.CV_32FC1)
         self.kalman_process_noise = cv.CreateMat(3, 1, cv.CV_32FC1)
         self.kalman_measurement = cv.CreateMat(3, 1, cv.CV_32FC1)
 
-        self.kalman.state_pre[0, 0] = 0  # first x
-        self.kalman.state_pre[1, 0] = 0  # first y
-        self.kalman.state_pre[2, 0] = 0  # first theta
+        if pose is None:
+            self.kalman.state_pre[0, 0] = 0  # first x
+            self.kalman.state_pre[1, 0] = 0  # first y
+            self.kalman.state_pre[2, 0] = 0  # first theta
+        else:
+            quat = quat_msg_to_array(pose.pose.orientation)
+            r, p, theta = tf.transformations.euler_from_quaternion(quat)
+            self.kalman.state_post[0, 0] = pose.pose.position.x
+            self.kalman.state_post[1, 0] = pose.pose.position.y
+            self.kalman.state_post[2, 0] = theta
 
         # set kalman transition matrix
         self.kalman.transition_matrix[0, 0] = 1
@@ -56,13 +75,38 @@ class DetectHive:
         cv.SetIdentity(self.kalman.measurement_noise_cov, cv.RealScalar(1e-1))
         cv.SetIdentity(self.kalman.error_cov_post, cv.RealScalar(1))
 
-        self.get_hive = rospy.Service('get_hive', GetLocation, self.get_hive)
-        rospy.Subscriber('large_markers', AlvarMarkers, self.cb_ar_marker)
-
     def get_hive(self, req):
         res = GetLocationResponse()
         res.res = "last_seen"
         res.pose.header.stamp = transform['stamp']
+        return res
+
+    def set_hive(self, req):
+
+        # Get odom pose in base frame:
+        odom_pose_in_base_frame = PoseStamped()
+        odom_pose_in_base_frame.header.stamp = rospy.Time.now()
+        odom_pose_in_base_frame.header.frame_id = odom
+        odom_pose_in_base_frame.pose.orientation.w = 1.0
+        self.transform_pose(odom_pose_in_base_frame, base_frame)
+
+        hive_in_base_frame = req.pose
+        hive_in_base_frame.pose.position.x = -req.pose.pose.position.x
+        hive_in_base_frame.pose.position.y = -req.pose.pose.position.y
+        r, p, theta = tf.transformations.euler_from_quaternion(quat_msg_to_array(req.pose.pose.orientation))
+        hive_in_base_frame.pose.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, -theta))
+
+        relative_hive_pose = PoseStamped()
+        relative_hive_pose.pose.position.x = hive_in_base_frame.pose.position.x - odom_pose_in_base_frame.pose.position.x
+        relative_hive_pose.pose.position.y = hive_in_base_frame.pose.position.y - odom_pose_in_base_frame.pose.position.y
+        r, p, theta_hive = tf.transformations.euler_from_quaternion(quat_msg_to_array(relative_hive_pose.pose.orientation))
+        r, p, theta_odom = tf.transformations.euler_from_quaternion(quat_msg_to_array(odom_pose_in_base_frame.pose.orientation))
+        relative_hive_pose.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0,0, theta_hive - theta_odom))
+
+        self.init_kalman(relative_hive_pose)
+        self.predict_pose(relative_hive_pose)
+        res = SetHiveResponse()
+        res.res = 'Success'
         return res
 
     def get_own_pose(self):
