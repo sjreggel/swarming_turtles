@@ -62,7 +62,7 @@ def init_globals():
     global tfListen, cmd_pub
     tfListen = tf.TransformListener()
     rospy.sleep(1)
-    cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)  # publish Twist
+    cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)  # publish Twist
 
 
 def cb_laser_scan(msg):

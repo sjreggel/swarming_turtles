@@ -4,8 +4,8 @@ interval_sim 100 # simulation timestep in milliseconds
 
 window
 ( 
-  size [ 958 263 ] 
-  scale 19.675 
+  size [ 958 1059 ] 
+  scale 82.187 
 )
 
 define map model
@@ -120,9 +120,9 @@ obst( pose [ -2.204 -1.873 0.000 93.702 ] name "hive" color "blue")
 obst( pose [ -2.108 3.821 0.000 -95.374 ] name "food" color "red")
 
 # robots added here automatically
-roomba( pose [ -1.682 0.095 0.000 -93.205 ] name "robot_0" color "black")
-roomba( pose [ -2.114 -0.795 0.000 -165.000 ] name "robot_1" color "SlateGray")
-#roomba( pose [ -2.159 -0.213 0.000 -105.000 ] name "robot_2" color "LightGrey")
-#roomba( pose [ -2.212 0.635 0.000 -45.000 ] name "robot_3" color "dark slate blue")
-#roomba( pose [ -2.483 0.180 0.000 15.000 ] name "robot_4" color "royal blue")
-#roomba( pose [ -2.585 -0.406 0.000 75.000 ] name "robot_5" color "LightSkyBlue")
+roomba( pose [ -1.954 -0.904 0.000 -93.205 ] name "robot_0" color "black")
+roomba( pose [ -1.912 -1.283 0.000 -165.000 ] name "robot_1" color "SlateGray")
+roomba( pose [ -2.337 -0.940 0.000 -105.000 ] name "robot_2" color "LightGrey")
+roomba( pose [ -2.217 -1.467 0.000 -45.000 ] name "robot_3" color "dark slate blue")
+roomba( pose [ -2.755 -1.040 0.000 15.000 ] name "robot_4" color "royal blue")
+roomba( pose [ -2.590 -1.358 0.000 75.000 ] name "robot_5" color "LightSkyBlue")

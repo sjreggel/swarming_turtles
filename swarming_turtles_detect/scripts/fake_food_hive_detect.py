@@ -18,7 +18,7 @@ BASE_FRAME = rospy.get_param('base_frame', '/base_link')
 SEEN_FOOD = [False] * len(FOOD_TOPICS)
 SEEN_HIVE = False
 
-SEEN_DIST = 2.0
+SEEN_DIST = 1.5
 
 SEEN_ANG = math.pi / 4
 
@@ -42,11 +42,13 @@ def diff_vec(a, b):
     res.y = b.y - a.y
     return res
 
+
 class FakeFoodHiveDetect(object):
     def __init__(self):
         self.tf = tf.TransformListener()
         self.food_locations = {}
         self.hive_location = PoseStamped()
+        self.last_seen_hive = None
         rospy.Subscriber(HIVE_TOPIC, Odometry, self.hive_cb)
         for idx, food_topic in enumerate(FOOD_TOPICS):
             rospy.Subscriber(food_topic, Odometry, self.food_cb, idx)
@@ -78,10 +80,9 @@ class FakeFoodHiveDetect(object):
         p.pose = msg.pose.pose
         p.header = msg.header
         p = self.transform_pose(p, HIVE_FRAME, time_in=msg.header.stamp)
-        if p is not None:
+        if p is not None and self.seen_loc(p):
             self.food_locations[key] = p
-            if not SEEN_FOOD[idx] and self.seen_loc(p):
-                SEEN_FOOD[idx] = True
+            SEEN_FOOD[idx] = True
 
     def transform_pose(self, pose_in, frame, time_in=None):
         if self.tf.frameExists(pose_in.header.frame_id) and self.tf.frameExists(frame):
@@ -112,8 +113,9 @@ class FakeFoodHiveDetect(object):
         transform['pose'] = (self.hive_location.pose.position.x, self.hive_location.pose.position.y, 0)
         transform['quat'] = tuple(quat_msg_to_array(self.hive_location.pose.orientation))
         transform['stamp'] = rospy.Time.now()
-        if not SEEN_HIVE and self.seen_loc(self.hive_location):
+        if self.seen_loc(self.hive_location):
             SEEN_HIVE = True
+            self.last_seen_hive = rospy.Time.now()
 
     def get_hive(self, req):
         """
@@ -126,6 +128,7 @@ class FakeFoodHiveDetect(object):
         if SEEN_HIVE:
             res.res = "last_seen"
             res.pose = self.hive_location
+            res.pose.header.stamp = self.last_seen_hive
         return res
 
     def get_food(self, req):

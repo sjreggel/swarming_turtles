@@ -16,5 +16,20 @@
      <arg name="robot" value="robot_1" />
     </include>
 
+    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
+     <arg name="robot" value="robot_2" />
+    </include>
+
+    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
+     <arg name="robot" value="robot_3" />
+    </include>
+
+    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
+     <arg name="robot" value="robot_4" />
+    </include>
+
+    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
+     <arg name="robot" value="robot_5" />
+    </include>
 
 </launch>

@@ -98,21 +98,21 @@ Visualization Manager:
       Topic: /robot_0/cur_goal
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /robot_0/vo
       Name: Marker
       Namespaces:
-        robot_0/base_link: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /robot_0/orca_lines
       Name: Marker
       Namespaces:
-        robot_0/base_link: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /robot_0/samples
@@ -122,13 +122,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /robot_0/obstacles
       Name: Marker
       Namespaces:
-        robot_0/base_link: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -186,5 +186,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 958
-  X: 2561
-  Y: 20
+  X: 2560
+  Y: 19

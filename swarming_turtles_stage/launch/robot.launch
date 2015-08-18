@@ -29,7 +29,7 @@
         </node>
 
         <node name="move_random" pkg="swarming_turtles_navigation" type="move_random.py" output="screen" >
-            <remap from="/cmd_vel" to="/$(arg robot)/cmd_vel" />
+            <remap from="cmd_vel" to="/$(arg robot)/cmd_vel" />
             <remap from="/scan_obst" to="/$(arg robot)/base_scan" />
         </node>
 
@@ -45,6 +45,10 @@
 
         <!--Communication node-->
         <node name="communication_node" pkg="swarming_turtles_communicate" type="communication_node.py" output="screen"/>
+
+        <!--SMACH-->
+        <node name="smach_start" pkg="swarming_turtles_smach" type="smach_hive_frame.py" output="screen"/>
+
 
     </group>
 
