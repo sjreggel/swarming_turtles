@@ -10,9 +10,9 @@ from swarming_turtles_navigation import move_random as utils
 
 import cv2.cv as cv
 
-odom = "/odom"
-hive = "/hive"
-base_frame = "/base_link"
+HIVE_FRAME = "/hive"
+OUTPUT_FRAME = "/odom"
+BASE_FRAME = "/base_link"
 RATE = 20
 
 transform = {}
@@ -89,9 +89,9 @@ class DetectHive:
         # Get odom pose in base frame:
         odom_pose_in_base_frame = PoseStamped()
         odom_pose_in_base_frame.header.stamp = rospy.Time.now()
-        odom_pose_in_base_frame.header.frame_id = odom
+        odom_pose_in_base_frame.header.frame_id = OUTPUT_FRAME
         odom_pose_in_base_frame.pose.orientation.w = 1.0
-        odom_pose_in_base_frame = self.transform_pose(odom_pose_in_base_frame, base_frame)
+        odom_pose_in_base_frame = self.transform_pose(odom_pose_in_base_frame, BASE_FRAME)
         if odom_pose_in_base_frame is None:
             res.res = 'Could not transform odom to baselink'
             return res
@@ -128,19 +128,19 @@ class DetectHive:
     def get_own_pose(self):
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
-        pose_stamped.header.frame_id = base_frame
+        pose_stamped.header.frame_id = BASE_FRAME
         pose_stamped.pose.orientation.w = 1.0
 
-        return self.transform_pose(self, pose_stamped)
+        return self.transform_pose(pose_stamped)
 
-    def transform_pose(self, pose_in, output_frame=odom):
-        if pose_in.header.frame_id == output_frame:
+    def transform_pose(self, pose_in, out_frame=OUTPUT_FRAME):
+        if pose_in.header.frame_id == out_frame:
             return pose_in
 
-        if self.tfListen.frameExists(output_frame) and self.tfListen.frameExists(pose_in.header.frame_id):
-            time = self.tfListen.getLatestCommonTime(pose_in.header.frame_id, output_frame)
+        if self.tfListen.frameExists(out_frame) and self.tfListen.frameExists(pose_in.header.frame_id):
+            time = self.tfListen.getLatestCommonTime(pose_in.header.frame_id, out_frame)
             pose_in.header.stamp = time
-            pose = self.tfListen.transformPose(output_frame, pose_in)
+            pose = self.tfListen.transformPose(out_frame, pose_in)
             return pose
         return None
 
@@ -157,7 +157,7 @@ class DetectHive:
         self.calc_position(markers_detected)
 
     def check_distance(self, marker):
-        pose = self.transform_pose(marker, output_frame=base_frame)
+        pose = self.transform_pose(marker, out_frame=BASE_FRAME)
 
         if pose is None:
             return False
@@ -233,7 +233,7 @@ class DetectHive:
 
             quat = quat_msg_to_array(pose.pose.orientation)
             r, p, theta = tf.transformations.euler_from_quaternion(quat)
-            q = tf.transformations.quaternion_from_euler(0, 0, theta)
+            q = tf.transformations.quaternion_from_euler(0, -math.pi/2., theta)
             pose.pose.orientation = Quaternion(*q)
             pose.pose.position.z = 0
 
@@ -263,8 +263,8 @@ def main():
         tf_br.sendTransform(transform['pose'],
                             transform['quat'],
                             rospy.Time.now(),
-                            hive,
-                            odom)
+                            HIVE_FRAME,
+                            OUTPUT_FRAME)
         r.sleep()
 
 
