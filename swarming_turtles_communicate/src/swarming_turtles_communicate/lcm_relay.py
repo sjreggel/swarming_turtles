@@ -19,8 +19,8 @@ pub = None
 def init_globals():
     global lc, own_name, pub, lcm_sub
     lc = lcm.LCM("udpm://224.1.1.1:5007?ttl=2")
-    name = gethostname()
-    lcm_sub = lc.subscribe(name, udp_callback)
+    own_name = gethostname()
+    lcm_sub = lc.subscribe(own_name, udp_callback)
     pub = rospy.Publisher(topic, CommunicationProtocol)
     rospy.Subscriber(topic, CommunicationProtocol, handle_msg)
 
