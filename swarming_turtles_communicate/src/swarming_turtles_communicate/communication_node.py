@@ -30,11 +30,12 @@ def cb_communication(msg):
         print "GOT ANSWER", req[1]
         process_msg(msg)
     elif "mitro_message" == req[0]:
-        print "GOT MESSAGE FROM MITRO", req[1:]
+        print "GOT MESSAGE FROM MITRO"
         process_mitro_msg(msg)
 
 
 def process_mitro_msg(msg):
+    global location_received
     location_received['from'] = msg.sender
     location_received['pose'] = msg.food_location
     robot_location = msg.robot_location
