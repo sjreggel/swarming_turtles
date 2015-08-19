@@ -6,6 +6,8 @@
   <node name="smach_comm" pkg="swarming_turtles_communicate" type="lcm_relay.py" output="screen"/>
   <node name="communication_node" pkg="swarming_turtles_communicate" type="communication_node.py" output="screen"/>
 
-  <node name="smach_hive" pkg="swarming_turtles_smach" type="smach_hive_frame.py" output="screen"/>
+  <node name="smach_hive" pkg="swarming_turtles_smach" type="smach_hive_frame.py" output="screen">
+  <remap from="cmd_vel" to="/cmd_vel_mux/input/navi" />
+  </node>
 
 </launch>

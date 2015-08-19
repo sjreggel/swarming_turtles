@@ -41,13 +41,13 @@ FIND_TIMEOUT = 1.0
 LAST_SEEN = 3.0  # check last seen for other turtle
 EPS_TARGETS = 0.2  # if targets are further away than that resend goal
 
-INWARDS = 0.8  # move loc xx meters inwards from detected marker locations
+INWARDS = 0.4  # move loc xx meters inwards from detected marker locations
 
-Y_OFFSET_EXIT = -1.  # move loc xx towards exit
-X_OFFSET_EXIT = 0.5  # move loc xx towards exit
+Y_OFFSET_EXIT = -0.5  # move loc xx towards exit
+X_OFFSET_EXIT = 0.2  # move loc xx towards exit
 
-Y_OFFSET_ENTRY = 1.  # move loc xx towards exit
-X_OFFSET_ENTRY = 0.5  # move loc xx towards exit
+Y_OFFSET_ENTRY = 0.5  # move loc xx towards exit
+X_OFFSET_ENTRY = 0.2  # move loc xx towards exit
 
 
 MIN_DIST_ASK = 2.0  # how close to include in asking?
@@ -62,7 +62,8 @@ base_frame = rospy.get_param('base_frame', '/base_link')
 MAX_DIST = 1.5
 move_action_server = None
 
-offset = rospy.get_param('marker_offset', math.pi/2.0)
+#offset = rospy.get_param('marker_offset', math.pi/2.0)
+offset = 0
 
 def init_globals():
     global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server
