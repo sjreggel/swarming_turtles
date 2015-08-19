@@ -27,7 +27,8 @@ def init_globals():
 def udp_callback(channel, data):
     msg = CommunicationProtocol()
     msg.deserialize(data)
-    pub.publish(msg)
+    if msg.receiver == own_name:
+        pub.publish(msg)
     
 def handle_msg(msg):
     if msg.receiver == own_name:
