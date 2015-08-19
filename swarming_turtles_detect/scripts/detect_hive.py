@@ -6,6 +6,7 @@ import math
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 from swarming_turtles_detect.srv import *
+from swarming_turtles_navigation import move_random as utils
 
 import cv2.cv as cv
 
@@ -82,30 +83,45 @@ class DetectHive:
         return res
 
     def set_hive(self, req):
+        global transform
+        res = SetHiveResponse()
 
         # Get odom pose in base frame:
         odom_pose_in_base_frame = PoseStamped()
         odom_pose_in_base_frame.header.stamp = rospy.Time.now()
         odom_pose_in_base_frame.header.frame_id = odom
         odom_pose_in_base_frame.pose.orientation.w = 1.0
-        self.transform_pose(odom_pose_in_base_frame, base_frame)
-
+        odom_pose_in_base_frame = self.transform_pose(odom_pose_in_base_frame, base_frame)
+        if odom_pose_in_base_frame is None:
+            res.res = 'Could not transform odom to baselink'
+            return res
         hive_in_base_frame = req.pose
-        hive_in_base_frame.pose.position.x = -req.pose.pose.position.x
-        hive_in_base_frame.pose.position.y = -req.pose.pose.position.y
         r, p, theta = tf.transformations.euler_from_quaternion(quat_msg_to_array(req.pose.pose.orientation))
+
+        rotated_vec = utils.rotate_vec_by_angle(req.pose.pose.position, math.pi - theta)
+
+        hive_in_base_frame.pose.position.x = rotated_vec.x
+        hive_in_base_frame.pose.position.y = rotated_vec.y
+
         hive_in_base_frame.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, -theta))
 
         relative_hive_pose = PoseStamped()
         relative_hive_pose.pose.position.x = hive_in_base_frame.pose.position.x - odom_pose_in_base_frame.pose.position.x
         relative_hive_pose.pose.position.y = hive_in_base_frame.pose.position.y - odom_pose_in_base_frame.pose.position.y
-        r, p, theta_hive = tf.transformations.euler_from_quaternion(quat_msg_to_array(relative_hive_pose.pose.orientation))
+
+        r, p, theta_hive = tf.transformations.euler_from_quaternion(quat_msg_to_array(hive_in_base_frame.pose.orientation))
         r, p, theta_odom = tf.transformations.euler_from_quaternion(quat_msg_to_array(odom_pose_in_base_frame.pose.orientation))
+
         relative_hive_pose.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0,0, theta_hive - theta_odom))
+        relative_hive_pose.pose.position = utils.rotate_vec_by_angle(relative_hive_pose.pose.position, - theta_odom )
 
         self.init_kalman(relative_hive_pose)
-        self.predict_pose(relative_hive_pose)
-        res = SetHiveResponse()
+        pose = self.predict_pose(relative_hive_pose)
+
+        transform['pose'] = (pose.pose.position.x, pose.pose.position.y, 0)
+        transform['quat'] = tuple(quat_msg_to_array(pose.pose.orientation))
+        transform['stamp'] = rospy.Time.now()
+
         res.res = 'Success'
         return res
 
