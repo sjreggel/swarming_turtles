@@ -224,7 +224,7 @@ class SearchFood(smach.State):
         move_random_start()
         userdata.pose_out = None
         pose = None
-        while not found:
+        while not found and not rospy.is_shutdown():
             if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'not_found'
@@ -289,7 +289,7 @@ class CheckIfAtLocation(smach.State):
         ang = utils.get_jaw(target.pose.orientation)
         rate = rospy.Rate(RATE)
 
-        while not found():
+        while not found() and not rospy.is_shutdown():
             if utils.rotation_aligned(ang):
                 if self.loc == 'food':
                     try:
@@ -311,7 +311,7 @@ class SearchHive(smach.State):
         rate = rospy.Rate(RATE)
         start = rospy.Time.now()
         move_random_start()
-        while True:
+        while not rospy.is_shutdown():
             if (rospy.Time.now() - start).to_sec() > 2 * SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'success'
@@ -331,7 +331,7 @@ class InitHive(smach.State):
         start = rospy.Time.now()
         twist = Twist()
         twist.angular.z = utils.ROTATION_SPEED
-        while True:
+        while not rospy.is_shutdown():
             if seen_hive():
                 utils.stop()
                 rospy.sleep(1.0)
@@ -380,7 +380,7 @@ class MoveToInLocation(smach.State):
         old_pose = utils.get_own_pose()
 
         retry = MAX_RETRY - 2
-        while True:
+        while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 print "standing still too long for moviing to in location"
@@ -438,7 +438,7 @@ class MoveToOutLocation(smach.State):
         stand_still = 0
         old_pose = utils.get_own_pose()
 
-        while True:
+        while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 return 'failed'
@@ -476,7 +476,7 @@ class MoveToHiveLocation(smach.State):
         stand_still = 0
         old_pose = utils.get_own_pose()
 
-        while True:
+        while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 if at_hive():
@@ -544,7 +544,7 @@ class MoveToFoodLocation(smach.State):
         stand_still = 0
         old_pose = utils.get_own_pose()
 
-        while True:
+        while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)

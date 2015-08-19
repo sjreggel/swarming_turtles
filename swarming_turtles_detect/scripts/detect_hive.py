@@ -94,7 +94,7 @@ class DetectHive:
         hive_in_base_frame.pose.position.x = -req.pose.pose.position.x
         hive_in_base_frame.pose.position.y = -req.pose.pose.position.y
         r, p, theta = tf.transformations.euler_from_quaternion(quat_msg_to_array(req.pose.pose.orientation))
-        hive_in_base_frame.pose.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, -theta))
+        hive_in_base_frame.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, -theta))
 
         relative_hive_pose = PoseStamped()
         relative_hive_pose.pose.position.x = hive_in_base_frame.pose.position.x - odom_pose_in_base_frame.pose.position.x
