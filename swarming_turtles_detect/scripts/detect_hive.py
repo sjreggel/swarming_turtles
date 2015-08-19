@@ -233,7 +233,7 @@ class DetectHive:
 
             quat = quat_msg_to_array(pose.pose.orientation)
             r, p, theta = tf.transformations.euler_from_quaternion(quat)
-            q = tf.transformations.quaternion_from_euler(0, -math.pi/2., theta)
+            q = tf.transformations.quaternion_from_euler(0, 0, theta-math.pi/2)
             pose.pose.orientation = Quaternion(*q)
             pose.pose.position.z = 0
 

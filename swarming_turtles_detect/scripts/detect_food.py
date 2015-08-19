@@ -29,7 +29,7 @@ class DetectFood:
         self.tfListen = tf.TransformListener()
         rospy.sleep(0.5)
         rospy.Subscriber('large_markers', AlvarMarkers, self.cb_ar_marker)
-        self.food_pub = rospy.Publisher('cur_food', PoseStamped)
+        self.food_pub = rospy.Publisher('cur_food', PoseStamped, queue_size=1)
 
         self.init_kalman()
 
@@ -182,7 +182,7 @@ class DetectFood:
             quat = quat_msg_to_array(pose.pose.orientation)
             r, p, theta = tf.transformations.euler_from_quaternion(quat)
 
-            q = tf.transformations.quaternion_from_euler(0, 0, theta)
+            q = tf.transformations.quaternion_from_euler(0, 0, theta - math.pi/2.)
 
             pose.pose.position.z = 0
             pose.pose.orientation = Quaternion(*q)
