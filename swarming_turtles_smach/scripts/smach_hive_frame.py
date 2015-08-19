@@ -202,7 +202,7 @@ class SearchFood(smach.State):
     def get_received_location(self, asked_turtles):
         try:
             resp = self.get_received_location_srv(location='')
-            if resp.res in asked_turtles and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < ASK_TIMEOUT:
+            if (resp.res in asked_turtles or resp.res == 'mitro') and (rospy.Time.now() - resp.pose.header.stamp).to_sec() < ASK_TIMEOUT:
                 return resp.pose
             else:
                 return None
