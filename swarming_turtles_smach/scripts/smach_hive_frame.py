@@ -293,7 +293,7 @@ class CheckIfAtLocation(smach.State):
         rate = rospy.Rate(RATE)
 
         while not found() and not rospy.is_shutdown():
-            if utils.rotation_aligned(ang):
+            if utils.rotation_aligned(ang, eps=0.05):
                 if self.loc == 'food':
                     try:
                         self.forget_food()
@@ -399,8 +399,9 @@ class MoveToInLocation(smach.State):
             rec_pose = get_received_location([])
             if rec_pose is not None:
                 move_action_server.cancel_all_goals()
-                goal = utils.create_goal_message(utils.move_location_inwards(rec_pose, INWARDS, offset=offset))
+                goal = utils.move_location_inwards(rec_pose, INWARDS, offset=offset)
                 goal = utils.move_location(goal, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
+                goal = utils.create_goal_message(goal)
 
                 move_action_server.send_goal(goal)
                 rate.sleep()
