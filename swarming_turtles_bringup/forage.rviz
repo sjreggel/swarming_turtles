@@ -134,7 +134,7 @@ Visualization Manager:
       Marker Topic: /neighbors
       Name: MarkerArray
       Namespaces:
-        {}
+        /base_link: true
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -415,22 +415,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 27.8738
+      Distance: 24.0977
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.4557
-        Y: 1.47489
-        Z: 1.21841
+        X: 2.38083
+        Y: 0.358655
+        Z: -0.552306
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5598
+      Pitch: 1.1348
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.75111
+      Yaw: 4.80112
     Saved: ~
 Window Geometry:
   Displays:
@@ -448,5 +448,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1247
-  X: 1292
+  X: 1302
   Y: 14

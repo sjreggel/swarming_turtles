@@ -10,7 +10,9 @@ location_received = {}
 own_name = ''
 comm_pub = None
 get_food_srv = None
+forget_food_srv = None
 set_hive_srv = None
+
 
 def cb_communication(msg):
     if not msg.receiver == own_name:
@@ -38,6 +40,11 @@ def process_mitro_msg(msg):
     global location_received
     location_received['from'] = msg.sender
     location_received['pose'] = msg.food_location
+    try:
+        forget_food_srv()
+    except rospy.ServiceException as e:
+        print "could not forget food", e
+
     robot_location = msg.robot_location
     try:
         set_hive_srv(robot_location)
@@ -104,7 +111,7 @@ def request(receiver, loc_name):
 
 
 def main():
-    global get_food_srv, own_name, comm_pub, set_hive_srv
+    global get_food_srv, forget_food_srv, comm_pub, set_hive_srv
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
@@ -117,6 +124,8 @@ def main():
 
     get_food_srv = rospy.ServiceProxy('get_location', GetLocation)
     set_hive_srv = rospy.ServiceProxy('set_hive', SetHive)
+
+    forget_food_srv = rospy.ServiceProxy('forget_location', ForgetLocation)
 
 
     comm_pub = rospy.Publisher(topic, CommunicationProtocol, queue_size=1)
