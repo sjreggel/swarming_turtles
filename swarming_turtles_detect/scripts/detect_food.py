@@ -79,6 +79,10 @@ class DetectFood:
             if req.location in food_locations.keys():
                 food_locations[req.location] = None
                 self.init_kalman()
+        pose = PoseStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.pose.orientation.z = 1.
+        self.food_pub.publish(pose)
         return ForgetLocationResponse()
 
     def transform_pose(self, pose_in, time_in=None, output_frame=hive):
