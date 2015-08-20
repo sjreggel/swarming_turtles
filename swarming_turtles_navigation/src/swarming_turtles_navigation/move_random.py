@@ -295,6 +295,9 @@ def move_random():
                 r.sleep()
 
             dist, ang = get_random_walk()
+            while active and not rotation_aligned(ang):
+                rotate_to_ang(ang)
+                r.sleep()
             create_goal(dist)
         twist = get_twist()
         cmd_pub.publish(twist)
