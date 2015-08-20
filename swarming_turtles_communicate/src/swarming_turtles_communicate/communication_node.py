@@ -111,7 +111,7 @@ def request(receiver, loc_name):
 
 
 def main():
-    global get_food_srv, forget_food_srv, comm_pub, set_hive_srv
+    global get_food_srv, forget_food_srv, comm_pub, set_hive_srv, own_name
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
@@ -135,7 +135,8 @@ def main():
 
     rospy.Service('get_received_location', GetLocation, get_received_location)
 
-    rospy.wait_for_service(get_food_srv)
+    #rospy.wait_for_service(get_food_srv, 2.0)
+    rospy.loginfo('Started communcation node with name: %s'%own_name)
     rospy.spin()
 
 
