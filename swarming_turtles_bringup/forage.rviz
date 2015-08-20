@@ -7,9 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /LaserScan1
-        - /PoseArray1
         - /LaserScan2
-        - /Pose1
         - /Pose2
         - /Axes2
         - /Axes4
@@ -94,13 +92,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Arrow Length: 0.3
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Name: PoseArray
-      Topic: /particlecloud
-      Value: true
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /me
@@ -143,7 +134,7 @@ Visualization Manager:
       Marker Topic: /neighbors
       Name: MarkerArray
       Namespaces:
-        /base_link: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -158,7 +149,7 @@ Visualization Manager:
       Axes Radius: 0.1
       Class: rviz/Pose
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.3
       Head Radius: 0.1
       Name: Pose
@@ -166,12 +157,12 @@ Visualization Manager:
       Shaft Radius: 0.05
       Shape: Arrow
       Topic: /cur_hive
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.1
       Class: rviz/Pose
-      Color: 255; 25; 0
+      Color: 0; 85; 0
       Enabled: true
       Head Length: 0.3
       Head Radius: 0.1
@@ -424,16 +415,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 31.3033
+      Distance: 27.8738
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.15072
-        Y: 0.878525
-        Z: 1.21424
+        X: 4.4557
+        Y: 1.47489
+        Z: 1.21841
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 1.5598
@@ -457,5 +448,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1247
-  X: 1302
+  X: 1292
   Y: 14

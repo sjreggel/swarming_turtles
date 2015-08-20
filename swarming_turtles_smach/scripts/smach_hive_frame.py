@@ -287,7 +287,7 @@ class CheckIfAtLocation(smach.State):
             found = at_food
             target = utils.move_location_inwards(target, INWARDS, offset=offset)
 
-        ang = utils.get_jaw(target.pose.orientation)
+        ang = utils.get_jaw(target.pose.orientation) + math.pi
         rate = rospy.Rate(RATE)
 
         while not found() and not rospy.is_shutdown():
