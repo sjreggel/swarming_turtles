@@ -396,10 +396,15 @@ class MoveToInLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
-
-            if get_received_location([]) is not None:
+            rec_pose = get_received_location([])
+            if rec_pose is not None:
                 move_action_server.cancel_all_goals()
-                return 'failed'
+                goal = utils.create_goal_message(utils.move_location_inwards(rec_pose, INWARDS, offset=offset))
+                goal = utils.move_location(goal, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
+
+                move_action_server.send_goal(goal)
+                rate.sleep()
+                continue
 
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
@@ -507,6 +512,9 @@ class MoveToHiveLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
+            if get_received_location([]) is not None:
+                move_action_server.cancel_all_goals()
+                return 'success'
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
                 return 'success'
@@ -568,6 +576,14 @@ class MoveToFoodLocation(smach.State):
                     except:
                         print "forget_food failed"
                     return 'failed'
+            rec_pose = get_received_location([])
+            if rec_pose is not None:
+                move_action_server.cancel_all_goals()
+                goal = utils.create_goal_message(utils.move_location_inwards(rec_pose, INWARDS, offset=offset))
+                move_action_server.send_goal(goal)
+                rate.sleep()
+                continue
+
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
