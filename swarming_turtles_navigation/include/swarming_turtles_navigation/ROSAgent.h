@@ -200,8 +200,7 @@ namespace collvoid {
     //ORCA stuff
     double max_vel_with_obstacles_;
     collvoid::Vector2 holo_velocity_;
-
-
+      int old_dir;
     //Obstacles
     laser_geometry::LaserProjection projector_;
 

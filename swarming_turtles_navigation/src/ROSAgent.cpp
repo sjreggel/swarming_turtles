@@ -446,11 +446,19 @@ namespace collvoid{
 
         //ROS_ERROR("dif_ang %f", dif_ang);
         if (std::abs(dif_ang) > 3.0*M_PI / 4.0) {
-          cmd_vel.angular.z = sign(base_odom_.twist.twist.angular.z) * std::min(std::abs(dif_ang/time_to_holo_),max_vel_th_);
-
+            if (old_dir != 0) {
+                cmd_vel.angular.z = sign(old_dir) * std::min(std::abs(dif_ang/time_to_holo_),max_vel_th_);
+            }
+            else {
+                cmd_vel.angular.z = sign(dif_ang) * std::min(std::abs(dif_ang / time_to_holo_), max_vel_th_);
+                old_dir = (int)sign(dif_ang);
+            }
         }
         else {
-          cmd_vel.angular.z = sign(dif_ang) * std::min(std::abs(dif_ang/time_to_holo_),max_vel_th_);
+            cmd_vel.angular.z = sign(dif_ang) * std::min(std::abs(dif_ang/time_to_holo_),max_vel_th_);
+
+            old_dir = 0;
+
         }
         //ROS_ERROR("vstar = %.3f", vstar);
         // if (std::abs(cmd_vel.angular.z) == max_vel_th_)
