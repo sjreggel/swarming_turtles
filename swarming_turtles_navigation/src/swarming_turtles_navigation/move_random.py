@@ -18,6 +18,8 @@ LEFT = 0
 CENTER = 1
 RIGHT = 2
 
+MOVE_RANDOM_DIST = 5.
+
 ROTATE_RIGHT = -1
 ROTATE_LEFT = 1
 
@@ -186,7 +188,7 @@ def rotation_aligned(ang, eps=None):
 
 
 def get_random_walk():
-    dist = random.random() * 2.5
+    dist = random.random() * MOVE_RANDOM_DIST
     ang = random.random() * 2. * math.pi
     return dist, ang
 
