@@ -24,7 +24,7 @@ class FakeTurtlesDetect(object):
     def publish_turtles(self):
         turtles_msg = Turtles()
         time = rospy.Time.now()
-        for i in xrange(MAX_NUM_TURTLES):
+        for i in range(MAX_NUM_TURTLES):
             frame = "/robot_%d/base_footprint" % i
             if not self.tf.frameExists(frame):
                 # rospy.logwarn("turtle frame not found %s", frame)

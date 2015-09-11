@@ -4,8 +4,8 @@ interval_sim 100 # simulation timestep in milliseconds
 
 window
 ( 
-  size [ 958 1059 ] 
-  scale 82.187 
+  size [ 958 391 ] 
+  scale 34.855 
 )
 
 define map model
@@ -69,13 +69,13 @@ define topurg ranger
 
 define diff_robot position
 (
-  size [0.34 0.34 0.3]
-  origin [0 0 0 0]
+  size [0.340 0.340 0.300]
+  origin [0.000 0.000 0.000 0.000]
   gui_nose 1
   drive "diff"
   wheelbase 0.25
-  topurg(pose [ 0.0 0.000 0 0.000 ])
-  bitmap "robot.png"
+  topurg(pose [ 0.000 0.000 0.000 0.000 ])
+  # bitmap "robot.png"
   
 )
 
@@ -119,8 +119,8 @@ define obst model
 obst( pose [ -2.204 -1.873 0.000 93.702 ] name "hive" color "blue")
 obst( pose [ -2.108 3.821 0.000 -95.374 ] name "food" color "red")
 
-# robots added here automatically
-roomba( pose [ -1.954 -0.904 0.000 -93.205 ] name "robot_0" color "black")
+# add here robots
+diff_robot( pose [ -1.749 2.469 0.000 95.871 ] name "shepherd" color "black")
 roomba( pose [ -1.912 -1.283 0.000 -165.000 ] name "robot_1" color "SlateGray")
 roomba( pose [ -2.337 -0.940 0.000 -105.000 ] name "robot_2" color "LightGrey")
 #roomba( pose [ -2.217 -1.467 0.000 -45.000 ] name "robot_3" color "dark slate blue")

@@ -11,7 +11,7 @@ from move_base_msgs.msg import *
 from actionlib_msgs.msg import *
 from swarming_turtles_detect.srv import GetLocation, ForgetLocation
 from swarming_turtles_msgs.msg import Turtles
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty, EmptyResponse
 import swarming_turtles_navigation.move_random as utils
 
 turtles = {}
@@ -65,6 +65,8 @@ move_action_server = None
 
 # offset = rospy.get_param('marker_offset', math.pi/2.0)
 offset = 0
+
+started = False
 
 
 def init_globals():
@@ -615,6 +617,12 @@ class MoveToFoodLocation(smach.State):
             rate.sleep()
 
 
+def start_srv_cb(req):
+    global started
+    started = True
+    return EmptyResponse()
+
+
 def main():
     rospy.init_node('swarming_turtles_machine')
     init_globals()
@@ -663,9 +671,13 @@ def main():
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/swarming_turtles')
     sis.start()
-    rospy.loginfo("starting!")
 
+    rospy.Service('start_smach', Empty, start_srv_cb)
+    r = rospy.Rate(10)
+    while not rospy.is_shutdown() and not started:
+        r.sleep()
     # Execute SMACH plan
+    rospy.loginfo("starting!")
     outcome = sm.execute()
 
     rospy.spin()
