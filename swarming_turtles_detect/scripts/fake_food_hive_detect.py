@@ -49,6 +49,7 @@ class FakeFoodHiveDetect(object):
         self.food_locations = {}
         self.hive_location = PoseStamped()
         self.last_seen_hive = None
+        self.food_pub = rospy.Publisher('found_food', PoseStamped, queue_size=10)
         rospy.Subscriber(HIVE_TOPIC, Odometry, self.hive_cb)
         for idx, food_topic in enumerate(FOOD_TOPICS):
             rospy.Subscriber(food_topic, Odometry, self.food_cb, idx)
@@ -82,6 +83,7 @@ class FakeFoodHiveDetect(object):
         p = self.transform_pose(p, HIVE_FRAME, time_in=msg.header.stamp)
         if p is not None and self.seen_loc(p):
             self.food_locations[key] = p
+            self.food_pub.publish(p)
             SEEN_FOOD[idx] = True
 
     def transform_pose(self, pose_in, frame, time_in=None):

@@ -1,0 +1,60 @@
+<launch>
+    <arg name="robot" />
+
+    <group ns="$(arg robot)">
+        <!--Params-->
+        <param name="global_frame" value="$(arg robot)/odom" />
+        <param name="base_frame" value="$(arg robot)/base_link" />
+        <param name="hive_frame" value="$(arg robot)/hive" />
+        <param name="marker_offset" value="0." />
+
+        <rosparam command="load" file="$(find swarming_turtles_navigation)/config/params.yaml"/>
+
+
+        <node pkg="swarming_turtles_detect" type="fake_food_hive_detect.py" name="fake_food_hive_detect" output="screen" />
+        <node pkg="swarming_turtles_detect" type="fake_turtles_detect.py" name="fake_turtles_detect" output="screen" />
+        <node pkg="swarming_turtles_detect" type="visualize_turtles.py" name="visualize_turtles" output="screen" />
+
+
+        <!--fake localization for frames-->
+        <node name="fake_localization" pkg="fake_localization" type="fake_localization" respawn="false">
+            <param name="~tf_prefix" value="$(arg robot)" />
+            <param name="~odom_frame_id" value="$(arg robot)/odom" />
+            <param name="~base_frame_id" value="$(arg robot)/base_link" />
+        </node>
+
+        <!-- Navigation stuff-->
+        <node name="pose_resend" pkg="swarming_turtles_navigation" type="pose_resend.py" output="screen" >
+            <!--<remap from="found_turtles" to="/found_turtles" />-->
+        </node>
+
+        <!--<node name="move_random" pkg="swarming_turtles_navigation" type="move_random.py" output="screen" >-->
+            <!--<remap from="cmd_vel" to="/$(arg robot)/cmd_vel" />-->
+            <!--<remap from="/scan_obst" to="/$(arg robot)/base_scan" />-->
+        <!--</node>-->
+
+        <node name="SwarmCollvoid" pkg="swarming_turtles_navigation" type="SwarmCollvoid">
+            <remap from="/cmd_vel" to="/$(arg robot)/cmd_vel" />
+            <remap from="/position_share" to="/$(arg robot)/position_share" />
+            <remap from="scan_obst" to="/$(arg robot)/base_scan" />
+
+            <param name="~global_frame" value="$(arg robot)/odom" />
+            <param name="~base_frame" value="$(arg robot)/base_link" />
+
+        </node>
+
+        <!--&lt;!&ndash;Communication node&ndash;&gt;-->
+        <!--<node name="communication_node" pkg="swarming_turtles_communicate" type="communication_node.py" output="screen"/>-->
+
+        <!--Shepherd node-->
+        <node name="shepherding" pkg="swarming_turtles_shepherd" type="shepherding.py" output="screen"/>
+
+        <!--&lt;!&ndash;SMACH&ndash;&gt;-->
+        <!--<node name="smach_start" pkg="swarming_turtles_smach" type="smach_hive_frame.py" output="screen"/>-->
+
+
+    </group>
+
+
+</launch>
+

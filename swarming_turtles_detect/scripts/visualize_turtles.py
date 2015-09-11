@@ -23,7 +23,7 @@ def cb_found_turtles(msg):
     publish_me()
 
 
-def add_markers(marker_array, turtle):
+def add_markers(marker_array, turtle, me=False):
     marker = Marker()
     marker.header.frame_id = turtle.position.header.frame_id
     marker.header.stamp = turtle.position.header.stamp
@@ -33,7 +33,10 @@ def add_markers(marker_array, turtle):
     marker.scale.x = 2 * RADIUS
     marker.scale.y = 2 * RADIUS
     marker.scale.z = 0.1
-    marker.color.r = 1.0
+    if me:
+        marker.color.b = 1.0
+    else:
+        marker.color.r = 1.0
     marker.color.a = 1.0
     marker.id = len(marker_array.markers)
     marker.lifetime = rospy.Duration(1)
@@ -71,7 +74,10 @@ def add_markers(marker_array, turtle):
     marker.scale.x = 0.1
     marker.scale.y = 0.2
     marker.scale.z = 0.1
-    marker.color.r = 1.0
+    if me:
+        marker.color.b = 1.0
+    else:
+        marker.color.r = 1.0
     marker.color.a = 1.0
     marker.id = len(marker_array.markers)
     quat = turtle.position.pose.orientation
@@ -100,7 +106,7 @@ def publish_me():
 
     marker_array = MarkerArray()
 
-    add_markers(marker_array, turtle)
+    add_markers(marker_array, turtle, me=True)
 
     pub_me.publish(marker_array)
 
