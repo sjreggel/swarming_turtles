@@ -18,10 +18,10 @@ CIRCLE_BUTTON = 13
 CROSS_BUTTON = 14
 SQUARE_BUTTON = 15
 
-SHEPHERDING_TOGGLE_ON = CIRCLE_BUTTON
-SHEPHERDING_TOGGLE_OFF = CROSS_BUTTON
+SHEPHERDING_TOGGLE = CROSS_BUTTON
 
-BUTTONS_USED = [CIRCLE_BUTTON, CROSS_BUTTON]
+
+BUTTONS_USED = [START, CROSS_BUTTON]
 
 class ShepherdJoyControl(object):
     def __init__(self):
@@ -31,28 +31,44 @@ class ShepherdJoyControl(object):
         rospy.Subscriber('joy', Joy, self.joy_cb)
         #rospy.Subscriber('cmd_vel', Twist, self.twist_cb)
         self.set_shepherding_status = rospy.ServiceProxy('/shepherd/set_shepherding_status', SetShepherdingStatus)
+	self.start_all_robots = rospy.ServiceProxy('/start_all', Empty)
+
 
     def joy_cb(self, msg):
-        # Handle depressed buttons
-        for idx, button in enumerate(BUTTONS_USED):
-            # now pressed so set to True
+        # Handle pressed buttons
+       for idx, button in enumerate(BUTTONS_USED):
             if msg.buttons[button]:
-                self.buttons_pressed_before[idx] = True
-                # now not pressed so if pressed before do something
-            elif self.buttons_pressed_before[idx]:
-                if button == SHEPHERDING_TOGGLE_OFF:
-                    self.toggle_shepherding(active=False)
-                elif button == SHEPHERDING_TOGGLE_ON:
+		if self.buttons_pressed_before[idx] == False:
+                 if button == SHEPHERDING_TOGGLE:
                     self.toggle_shepherding(active=True)
+		 if button == START:
+		    self.start_robots(active=True)
+                 self.buttons_pressed_before[idx] = True
+            elif self.buttons_pressed_before[idx] == True:
+                if button == SHEPHERDING_TOGGLE:
+                    self.toggle_shepherding(active=False)
+		if button == START:
+		    self.start_robots(active=False)
+                self.buttons_pressed_before[idx] = False
+
+
+    def start_robots(self, active):
+	try: 
+	    res = self.start_all_robots()
+	    print "starting robots"
+        except rospy.ServiceException as e:
+            print "Service call failed: %s" % e
+
 
     def toggle_shepherding(self, active):
         req = SetShepherdingStatusRequest()
         req.target_status = active
         try:
             res = self.set_shepherding_status(req)
-            print res.success
+            print res
         except rospy.ServiceException as e:
             print "Service call failed: %s" % e
+
 
             
 if __name__ == '__main__':
