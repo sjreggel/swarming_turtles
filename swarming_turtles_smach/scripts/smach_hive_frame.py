@@ -16,6 +16,8 @@ import swarming_turtles_navigation.move_random as utils
 
 turtles = {}
 closest = ''
+count_fooddrops = 0
+has_food = False
 
 tfListen = None
 
@@ -271,11 +273,18 @@ class CheckIfAtLocation(smach.State):
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
 
     def execute(self, userdata):
+	global count_fooddrops
+	global has_food
+
         target = None
         found = None
         if self.loc == 'hive':
             target = hive_loc
             found = at_hive
+	    if has_food is True:
+		has_food = False
+		count_fooddrops += 1
+	    	print own_name, "Delivered_Food", count_fooddrops
         else:  # food
             target = get_food()
 
@@ -289,6 +298,9 @@ class CheckIfAtLocation(smach.State):
                     print "forget_food failed"
                 return 'failed'
             found = at_food
+	    has_food = True
+	    print own_name, "Aquired_food"
+
             target = utils.move_location_inwards(target, INWARDS, offset=offset)
 
         ang = utils.get_jaw(target.pose.orientation) + math.pi
@@ -541,6 +553,8 @@ class MoveToFoodLocation(smach.State):
         global move_action_server
 
         target = get_food()
+
+	print own_name, ":getting food"
 
         if target is None and userdata.pose_in is not None:
             target = userdata.pose_in
