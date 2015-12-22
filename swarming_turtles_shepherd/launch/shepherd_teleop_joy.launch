@@ -1,5 +1,5 @@
 <launch>
-<arg name="config_filepath" default="$(find teleop_twist_joy)/config/ps3.config.yaml" />
+<arg name="config_filepath" default="$(find swarming_turtles_shepherd)/config/ps3.config.yaml" />
 <arg name="joy_dev" default="/dev/input/js0" />
 <node pkg="joy" type="joy_node" name="joy_node">
 <param name="dev" value="$(arg joy_dev)" />
