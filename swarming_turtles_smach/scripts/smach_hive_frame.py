@@ -17,7 +17,8 @@ import swarming_turtles_navigation.move_random as utils
 turtles = {}
 closest = ''
 count_fooddrops = 0
-has_food = False
+robot_has_food = False
+robot_is_foraging = False
 
 tfListen = None
 
@@ -209,6 +210,8 @@ class SearchFood(smach.State):
         smach.State.__init__(self, outcomes=['found', 'not_found'], output_keys=['pose_out'])
         self.ask_food_srv = rospy.ServiceProxy('ask_food', GetLocation, persistent=True)
 
+
+
     def ask_food(self, name):
         try:
             resp = self.ask_food_srv(location=name)
@@ -222,11 +225,14 @@ class SearchFood(smach.State):
 
     def execute(self, userdata):
         global closest
+	global robot_is_foraging
+	robot_is_foraging = False
         closest = ''
         asked_turtles = []
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         found = False
+	print ">>>>>>>>",own_name, "IN SEARCH FOOD" ,"<<<<<<<<"
 
         move_random_start()
         userdata.pose_out = None
@@ -272,19 +278,23 @@ class CheckIfAtLocation(smach.State):
         self.loc = loc
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
 
+
     def execute(self, userdata):
 	global count_fooddrops
-	global has_food
+	global robot_has_food
+	global robot_is_foraging
 
         target = None
         found = None
         if self.loc == 'hive':
             target = hive_loc
             found = at_hive
-	    if has_food is True:
-		has_food = False
+	    if robot_has_food is True:
+		robot_has_food = False # Food is deliverd
 		count_fooddrops += 1
-	    	print own_name, "Delivered_Food", count_fooddrops
+	    	print ">>>>>>>>",own_name, "Delivered_Food", count_fooddrops, robot_is_foraging ,"<<<<<<<<"
+		#rospy.loginfo("%s Delivered_Food count:=%d foraging:=%r", own_name, count_fooddrops, robot_is_foraging)
+		robot_is_foraging = True
         else:  # food
             target = get_food()
 
@@ -296,11 +306,10 @@ class CheckIfAtLocation(smach.State):
                     self.forget_food()
                 except:
                     print "forget_food failed"
+		    robot_is_foraging = False
                 return 'failed'
             found = at_food
-	    has_food = True
-	    print own_name, "Aquired_food"
-
+   
             target = utils.move_location_inwards(target, INWARDS, offset=offset)
 
         ang = utils.get_jaw(target.pose.orientation) + math.pi
@@ -313,16 +322,21 @@ class CheckIfAtLocation(smach.State):
                         self.forget_food()
                     except:
                         print "forget_food failed"
-
+		robot_is_foraging = False
                 return 'failed'
             utils.rotate_to_ang(ang)
             rate.sleep()
+	if self.loc == 'food' and target is not None:
+		robot_has_food = True
+	    	print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
         return 'success'
 
 
 class SearchHive(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['success'])
+	global robot_is_foraging
+	robot_is_foraging = False
 
     def execute(self, userdata):
         rate = rospy.Rate(RATE)
@@ -493,6 +507,7 @@ class MoveToHiveLocation(smach.State):
 
     def execute(self, userdata):
         global move_action_server
+	global robot_is_foraging
 
         target = hive_loc
         goal = utils.create_goal_message(target)
@@ -540,6 +555,7 @@ class MoveToHiveLocation(smach.State):
                     move_action_server.send_goal(goal)
                 else:
                     move_action_server.cancel_all_goals()
+		    robot_is_foraging = False
                     return 'failed'
             rate.sleep()
 
@@ -551,10 +567,9 @@ class MoveToFoodLocation(smach.State):
 
     def execute(self, userdata):
         global move_action_server
+	global robot_is_foraging
 
         target = get_food()
-
-	print own_name, ":getting food"
 
         if target is None and userdata.pose_in is not None:
             target = userdata.pose_in
@@ -566,6 +581,7 @@ class MoveToFoodLocation(smach.State):
             except:
                 print "forget_food failed"
             print "target is None"
+	    robot_is_foraging = False
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS, offset=offset))
         move_action_server.send_goal(goal)
@@ -592,6 +608,7 @@ class MoveToFoodLocation(smach.State):
                         self.forget_food(location="")
                     except:
                         print "forget_food failed"
+		    robot_is_foraging = False
                     return 'failed'
             rec_pose = get_received_location([])
             if rec_pose is not None:
@@ -627,6 +644,7 @@ class MoveToFoodLocation(smach.State):
                         self.forget_food(location="")
                     except:
                         print "forget_food failed"
+		    robot_is_foraging = False
                     return 'failed'
             rate.sleep()
 
