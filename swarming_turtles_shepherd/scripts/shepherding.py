@@ -34,7 +34,7 @@ def transform_pose(pose_in, frame=HIVE_FRAME):
     return None
 
 
-def seen_loc(pos):
+def seen_loc(pos, name):
     if not SIMULATION:
         return True
     res = transform_pose(pos, BASE_FRAME)
@@ -42,7 +42,7 @@ def seen_loc(pos):
         if abs(dist_vec(res.pose.position, Vector3())) < SEEN_DIST:
             rospy.logdebug("Turtle is in ViewDistance!")
             if abs(math.atan2(res.pose.position.y, res.pose.position.x)) < SEEN_ANG:
-                rospy.loginfo("Turtle is in ViewAngle!")
+                rospy.loginfo("%s -> %s is in ViewAngle!", own_name, name)
                 return True
     return False
 
@@ -60,7 +60,7 @@ def cb_set_status(request):
         else:
             active = True
             result.result = "Shepherding enabled!"
-    rospy.loginfo(result.result)
+    rospy.loginfo("%s -> %s", own_name, result.result)
     return result
 
 
@@ -70,7 +70,7 @@ def cb_found_turtles(msg):
     # rospy.loginfo("Previous turtles: %s"%str(turtles))
 
     for turtle in msg.turtles:
-        if seen_loc(turtle.position):
+        if seen_loc(turtle.position, turtle.name):
             current_turtles.append(turtle.name)
             if active and turtle.name not in turtles:
                 bark_at(turtle)
@@ -83,7 +83,7 @@ def cb_found_turtles(msg):
 def cb_found_food(msg):
     global food
     food = transform_pose(msg)
-    rospy.loginfo("Found food!")
+    rospy.loginfo("%s -> Found food!", own_name)
 
 
 def bark_at(turtle):
@@ -97,7 +97,7 @@ def bark_at(turtle):
     if turtle_pose is not None:
         msg.robot_location = turtle_pose
         comm_pub.publish(msg)
-        rospy.loginfo("Barked at %s" % (turtle.name))
+        rospy.loginfo("%s -> Barked at %s", own_name, turtle.name)
 
 
 def main():

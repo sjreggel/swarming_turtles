@@ -14,6 +14,13 @@ from swarming_turtles_msgs.msg import Turtles
 from std_srvs.srv import Empty, EmptyResponse
 import swarming_turtles_navigation.move_random as utils
 
+#disable ros_info messages from SMACH
+import logging
+class Filter(logging.Filter):
+    def filter(self, record):
+        return 'State machine transitioning' not in record.msg
+logging.getLogger('rosout').addFilter(Filter())
+
 turtles = {}
 closest = ''
 count_fooddrops = 0
@@ -70,6 +77,15 @@ move_action_server = None
 offset = 0
 
 started = False
+
+def print_debug():
+    global own_name
+    ps = utils.get_own_pose()
+    x = ps.pose.position.x
+    y = ps.pose.position.y
+    z = ps.pose.orientation.z
+    w = ps.pose.orientation.w
+    rospy.loginfo("%s -> POSITION x:=%s y:=%s z:=%s w:=%s", own_name, x, y, z, w)
 
 
 def init_globals():
@@ -232,8 +248,9 @@ class SearchFood(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         found = False
-	print ">>>>>>>>",own_name, "IN SEARCH FOOD" ,"<<<<<<<<"
-
+	#print ">>>>>>>>",own_name, "IN SEARCH FOOD" ,"<<<<<<<<"
+	rospy.loginfo("%s -> IN SEARCH FOOD ", own_name)
+	print_debug()
         move_random_start()
         userdata.pose_out = None
         pose = None
@@ -251,7 +268,8 @@ class SearchFood(smach.State):
                 break
             if not closest == '' and closest not in asked_turtles:
                 asked_turtles.append(closest)
-                print "asking ", closest
+		rospy.loginfo("%s -> asking %s for food", own_name, closest)
+                #print "asking ", closest
                 self.ask_food(closest)
             rate.sleep()
 
@@ -292,8 +310,8 @@ class CheckIfAtLocation(smach.State):
 	    if robot_has_food is True:
 		robot_has_food = False # Food is deliverd
 		count_fooddrops += 1
-	    	print ">>>>>>>>",own_name, "Delivered_Food", count_fooddrops, robot_is_foraging ,"<<<<<<<<"
-		#rospy.loginfo("%s Delivered_Food count:=%d foraging:=%r", own_name, count_fooddrops, robot_is_foraging)
+	    	#print ">>>>>>>>",own_name, "Delivered_Food", count_fooddrops, robot_is_foraging ,"<<<<<<<<"
+		rospy.loginfo("%s -> Delivered_Food:=%d, Foraging:=%r", own_name, count_fooddrops, robot_is_foraging)
 		robot_is_foraging = True
         else:  # food
             target = get_food()
@@ -328,7 +346,8 @@ class CheckIfAtLocation(smach.State):
             rate.sleep()
 	if self.loc == 'food' and target is not None:
 		robot_has_food = True
-	    	print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
+	    	#print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
+		rospy.loginfo("%s -> Aquired_Food", own_name)
         return 'success'
 
 
