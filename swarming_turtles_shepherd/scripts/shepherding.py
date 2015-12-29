@@ -8,7 +8,8 @@ from geometry_msgs.msg import PoseStamped, Vector3
 from swarming_turtles_msgs.msg import Turtles, CommunicationProtocol
 from swarming_turtles_shepherd.srv import *
 from std_msgs.msg import Bool
-from swarming_turtles_navigation.move_random import dist_vec
+#from swarming_turtles_navigation.move_random import dist_vec
+import swarming_turtles_navigation.move_random as utils
 
 turtles = []
 own_name = 'mitro' # gethostname()  # hostname used for communication
@@ -19,12 +20,27 @@ comm_pub = None
 HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
 BASE_FRAME = rospy.get_param('shepherd_base_frame', '/robot_0/base_link')
 food = None
+#bark_time = 0
+#bark_counter = 0
+#time_now = 0
+#time_past = 0
+
 
 active = False
 
 SIMULATION = True
 SEEN_DIST = rospy.get_param('seen_dist_shepherd', 1)
 SEEN_ANG = rospy.get_param('seen_ang_shepherd', math.pi/4.0)
+
+
+def rob_debug():
+    global own_name
+    pos = utils.get_own_pose()
+    x = format(pos.pose.position.x,'.3f')
+    y = format(pos.pose.position.y,'.3f')
+    z = format(pos.pose.orientation.z,'.3f')
+    w = format(pos.pose.orientation.w,'.3f')
+    return own_name, x, y, z, w
 
 def transform_pose(pose_in, frame=HIVE_FRAME):
     if tf_listener.frameExists(pose_in.header.frame_id) and tf_listener.frameExists(frame):
@@ -39,19 +55,26 @@ def seen_loc(pos, name):
         return True
     res = transform_pose(pos, BASE_FRAME)
     if res is not None:
-        if abs(dist_vec(res.pose.position, Vector3())) < SEEN_DIST:
+        if abs(utils.dist_vec(res.pose.position, Vector3())) < SEEN_DIST:
             rospy.logdebug("Turtle is in ViewDistance!")
             if abs(math.atan2(res.pose.position.y, res.pose.position.x)) < SEEN_ANG:
-                rospy.loginfo("%s -> %s is in ViewAngle!", own_name, name)
+                rospy.logdebug("%s -> %s is in ViewAngle!", own_name, name)
                 return True
     return False
 
 
 def cb_set_status(request):
     global active
+    #global time_now
+    #global time_past
+    #global bark_time 
+
     result = SetShepherdingStatusResponse()
     if request.target_status is False:
         active = False
+	#time_past = rospy.get_time() - time_now
+	#bark_time += time_past
+	#rospy.loginfo("Elapsed time %i %i", time_past, bark_time)
         result.result = "Shepherding disabled"
     else:
         if food is None:
@@ -60,7 +83,9 @@ def cb_set_status(request):
         else:
             active = True
             result.result = "Shepherding enabled!"
-    rospy.loginfo("%s -> %s", own_name, result.result)
+	    #time_now = rospy.get_time()
+	    #rospy.loginfo("Current time %i", time_now)
+    rospy.loginfo("%s -> %s ", rob_debug(), result.result)
     return result
 
 
@@ -83,7 +108,7 @@ def cb_found_turtles(msg):
 def cb_found_food(msg):
     global food
     food = transform_pose(msg)
-    rospy.loginfo("%s -> Found food!", own_name)
+    rospy.loginfo("%s -> Found food!", rob_debug())
 
 
 def bark_at(turtle):
@@ -97,12 +122,14 @@ def bark_at(turtle):
     if turtle_pose is not None:
         msg.robot_location = turtle_pose
         comm_pub.publish(msg)
-        rospy.loginfo("%s -> Barked at %s", own_name, turtle.name)
+        #rospy.loginfo("%s -> Barked at %s", own_name, turtle.name)
+	rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
 
 
 def main():
     global tf_listener, comm_pub
     rospy.init_node('shepherding')
+    utils.init_globals()
 
     tf_listener = tf.TransformListener()
 
@@ -112,9 +139,10 @@ def main():
     rospy.Subscriber('found_food', PoseStamped, cb_found_food)
     rospy.Service('/shepherd/set_shepherding_status', SetShepherdingStatus, cb_set_status)
 
-    r = rospy.Rate(1)
+    r = rospy.Rate(10)
     while not rospy.is_shutdown():
         shep_pub.publish(active)
+	rospy.loginfo("%s -> Position", rob_debug())
         r.sleep()
 
 

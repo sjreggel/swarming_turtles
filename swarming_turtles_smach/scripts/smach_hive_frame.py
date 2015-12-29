@@ -78,15 +78,17 @@ offset = 0
 
 started = False
 
-def print_debug():
+def rob_debug():
     global own_name
-    ps = utils.get_own_pose()
-    x = ps.pose.position.x
-    y = ps.pose.position.y
-    z = ps.pose.orientation.z
-    w = ps.pose.orientation.w
-    rospy.loginfo("%s -> POSITION x:=%s y:=%s z:=%s w:=%s", own_name, x, y, z, w)
-
+    global count_fooddrops
+    global robot_has_food
+    global robot_is_foraging
+    pos = utils.get_own_pose()
+    x = format(pos.pose.position.x,'.3f')
+    y = format(pos.pose.position.y,'.3f')
+    z = format(pos.pose.orientation.z,'.3f')
+    w = format(pos.pose.orientation.w,'.3f')
+    return own_name, x, y, z, w, robot_is_foraging, count_fooddrops, robot_has_food
 
 def init_globals():
     global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server, get_received_location_srv
@@ -248,9 +250,6 @@ class SearchFood(smach.State):
         start = rospy.Time.now()
         rate = rospy.Rate(RATE)
         found = False
-	#print ">>>>>>>>",own_name, "IN SEARCH FOOD" ,"<<<<<<<<"
-	rospy.loginfo("%s -> IN SEARCH FOOD ", own_name)
-	print_debug()
         move_random_start()
         userdata.pose_out = None
         pose = None
@@ -268,9 +267,10 @@ class SearchFood(smach.State):
                 break
             if not closest == '' and closest not in asked_turtles:
                 asked_turtles.append(closest)
-		rospy.loginfo("%s -> asking %s for food", own_name, closest)
+		rospy.loginfo("%s -> asking %s for food", rob_debug(), closest)
                 #print "asking ", closest
                 self.ask_food(closest)
+	    rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
             rate.sleep()
 
         userdata.pose_out = pose
@@ -311,7 +311,7 @@ class CheckIfAtLocation(smach.State):
 		robot_has_food = False # Food is deliverd
 		count_fooddrops += 1
 	    	#print ">>>>>>>>",own_name, "Delivered_Food", count_fooddrops, robot_is_foraging ,"<<<<<<<<"
-		rospy.loginfo("%s -> Delivered_Food:=%d, Foraging:=%r", own_name, count_fooddrops, robot_is_foraging)
+		rospy.loginfo("%s -> Delivered_Food", rob_debug())
 		robot_is_foraging = True
         else:  # food
             target = get_food()
@@ -347,7 +347,7 @@ class CheckIfAtLocation(smach.State):
 	if self.loc == 'food' and target is not None:
 		robot_has_food = True
 	    	#print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
-		rospy.loginfo("%s -> Aquired_Food", own_name)
+		rospy.loginfo("%s -> Aquired_Food", rob_debug())
         return 'success'
 
 
@@ -370,6 +370,7 @@ class SearchHive(smach.State):
                 move_random_stop()
                 return 'success'
             rate.sleep()
+	rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
 
 
 class InitHive(smach.State):
@@ -467,6 +468,7 @@ class MoveToInLocation(smach.State):
                     rospy.sleep(MOVE_RANDOM_TIME)
                     move_random_stop()
                     move_action_server.send_goal(goal)
+	    rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
             rate.sleep()
 
 
@@ -517,6 +519,7 @@ class MoveToOutLocation(smach.State):
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
                 return 'failed'
+	    rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
             rate.sleep()
 
 
@@ -576,6 +579,7 @@ class MoveToHiveLocation(smach.State):
                     move_action_server.cancel_all_goals()
 		    robot_is_foraging = False
                     return 'failed'
+	    rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
             rate.sleep()
 
 
@@ -665,6 +669,7 @@ class MoveToFoodLocation(smach.State):
                         print "forget_food failed"
 		    robot_is_foraging = False
                     return 'failed'
+	    rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
             rate.sleep()
 
 
