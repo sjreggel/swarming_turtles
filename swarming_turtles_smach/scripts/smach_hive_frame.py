@@ -18,8 +18,10 @@ import swarming_turtles_navigation.move_random as utils
 import logging
 class Filter(logging.Filter):
     def filter(self, record):
-        return 'State machine transitioning' not in record.msg
+        return 'State machine' not in record.msg
 logging.getLogger('rosout').addFilter(Filter())
+ #transitioning
+
 
 turtles = {}
 closest = ''
@@ -733,7 +735,8 @@ def main():
     while not rospy.is_shutdown() and not started:
         r.sleep()
     # Execute SMACH plan
-    rospy.loginfo("starting!")
+    rospy.loginfo("%s -> Starting ", rob_debug())
+    #rospy.loginfo("starting!")
     outcome = sm.execute()
 
     rospy.spin()

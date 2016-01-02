@@ -40,7 +40,7 @@ def rob_debug():
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w
+    return own_name, x, y, z, w, False, 0, False
 
 def transform_pose(pose_in, frame=HIVE_FRAME):
     if tf_listener.frameExists(pose_in.header.frame_id) and tf_listener.frameExists(frame):
