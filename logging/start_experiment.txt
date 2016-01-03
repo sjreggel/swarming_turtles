@@ -11,7 +11,7 @@ START-button starts the robots (smach)
 X-button enables barking
 
 Start experiment
-> roslaunch swarming_turtles_stage swarm_sim.launch 
+> roslaunch swarming_turtles_stage swarm_sim-x-robots.launch 
 
 Log experiment data
 > rqt_console
