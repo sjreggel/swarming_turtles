@@ -47,7 +47,7 @@ robots_in_experiment = 0
 convergence = False
 prev_xpos = [0] * Elements
 prev_ypos = [0] * Elements
-distance = [0] * Elements
+distance = [None] * Elements
 
 def decode(strs):
     global Shepontime, Sheptotaltime
@@ -231,7 +231,10 @@ def decode(strs):
     try:
 	if robot == 'mitro':
 	   current_robot = 0
-	distance[current_robot] += math.sqrt(math.pow((float(xpos) - prev_xpos[current_robot]),2) + math.pow((float(ypos) - prev_ypos[current_robot]),2))
+	if distance[current_robot] == None: # init prev x-pos and ypos with startlocation for a new robot
+	  distance[current_robot] = 0
+	else:
+	  distance[current_robot] += math.sqrt(math.pow((float(xpos) - prev_xpos[current_robot]),2) + math.pow((float(ypos) - prev_ypos[current_robot]),2))
 	prev_xpos[current_robot] = float(xpos)
 	prev_ypos[current_robot] = float(ypos)
     except:
@@ -263,19 +266,29 @@ for row in reversed(list(reader)):
 for robotnr in range(1,MaxRobots):
   if foraging_robot[robotnr] == True: #robot still foraging
      foraging_time[robotnr] += endtime - foraging_start[robotnr] 
-     print "correcting foraging time"
+     #print "correcting foraging time"
 #adjust convergence time when still converged at end of experiment
 if convergence == True: 
    convergence_time += endtime - convergence_start
-   print "correcting convergence time"
+   #print "correcting convergence time"
 
 #total forage runs
 for robotnr in range(1,MaxRobots):
   foraging_total += foraging_count[robotnr]
   hasfood_total += hasfood_count[robotnr]
-   
-runtime = endtime - starttime
 
+# calculate runtime of the experiment   
+
+try:
+  runtime = endtime - starttime
+except:
+  runtime = 0
+try:
+  troughput = (foraging_total /runtime)
+except:
+  troughput = 0
+
+#log output
 lfile.write("\n****************************************************************************************\n")
 lfile.write( "Decoding " + file_name + " --> %s \n" % outfile)
 lfile.write( "General: 		MaxRobots 			= %s \n" % MaxRobots )
@@ -304,17 +317,18 @@ lfile.write( "Convergence: 		Time to first (sec) 		= %s \n" % convergence_time_f
 lfile.write( "Distance travelled:	per robots [1..MaxRobots] (m)	= %s \n" % distance[1:])
 lfile.write( "Distance travelled:	mitro (m)			= %s \n" % distance[0])
 lfile.write( "****************************************************************************************\n")
-lfile.write( "calc troughput: 	food deliveries per second 	= %s \n" %  (runtime / foraging_total))
+lfile.write( "calc troughput: 	food deliveries per second 	= %s \n" %  troughput)
+lfile.write( "calc troughput: 	food deliveries per minute 	= %s \n" %  (troughput*60))
 lfile.write( "****************************************************************************************\n")
 
 
 
-
+#close files
 ifile.close()
 ofile.close()
 lfile.close()
 
-
+#print log output to screen
 with open(logfile, 'r') as fin:
     print fin.read()
 

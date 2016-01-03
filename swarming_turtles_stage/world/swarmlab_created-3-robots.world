@@ -1,0 +1,128 @@
+resolution 0.02 # set the resolution of the underlying raytrace model in meters
+interval_sim 100 # simulation timestep in milliseconds
+#interval_real 100
+
+window
+( 
+  size [ 958 391 ] 
+  scale 34.855 
+)
+
+define map model
+(
+  color "gray30"
+  boundary 0
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  obstacle_return 1
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+map
+(
+  name "swarmlab_map"
+  size [10.900  17.750 0.500]
+  pose [0.000 0.000 0.000 0.000]
+  bitmap "swarmlab_map.pgm"
+)
+
+
+define hokuyo ranger
+(
+  sensor(
+    range [0.0 4.0]
+    fov 270
+    samples 270
+    size [ 0.05 0.05 0.1 ]
+  )
+  color "black"
+  #ctrl "lasernoise"
+)
+
+define roomba position
+(
+  size [0.330 0.330 0.200]
+  origin [0.000 0.000 0.000 0.000]
+  gui_nose 1
+
+  # This block approximates the circular shape of a Roomba
+  hokuyo( pose [0.000 0.000 0.100 0.000] )
+  drive "diff"
+  bitmap "robot.png"
+)
+
+define topurg ranger
+(
+  sensor(
+    range [0.0 30.0]
+    fov 270.25
+    samples 800
+    size [ 0.05 0.05 0.1 ]
+    )
+  # generic model properties
+  color "black"
+)
+
+define diff_robot position
+(
+  size [0.340 0.340 0.300]
+  origin [0.000 0.000 0.000 0.000]
+  gui_nose 1
+  drive "diff"
+  wheelbase 0.25
+  topurg(pose [ 0.000 0.000 0.000 0.000 ])
+  # bitmap "robot.png"
+  
+)
+
+define omni_robot position
+(
+  size [0.34 0.34 0.3]
+  origin [0 0 0 0]
+  gui_nose 1
+  drive "omni"
+  wheelbase 0.25
+  topurg(pose [ 0.0 0.000 0 0.000 ])
+)
+
+define pr2 position
+(
+  size [0.50 0.45 0.1]
+  origin [0 0 0 0]
+  gui_nose 1
+  topurg( pose [0.275 0 0.1 0] )
+  drive "omni"
+)
+
+
+define stick position
+(
+  size [0.6 0.4 0.1]
+  origin [0 0 0 0]
+  gui_nose 1
+	
+  hokuyo( pose [0.125 0 0.1 0] )
+  drive "omni"
+
+)
+define obst model
+(
+  size [0.400 0.300 0.400]
+  origin [0.000 0.000 0.000 0.000]
+  gui_nose 1
+)
+
+obst( pose [ -2.204 -1.873 0.000 93.702 ] name "hive" color "blue")
+obst( pose [ -2.108 3.821 0.000 -95.374 ] name "food" color "red")
+
+# add here robots
+diff_robot( pose [ -1.749 2.469 0.000 95.871 ] name "shepherd" color "black")
+roomba( pose [ -1.912 -1.283 0.000 -165.000 ] name "robot_1" color "SlateGray")
+roomba( pose [ -2.337 -0.940 0.000 -105.000 ] name "robot_2" color "LightGrey")
+roomba( pose [ -2.417 -1.467 0.000 -45.000 ] name "robot_3" color "dark slate blue")
+#roomba( pose [ -2.755 -1.040 0.000 15.000 ] name "robot_4" color "royal blue")
+#roomba( pose [ -2.590 -1.358 0.000 75.000 ] name "robot_5" color "LightSkyBlue")
