@@ -1,0 +1,28 @@
+-----------------------
+running the experiment
+-----------------------
+
+Using PS3
+> sixad --start
+> roslaunch swarming_turtles_shepherd shepherd_teleop_joy.launch 
+> rosrun swarming_turtles_shepherd shepherd_joy_control.py
+Hold Left1 to move the shepherd with the left thumb control
+START-button starts the robots (smach)
+X-button enables barking
+
+Start experiment
+> roslaunch swarming_turtles_stage swarm_sim.launch 
+
+Log experiment data
+> rqt_console
+in rqt_console EXCLUDE all messages with severity DEBUG, ERR, WARN, FATAL
+in rqt_console EXCLUDE all nodes (per robot) that includes SwarmCollvoid
+clear the console before starting the experiment and make sure the logging is RUNNING
+after the experiment SAVE the logs to a file: e.g. Experiment_x.csv
+
+Parse and Analyze the data
+> python parse.py /logfilelocation/Experiment_x.csv
+This will parse and analysis the inputfile, and will output  
+/logfilelocation/Experiment_x-out.txt containing the parsed data
+/logfilelocation/Experiment_x-out.log containing the analysis results
+

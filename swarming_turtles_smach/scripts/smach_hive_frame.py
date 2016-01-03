@@ -246,6 +246,7 @@ class SearchFood(smach.State):
     def execute(self, userdata):
         global closest
 	global robot_is_foraging
+	asked_robot = None
 	robot_is_foraging = False
         closest = ''
         asked_turtles = []
@@ -270,11 +271,16 @@ class SearchFood(smach.State):
             if not closest == '' and closest not in asked_turtles:
                 asked_turtles.append(closest)
 		rospy.loginfo("%s -> asking %s for food", rob_debug(), closest)
+		asked_robot = closest
                 #print "asking ", closest
                 self.ask_food(closest)
+	    else:
+		asked_robot = None
 	    rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
             rate.sleep()
-
+	if asked_robot == closest:
+		rospy.loginfo("%s -> Foodlocation received from %s", rob_debug(), closest)
+		asked_robot = None
         userdata.pose_out = pose
 
         move_random_stop()
