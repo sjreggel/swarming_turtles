@@ -10,6 +10,9 @@ Hold Left1 to move the shepherd with the left thumb control
 START-button starts the robots (smach)
 X-button enables barking
 
+publish food location
+> rosrun swarming_turtles_stage food_location_publisher.py
+
 Start experiment
 > roslaunch swarming_turtles_stage swarm_sim-x-robots.launch 
 

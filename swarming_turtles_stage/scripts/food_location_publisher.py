@@ -4,7 +4,6 @@ import rospy
 import tf
 from geometry_msgs.msg import PoseStamped, Vector3
 from nav_msgs.msg import Odometry
-
 __author__ = 'danielclaes'
 
 HIVE_TOPIC = '/hive/base_pose_ground_truth'
@@ -14,9 +13,19 @@ WORLD_FRAME = '/world'
 HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
 BASE_FRAME = rospy.get_param('base_frame', '/base_link')
 
-RATE = 20
+RATE = 10
 
 transform = {}  # transform of world to hive
+
+own_name = 'food'
+
+def rob_debug(pos):
+    global own_name
+    x = format(pos.pose.position.x,'.3f')
+    y = format(pos.pose.position.y,'.3f')
+    z = format(pos.pose.orientation.z,'.3f')
+    w = format(pos.pose.orientation.w,'.3f')
+    return own_name, x, y, z, w, False, 0, False, False
 
 
 def quat_msg_to_array(quat):
@@ -27,6 +36,7 @@ class FoodPublisher(object):
     def __init__(self):
         self.tf = tf.TransformListener()
         self.food_pub = rospy.Publisher('/food_location', PoseStamped, queue_size=10)
+        self.hive_location = PoseStamped()
         rospy.Subscriber(HIVE_TOPIC, Odometry, self.hive_cb)
         for idx, food_topic in enumerate(FOOD_TOPICS):
             rospy.Subscriber(food_topic, Odometry, self.food_cb, idx)
@@ -37,6 +47,8 @@ class FoodPublisher(object):
         p.header = msg.header
         p = self.transform_pose(p, HIVE_FRAME, time_in=msg.header.stamp)
         if p is not None:
+	    
+	    rospy.loginfo("%s -> Food Position", rob_debug(p))
             # Here you could also do:
             # rospy.loginfo("Food Position %.2f, %.2f", p.pose.position.x, p.pose.position.y)
             self.food_pub.publish(p)
@@ -88,4 +100,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -263,9 +263,11 @@ class SearchFood(smach.State):
         rate = rospy.Rate(RATE)
         found = False
         move_random_start()
+	print "SEARCHING..................................."
         userdata.pose_out = None
         pose = None
         while not found and not rospy.is_shutdown():
+	    print "SEARCHING_______________________________________"
             if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'not_found'
@@ -749,7 +751,7 @@ def main():
     while not rospy.is_shutdown() and not started:
         r.sleep()
     # Execute SMACH plan
-    rospy.loginfo("%s -> Starting ", rob_debug())
+    rospy.loginfo("%s -> Starting Experiment", rob_debug())
     #rospy.loginfo("starting!")
     outcome = sm.execute()
 

@@ -59,6 +59,14 @@ prev_xpos = [0] * Elements
 prev_ypos = [0] * Elements
 distance = [None] * Elements
 
+food_xpos = 0
+food_ypos = 0
+food_zpos = 0
+Food_moved = False
+convergence_time_food = 0
+conv_start_time_food = 0
+New_Foodfound = False
+
 def decode(strs):
     global Shepontime, Sheptotaltime
     global Shepherd_enabled, Shepherd_count
@@ -69,6 +77,7 @@ def decode(strs):
     global collision_robot, collision_count, collision_start, collision_time
     global hasfood_robot, hasfood_count, hasfood_start, hasfood_time
     global prev_xpos, prev_ypos, distance
+    global Food_moved, food_xpos, food_ypos, food_zpos,convergence_time_food, conv_start_time_food, New_Foodfound
 
     #decode the raw data
     res = [","] * 10
@@ -120,7 +129,8 @@ def decode(strs):
 
     #log experiment time
     try:
-     if action == 'Starting Experiment':
+#     if action == 'Starting Experiment':
+     if action == 'Starting ':
 	print "Starting Experiment"
   	starttime = float(time)
      endtime = float(time)
@@ -189,6 +199,14 @@ def decode(strs):
     except:
 	pass
 
+    #log deliverd food for each robot
+    try: 
+      if New_foodfound == False:
+        if action == 'SearchFood':
+	  New_Foodfound = True
+    except:
+	pass
+
 
     # log foraging and convergence time and count per robot
     try:
@@ -203,10 +221,13 @@ def decode(strs):
 		break
 	      else:
 		convergence = True
-	  if convergence == True:
+	  if convergence == True and New_Foodfound == False:
 		convergence_start = float(time)
 		if convergence_time_first == 0: # time till first convergence
-		  convergence_time_first = float(time)
+		  convergence_time_first = float(time) - starttime 
+		if conv_start_time_food != starttime:
+		  convergence_time_food = float(time) - conv_start_time_food
+		  print "convergence to food", convergence_time_food, conv_start_time_food
       else: 
 	if foraging_robot[current_robot] == True: #end forage run
 	  foraging_robot[current_robot] =  False
@@ -279,6 +300,22 @@ def decode(strs):
 	pass
 
 
+    # log food position
+    try:
+      if robot == 'food':
+	if (float(xpos)!= food_xpos) or (float(ypos) != food_ypos) or (float(zpos) != food_zpos):
+	   Food_moved = True
+	   food_xpos = float(xpos)
+	   food_ypos = float(ypos)
+	   food_zpos = float(zpos)
+	   New_Foodfound = False
+	else:
+	   if Food_moved == True:
+	     print "FOOD moved to location", xpos, ypos, zpos, float(time)
+	     conv_start_time_food = float(time)
+	     Food_moved = False
+    except:
+	pass
 
 # write column lables to file
 ofile.write("time, robot, xpos, ypos, zpos', wpos, action, foraging, foodcount, hasfood, collision \n")
