@@ -25,8 +25,8 @@ BarkedAtRobot = [0] * Elements
 AskedRobot = [0] * Elements
 Askcounter = 0
 Receivedfood = [0] * Elements
-Sendfood = [0] * Elements
 Receivecounter = 0
+Sendfood = [0] * Elements
 foraging_robot = [False] * Elements
 foraging_count = [0] * Elements
 foraging_start = [0] * Elements
@@ -167,13 +167,19 @@ def decode(strs):
     except:
 	pass
 
+    #log deliverd food for each robot
+    try: 
+      if action == 'Delivered_Food':
+	foraging_count[current_robot] += 1
+    except:
+	pass
 
 
     # log foraging and convergence time and count per robot
     try:
       if foraging == 'True':
 	if foraging_robot[current_robot] == False: #start new forage run(s)
-	  foraging_count[current_robot] += 1
+	  #foraging_count[current_robot] += 1
 	  foraging_robot[current_robot] =  True
 	  foraging_start[current_robot] = float(time)
 	  for robotnr in range(1,robots_in_experiment): # check if all robots are currently foraging
@@ -201,7 +207,7 @@ def decode(strs):
     try:
       if foraging == 'True':
 	if foraging_robot[current_robot] == False: #start forage run
-	  foraging_count[current_robot] += 1
+	  #foraging_count[current_robot] += 1
 	  foraging_robot[current_robot] =  True
 	  foraging_start[current_robot] = float(time)
       else: 
@@ -299,17 +305,17 @@ lfile.write( "Sherpherding:		Times enabled 			= %s \n" % Shepherd_count)
 lfile.write( "Sherpherding:		Total enabled time (sec) 	= %s \n" %  Sheptotaltime)
 lfile.write( "Barked: 		Total amount 			= %s \n" % Barkcounter)
 lfile.write( "Barked: 		Times at Robots [1..MaxRobots] 	= %s \n" % BarkedAtRobot[1:])
-lfile.write( "Asked Foodloc: 		Total times asked 		= %s \n" % Askcounter)
-lfile.write( "Asked Foodloc: 		Times per Robot [1..MaxRobots] 	= %s \n" % AskedRobot[1:])
-lfile.write( "Received Foodloc: 	Total times Received 		= %s \n" % Receivecounter)
-lfile.write( "Received Foodloc: 	Times per Robot [1..MaxRobots] 	= %s \n" % Receivedfood[1:])
-lfile.write( "Send Foodloc: 		Times per Robot [1..MaxRobots] 	= %s \n" % Sendfood[1:])
+lfile.write( "Foodloc Asked: 		Total times asked 		= %s \n" % Askcounter)
+lfile.write( "Foodloc Asked: 		Times per Robot [1..MaxRobots] 	= %s \n" % AskedRobot[1:])
+lfile.write( "Foodloc Received: 	Total times Received 		= %s \n" % Receivecounter)
+lfile.write( "Foodloc Received: 	Times per Robot [1..MaxRobots] 	= %s \n" % Receivedfood[1:])
+lfile.write( "Foodloc Send: 		Times per Robot [1..MaxRobots] 	= %s \n" % Sendfood[1:])
 lfile.write( "Foraging Runs: 		Total 				= %s \n" % foraging_total)
 lfile.write( "Foraging Runs: 		per robots [1..MaxRobots] 	= %s \n" % foraging_count[1:])
 lfile.write( "Foraging Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % foraging_time[1:])
-lfile.write( "Got food: 		Total 				= %s \n" % hasfood_total)
-lfile.write( "Got food: 		per robots [1..MaxRobots] 	= %s \n" % hasfood_count[1:])
-lfile.write( "Got food Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % hasfood_time[1:])
+lfile.write( "Has food: 		Total 				= %s \n" % hasfood_total)
+lfile.write( "Has food: 		per robots [1..MaxRobots] 	= %s \n" % hasfood_count[1:])
+lfile.write( "Has food Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % hasfood_time[1:])
 lfile.write( "Dropped food: 		Total 				= %s \n" % (hasfood_total - foraging_total))
 lfile.write( "Dropped food: 		per robots [1..MaxRobots] 	= %s \n" % map(sub,hasfood_count[1:], foraging_count[1:]))
 lfile.write( "Convergence: 		Total time converged (sec)	= %s \n" % convergence_time)
