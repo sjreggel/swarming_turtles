@@ -27,16 +27,26 @@ Askcounter = 0
 Receivedfood = [0] * Elements
 Receivecounter = 0
 Sendfood = [0] * Elements
+
 foraging_robot = [False] * Elements
 foraging_count = [0] * Elements
 foraging_start = [0] * Elements
 foraging_time = [0] * Elements
 foraging_total = 0
+
 hasfood_robot = [False] * Elements
 hasfood_count = [0] * Elements
 hasfood_start = [0] * Elements
 hasfood_time = [0] * Elements
 hasfood_total = 0
+
+collision_robot = [False] * Elements
+collision_count = [0] * Elements
+collision_start = [0] * Elements
+collision_time = [0] * Elements
+collision_total = 0
+
+
 starttime = 0
 endtime = 0
 runtime = 0
@@ -56,6 +66,7 @@ def decode(strs):
     global starttime, endtime, convergence_time, convergence_start, convergence, convergence_time_first
     global robots_in_experiment
     global foraging_robot, foraging_count, foraging_start, foraging_time
+    global collision_robot, collision_count, collision_start, collision_time
     global hasfood_robot, hasfood_count, hasfood_start, hasfood_time
     global prev_xpos, prev_ypos, distance
 
@@ -67,7 +78,7 @@ def decode(strs):
     mylist = strs.split(" ->", 1)[0]
     mylist = mylist.replace(')',',')
     mylist = mylist.replace(" ","")
-    res += mylist.split(',')[5:8]
+    res += mylist.split(',')[5:9]
 
     #write to output file
     for item in res:
@@ -101,12 +112,16 @@ def decode(strs):
 	hasfood = res[9]
     except:
 	hasfood = ""
+    try:
+	collision = res[10]
+    except:
+	collision = ""
     #print time, robot, xpos, ypos, zpos, wpos, action, foraging, foodcount, hasfood
 
     #log experiment time
     try:
      if action == 'Starting Experiment':
-	print "statrting"
+	print "Starting Experiment"
   	starttime = float(time)
      endtime = float(time)
     except:
@@ -233,6 +248,23 @@ def decode(strs):
 	pass
 
 
+    # log collision time and count per robot
+    try:
+      if robot == 'mitro':
+	 current_robot = 0
+      if collision == 'True':
+	if collision_robot[current_robot] == False: #new collision
+	  collision_count[current_robot] += 1
+	  collision_robot[current_robot] =  True
+	  collision_start[current_robot] = float(time)
+      else: 
+	if collision_robot[current_robot] == True: #collision resolved
+	  collision_robot[current_robot] =  False
+	  collision_time[current_robot] += float(time) - collision_start[current_robot]
+    except:
+	pass
+
+
     # log travel distance per robot
     try:
 	if robot == 'mitro':
@@ -249,7 +281,7 @@ def decode(strs):
 
 
 # write column lables to file
-ofile.write("time, robot, xpos, ypos, zpos', wpos, action, foraging, foodcount, hasfood \n")
+ofile.write("time, robot, xpos, ypos, zpos', wpos, action, foraging, foodcount, hasfood, collision \n")
 
 
 # iterate trough the file and decode
@@ -282,6 +314,7 @@ if convergence == True:
 for robotnr in range(1,MaxRobots):
   foraging_total += foraging_count[robotnr]
   hasfood_total += hasfood_count[robotnr]
+  collision_total += collision_count[robotnr]
 
 # calculate runtime of the experiment   
 
@@ -318,6 +351,11 @@ lfile.write( "Has food: 		per robots [1..MaxRobots] 	= %s \n" % hasfood_count[1:
 lfile.write( "Has food Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % hasfood_time[1:])
 lfile.write( "Dropped food: 		Total 				= %s \n" % (hasfood_total - foraging_total))
 lfile.write( "Dropped food: 		per robots [1..MaxRobots] 	= %s \n" % map(sub,hasfood_count[1:], foraging_count[1:]))
+lfile.write( "Collision: 		Total 				= %s \n" % collision_total)
+lfile.write( "Collision: 		per robots [1..MaxRobots] 	= %s \n" % collision_count[1:])
+lfile.write( "Collision Time: 	per robot [1..MaxRobots] (sec) 	= %s \n" % collision_time[1:])
+lfile.write( "Collision: 		Mitro 				= %s \n" % collision_count[0])
+lfile.write( "Collision Time: 	Mitro (sec) 			= %s \n" % collision_time[0])
 lfile.write( "Convergence: 		Total time converged (sec)	= %s \n" % convergence_time)
 lfile.write( "Convergence: 		Time to first (sec) 		= %s \n" % convergence_time_first)
 lfile.write( "Distance travelled:	per robots [1..MaxRobots] (m)	= %s \n" % distance[1:])

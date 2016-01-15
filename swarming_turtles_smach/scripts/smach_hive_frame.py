@@ -12,6 +12,7 @@ from actionlib_msgs.msg import *
 from swarming_turtles_detect.srv import GetLocation, ForgetLocation
 from swarming_turtles_msgs.msg import Turtles
 from std_srvs.srv import Empty, EmptyResponse
+from stage_ros.msg import Stall
 import swarming_turtles_navigation.move_random as utils
 
 #disable ros_info messages from SMACH
@@ -28,6 +29,7 @@ closest = ''
 count_fooddrops = 0
 robot_has_food = False
 robot_is_foraging = False
+robot_in_collision = False
 
 tfListen = None
 
@@ -85,12 +87,13 @@ def rob_debug():
     global count_fooddrops
     global robot_has_food
     global robot_is_foraging
+    global robot_in_collision
     pos = utils.get_own_pose()
     x = format(pos.pose.position.x,'.3f')
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w, robot_is_foraging, count_fooddrops, robot_has_food
+    return own_name, x, y, z, w, robot_is_foraging, count_fooddrops, robot_has_food, robot_in_collision
 
 def init_globals():
     global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server, get_received_location_srv
@@ -120,6 +123,7 @@ def init_globals():
     own_name = rospy.get_param('~name', own_name)
 
     rospy.Subscriber('found_turtles', Turtles, cb_found_turtles)  # which turtles are near?
+    rospy.Subscriber('stall', Stall, cb_stall)  # turtle in collision?
 
 
 def seen_hive():
@@ -206,6 +210,11 @@ def cb_found_turtles(msg):
             closest_tmp = turtle.name
         turtles[turtle.name] = turtle.position
     closest = closest_tmp
+
+def cb_stall(msg):
+    global robot_in_collision
+    robot_in_collision = msg.stall
+
 
 
 def get_received_location(asked_turtles):

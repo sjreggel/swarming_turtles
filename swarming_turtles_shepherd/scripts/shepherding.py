@@ -8,11 +8,13 @@ from geometry_msgs.msg import PoseStamped, Vector3
 from swarming_turtles_msgs.msg import Turtles, CommunicationProtocol
 from swarming_turtles_shepherd.srv import *
 from std_msgs.msg import Bool
+from stage_ros.msg import Stall
 #from swarming_turtles_navigation.move_random import dist_vec
 import swarming_turtles_navigation.move_random as utils
 
 turtles = []
 own_name = 'mitro' # gethostname()  # hostname used for communication
+robot_in_collision = False
 
 tf_listener = None
 comm_pub = None
@@ -35,12 +37,13 @@ SEEN_ANG = rospy.get_param('seen_ang_shepherd', math.pi/4.0)
 
 def rob_debug():
     global own_name
+    global robot_in_collision
     pos = utils.get_own_pose()
     x = format(pos.pose.position.x,'.3f')
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w, False, 0, False
+    return own_name, x, y, z, w, False, 0, False, robot_in_collision
 
 def transform_pose(pose_in, frame=HIVE_FRAME):
     if tf_listener.frameExists(pose_in.header.frame_id) and tf_listener.frameExists(frame):
@@ -125,11 +128,15 @@ def bark_at(turtle):
         #rospy.loginfo("%s -> Barked at %s", own_name, turtle.name)
 	rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
 
+def cb_stall(msg):
+    global robot_in_collision
+    robot_in_collision = msg.stall
 
 def main():
     global tf_listener, comm_pub
     rospy.init_node('shepherding')
     utils.init_globals()
+    rospy.Subscriber('stall', Stall, cb_stall)  # turtle in collision?
 
     tf_listener = tf.TransformListener()
 
