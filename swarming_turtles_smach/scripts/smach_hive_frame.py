@@ -26,7 +26,7 @@ logging.getLogger('rosout').addFilter(Filter())
 
 turtles = {}
 closest = ''
-count_fooddrops = 0
+count_fooddeliveries = 0
 robot_has_food = False
 robot_is_foraging = False
 robot_in_collision = False
@@ -84,7 +84,7 @@ started = False
 
 def rob_debug():
     global own_name
-    global count_fooddrops
+    global count_fooddeliveries
     global robot_has_food
     global robot_is_foraging
     global robot_in_collision
@@ -93,7 +93,7 @@ def rob_debug():
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w, robot_is_foraging, count_fooddrops, robot_has_food, robot_in_collision
+    return own_name, x, y, z, w, robot_is_foraging, count_fooddeliveries, robot_has_food, robot_in_collision
 
 def init_globals():
     global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server, get_received_location_srv
@@ -315,7 +315,7 @@ class CheckIfAtLocation(smach.State):
 
 
     def execute(self, userdata):
-	global count_fooddrops
+	global count_fooddeliveries
 	global robot_has_food
 	global robot_is_foraging
 
@@ -326,8 +326,7 @@ class CheckIfAtLocation(smach.State):
             found = at_hive
 	    if robot_has_food is True:
 		robot_has_food = False # Food is deliverd
-		count_fooddrops += 1
-	    	#print ">>>>>>>>",own_name, "Delivered_Food", count_fooddrops, robot_is_foraging ,"<<<<<<<<"
+		count_fooddeliveries += 1
 		rospy.loginfo("%s -> Delivered_Food", rob_debug())
 		robot_is_foraging = True
         else:  # food
