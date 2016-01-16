@@ -25,6 +25,10 @@ in rqt_console EXCLUDE all nodes (per robot) that includes SwarmCollvoid
 clear the console before starting the experiment and make sure the logging is RUNNING
 after the experiment SAVE the logs to a file: e.g. Experiment_x.csv
 
+Monitor fooddrop count during experiment
+> rosrun swarming_turtles_smach food_counter.py
+
+
 Parse and Analyze the data
 > python parse.py /logfilelocation/Experiment_x.csv
 This will parse and analysis the inputfile, and will output  

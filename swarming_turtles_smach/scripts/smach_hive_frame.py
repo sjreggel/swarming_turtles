@@ -14,6 +14,7 @@ from swarming_turtles_msgs.msg import Turtles
 from std_srvs.srv import Empty, EmptyResponse
 from stage_ros.msg import Stall
 import swarming_turtles_navigation.move_random as utils
+from std_msgs.msg import Int32
 
 #disable ros_info messages from SMACH
 import logging
@@ -127,20 +128,14 @@ def init_globals():
 
 
 def talker():
-     pub = rospy.Publisher('chatter', String, queue_size=10)
+     pub = rospy.Publisher('fooddrops', Int32, queue_size=10)
      rospy.init_node('talker', anonymous=True)
      rate = rospy.Rate(10) # 10hz
-     while not rospy.is_shutdown():
-         hello_str = "hello world %s" % rospy.get_time()
-         rospy.loginfo(hello_str)
-         pub.publish(hello_str)
-         rate.sleep()
+#     while not rospy.is_shutdown():
+#         pub.publish(count_fooddeliveries)
+#         rate.sleep()
  
-if __name__ == '__main__':
-     try:
-         talker()
-     except rospy.ROSInterruptException:
-         pass
+
 
 def seen_hive():
     global get_hive_srv
@@ -336,6 +331,9 @@ class CheckIfAtLocation(smach.State):
 	global count_fooddeliveries
 	global robot_has_food
 	global robot_is_foraging
+	
+        drop_pub = rospy.Publisher('fooddrops', Int32, queue_size=10)
+
 
         target = None
         found = None
@@ -346,6 +344,7 @@ class CheckIfAtLocation(smach.State):
 		robot_has_food = False # Food is deliverd
 		count_fooddeliveries += 1
 		rospy.loginfo("%s -> Delivered_Food", rob_debug())
+		drop_pub.publish(count_fooddeliveries)
 		robot_is_foraging = True
         else:  # food
             target = get_food()
@@ -758,6 +757,9 @@ def main():
         # smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
 
 
+
+ 
+
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/swarming_turtles')
     sis.start()
@@ -767,6 +769,8 @@ def main():
     while not rospy.is_shutdown() and not started:
         r.sleep()
     # Execute SMACH plan
+
+
     rospy.loginfo("%s -> Starting Experiment", rob_debug())
     #rospy.loginfo("starting!")
     outcome = sm.execute()
@@ -777,3 +781,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
