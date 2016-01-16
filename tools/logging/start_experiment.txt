@@ -2,18 +2,20 @@
 running the experiment
 -----------------------
 
-Using PS3
-> sixad --start
-> roslaunch swarming_turtles_shepherd shepherd_teleop_joy.launch 
-> rosrun swarming_turtles_shepherd shepherd_joy_control.py
+Using PS3 (Now included in the experiment launchfile)
+# > sixad --start (when not already autostarted)
+# > roslaunch swarming_turtles_shepherd shepherd_teleop_joy.launch 
+# > rosrun swarming_turtles_shepherd shepherd_joy_control.py
 Hold Left1 to move the shepherd with the left thumb control
 START-button starts the robots (smach)
 X-button enables barking
 
 publish food location
-> rosrun swarming_turtles_stage food_location_publisher.py
+#rosrun swarming_turtles_stage food_location_publisher.py
+
 
 Start experiment
+***** ALL PREVIOUS Command are now included in the LAUNCH files *******
 > roslaunch swarming_turtles_stage swarm_sim-x-robots.launch 
 
 Log experiment data

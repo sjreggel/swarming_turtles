@@ -8,8 +8,12 @@
 
     <node pkg="swarming_turtles_smach" type="start_all.py" name="start_all_helper" respawn="false" output="screen" />
 
-
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find swarming_turtles_stage)/sim_view.rviz" output="screen" />
+
+    <node name="food_location_publisher" pkg="swarming_turtles_stage" type="food_location_publisher.py" output="screen"/>
+
+    <include file="$(find swarming_turtles_shepherd)/launch/shepherd_teleop_joy.launch" >
+    </include>
 
     <include file="$(find swarming_turtles_stage)/launch/shepherd.launch" >
      <arg name="robot" value="robot_0" />
