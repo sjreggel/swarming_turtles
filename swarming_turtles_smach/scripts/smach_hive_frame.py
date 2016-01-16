@@ -127,15 +127,6 @@ def init_globals():
     rospy.Subscriber('stall', Stall, cb_stall)  # turtle in collision?
 
 
-def talker():
-     pub = rospy.Publisher('fooddrops', Int32, queue_size=10)
-     rospy.init_node('talker', anonymous=True)
-     rate = rospy.Rate(10) # 10hz
-#     while not rospy.is_shutdown():
-#         pub.publish(count_fooddeliveries)
-#         rate.sleep()
- 
-
 
 def seen_hive():
     global get_hive_srv
