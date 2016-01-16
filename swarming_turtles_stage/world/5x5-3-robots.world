@@ -24,10 +24,10 @@ define map model
 
 map
 (
-  name "10x10_map"
-  size [10.900  17.750 0.500]
+  name "5x5_map"
+  size [10.500  10.500 0.500]
   pose [0.000 0.000 0.000 0.000]
-  bitmap "10x10_map.pgm"
+  bitmap "5x5_map.pgm"
 )
 
 
