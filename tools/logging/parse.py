@@ -53,6 +53,7 @@ runtime = 0
 convergence_time = 0
 convergence_time_first = 0
 convergence_start = 0
+convergence_counter = 0
 robots_in_experiment = 0
 convergence = False
 prev_xpos = [0] * Elements
@@ -63,7 +64,7 @@ food_xpos = 0
 food_ypos = 0
 food_zpos = 0
 Food_moved = False
-convergence_time_food = 0
+convergence_time_food = [0] * Elements
 conv_start_time_food = 0
 New_Foodfound = False
 
@@ -71,7 +72,7 @@ def decode(strs):
     global Shepontime, Sheptotaltime
     global Shepherd_enabled, Shepherd_count
     global Barkcounter, BarkedAtRobot, AskedRobot, Askcounter, Receivedfood, Receivecounter, Sendfood
-    global starttime, endtime, convergence_time, convergence_start, convergence, convergence_time_first
+    global starttime, endtime, convergence_time, convergence_start, convergence, convergence_time_first, convergence_counter
     global robots_in_experiment
     global foraging_robot, foraging_count, foraging_start, foraging_time
     global collision_robot, collision_count, collision_start, collision_time
@@ -129,8 +130,7 @@ def decode(strs):
 
     #log experiment time
     try:
-#     if action == 'Starting Experiment':
-     if action == 'Starting ':
+     if action == 'Starting Experiment':
 	print "Starting Experiment"
   	starttime = float(time)
      endtime = float(time)
@@ -215,20 +215,24 @@ def decode(strs):
 	  #foraging_count[current_robot] += 1
 	  foraging_robot[current_robot] =  True
 	  foraging_start[current_robot] = float(time)
-	  for robotnr in range(1,robots_in_experiment): # check if all robots are currently foraging
+	  for robotnr in range(1,robots_in_experiment+1): # check if all robots are currently foraging
 	      if foraging_robot[robotnr] != True:
 		convergence = False
+		Food_moved = False
 		break
 	      else:
 		convergence = True
-	  if convergence == True and New_Foodfound == False:
+	  if convergence == True and Food_moved == False:
 		convergence_start = float(time)
-		if convergence_time_first == 0: # time till first convergence
-		  convergence_time_first = float(time) - starttime 
-		if conv_start_time_food != starttime:
-		  convergence_time_food = float(time) - conv_start_time_food
-		  print "convergence to food", convergence_time_food, conv_start_time_food
+#		if convergence_time_first == 0: # time till first convergence
+#		  convergence_time_first = float(time) - starttime 
+#		if conv_start_time_food != starttime:
+		convergence_time_food[convergence_counter] = float(time) - conv_start_time_food
+		lfile.write("convergence to new food location in (sec) %s \n" % convergence_time_food[convergence_counter])
+		convergence_counter += 1
+
       else: 
+	Food_moved = False
 	if foraging_robot[current_robot] == True: #end forage run
 	  foraging_robot[current_robot] =  False
 	  foraging_time[current_robot] += float(time) - foraging_start[current_robot]
@@ -308,12 +312,8 @@ def decode(strs):
 	   food_xpos = float(xpos)
 	   food_ypos = float(ypos)
 	   food_zpos = float(zpos)
-	   New_Foodfound = False
-	else:
-	   if Food_moved == True:
-	     print "FOOD moved to location", xpos, ypos, zpos, float(time)
-	     conv_start_time_food = float(time)
-	     Food_moved = False
+	   lfile.write("FOOD moved to location %s %s %s %s \n" % (xpos, ypos, zpos, float(time)))
+	   conv_start_time_food = float(time)
     except:
 	pass
 
@@ -364,6 +364,8 @@ try:
 except:
   troughput = 0
 
+NrRobots = robots_in_experiment+1
+
 #log output
 lfile.write("\n****************************************************************************************\n")
 lfile.write( "Decoding " + file_name + " --> %s \n" % outfile)
@@ -374,28 +376,29 @@ lfile.write( "******************************************************************
 lfile.write( "Sherpherding:		Times enabled 			= %s \n" % Shepherd_count)
 lfile.write( "Sherpherding:		Total enabled time (sec) 	= %s \n" %  Sheptotaltime)
 lfile.write( "Barked: 		Total amount 			= %s \n" % Barkcounter)
-lfile.write( "Barked: 		Times at Robots [1..MaxRobots] 	= %s \n" % BarkedAtRobot[1:])
+lfile.write( "Barked: 		Times at Robots [1..NrRobots] 	= %s \n" % BarkedAtRobot[1:NrRobots])
 lfile.write( "Foodloc Asked: 		Total times asked 		= %s \n" % Askcounter)
-lfile.write( "Foodloc Asked: 		Times per Robot [1..MaxRobots] 	= %s \n" % AskedRobot[1:])
+lfile.write( "Foodloc Asked: 		Times per Robot [1..NrRobots] 	= %s \n" % AskedRobot[1:NrRobots])
 lfile.write( "Foodloc Received: 	Total times Received 		= %s \n" % Receivecounter)
-lfile.write( "Foodloc Received: 	Times per Robot [1..MaxRobots] 	= %s \n" % Receivedfood[1:])
-lfile.write( "Foodloc Send: 		Times per Robot [1..MaxRobots] 	= %s \n" % Sendfood[1:])
+lfile.write( "Foodloc Received: 	Times per Robot [1..NrRobots] 	= %s \n" % Receivedfood[1:NrRobots])
+lfile.write( "Foodloc Send: 		Times per Robot [1..NrRobots] 	= %s \n" % Sendfood[1:NrRobots])
 lfile.write( "Foraging Runs: 		Total 				= %s \n" % foraging_total)
-lfile.write( "Foraging Runs: 		per robots [1..MaxRobots] 	= %s \n" % foraging_count[1:])
-lfile.write( "Foraging Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % foraging_time[1:])
+lfile.write( "Foraging Runs: 		per robots [1..NrRobots] 	= %s \n" % foraging_count[1:NrRobots])
+lfile.write( "Foraging Time: 		per robot [1..NrRobots] (sec) 	= %s \n" % foraging_time[1:NrRobots])
 lfile.write( "Has food: 		Total 				= %s \n" % hasfood_total)
-lfile.write( "Has food: 		per robots [1..MaxRobots] 	= %s \n" % hasfood_count[1:])
-lfile.write( "Has food Time: 		per robot [1..MaxRobots] (sec) 	= %s \n" % hasfood_time[1:])
+lfile.write( "Has food: 		per robots [1..NrRobots] 	= %s \n" % hasfood_count[1:NrRobots])
+lfile.write( "Has food Time: 		per robot [1..NrRobots] (sec) 	= %s \n" % hasfood_time[1:NrRobots])
 lfile.write( "Dropped food: 		Total 				= %s \n" % (hasfood_total - foraging_total))
-lfile.write( "Dropped food: 		per robots [1..MaxRobots] 	= %s \n" % map(sub,hasfood_count[1:], foraging_count[1:]))
+lfile.write( "Dropped food: 		per robots [1..NrRobots] 	= %s \n" % map(sub,hasfood_count[1:NrRobots], foraging_count[1:NrRobots]))
 lfile.write( "Collision: 		Total 				= %s \n" % collision_total)
-lfile.write( "Collision: 		per robots [1..MaxRobots] 	= %s \n" % collision_count[1:])
-lfile.write( "Collision Time: 	per robot [1..MaxRobots] (sec) 	= %s \n" % collision_time[1:])
+lfile.write( "Collision: 		per robots [1..NrRobots] 	= %s \n" % collision_count[1:NrRobots])
+lfile.write( "Collision Time: 	per robot [1..NrRobots] (sec) 	= %s \n" % collision_time[1:NrRobots])
 lfile.write( "Collision: 		Mitro 				= %s \n" % collision_count[0])
 lfile.write( "Collision Time: 	Mitro (sec) 			= %s \n" % collision_time[0])
 lfile.write( "Convergence: 		Total time converged (sec)	= %s \n" % convergence_time)
-lfile.write( "Convergence: 		Time to first (sec) 		= %s \n" % convergence_time_first)
-lfile.write( "Distance travelled:	per robots [1..MaxRobots] (m)	= %s \n" % distance[1:])
+lfile.write( "Convergence: 		Time to first (sec) 		= %s \n" % convergence_time_food[0])
+lfile.write( "Convergence: 		To Moved Food loc (sec) 	= %s \n" % convergence_time_food[1:])
+lfile.write( "Distance travelled:	per robots [1..NrRobots] (m)	= %s \n" % distance[1:NrRobots])
 lfile.write( "Distance travelled:	mitro (m)			= %s \n" % distance[0])
 lfile.write( "****************************************************************************************\n")
 lfile.write( "calc troughput: 	food deliveries per second 	= %s \n" %  troughput)
