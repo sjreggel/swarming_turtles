@@ -92,7 +92,7 @@ namespace collvoid{
       }
       controlled_ = true;
 
-      ROS_INFO("Standalone My name is: %s",id_.c_str());
+      // ROS_INFO("Standalone My name is: %s",id_.c_str());
       ros::Duration(1.0).sleep();
       initCommon(nh);
 
@@ -226,12 +226,12 @@ namespace collvoid{
 
       }
       if (done) {
-        ROS_INFO("done");
+        // ROS_INFO("done");
 
         as_->setSucceeded();
       }
       if (failed) {
-        ROS_INFO("failed");
+        // ROS_INFO("failed");
 
         as_->setPreempted();
       }
@@ -308,7 +308,7 @@ namespace collvoid{
       //laser_scan_sub_ = nh.subscribe("base_scan", 1, &ROSAgent::baseScanCallback, this);
 
 
-      ROS_INFO("New Agent as me initialized");
+      // ROS_INFO("New Agent as me initialized");
     }
 
 
@@ -1027,7 +1027,7 @@ namespace collvoid{
         //TODO?
         agent->timestep_ = sim_period_;
         agent_neighbors_.push_back(agent);
-        ROS_INFO("neighbor %s, radius = %f,   pos(%.2f, %.2f), vel (%.2f, %.2f)", msg.name.c_str(), agent->radius_, agent->position_.x() - position_.x(), agent->position_.y() - position_.y(), agent->velocity_.x(), agent->velocity_.y());
+        // ROS_INFO("neighbor %s, radius = %f,   pos(%.2f, %.2f), vel (%.2f, %.2f)", msg.name.c_str(), agent->radius_, agent->position_.x() - position_.x(), agent->position_.y() - position_.y(), agent->velocity_.x(), agent->velocity_.y());
       }
     }
 
@@ -1249,7 +1249,7 @@ int main(int argc, char **argv) {
   ROSAgentPtr me(new ROSAgent);
   tf::TransformListener tf;
   me->init(nh,&tf);
-  ROS_INFO("ROSAgent initialized");
+  // ROS_INFO("ROSAgent initialized");
   ros::spin();
 
 }

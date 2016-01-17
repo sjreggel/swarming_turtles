@@ -449,9 +449,9 @@ def main():
 
     goal_pub = rospy.Publisher('cur_goal', PoseStamped, queue_size=1)
     get_twist_srv = rospy.ServiceProxy('SwarmCollvoid/get_collvoid_twist', GetCollvoidTwist, persistent=True)
-    rospy.loginfo("wait for service")
+    # rospy.loginfo("wait for service")
     rospy.wait_for_service('SwarmCollvoid/get_collvoid_twist')
-    rospy.loginfo("done")
+    # rospy.loginfo("done")
 
     r = rospy.Rate(RATE)
     action_server = actionlib.simple_action_server.SimpleActionServer('move_to_goal', MoveBaseAction, move_to_goal_cb,

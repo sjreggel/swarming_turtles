@@ -21,7 +21,14 @@ import logging
 class Filter(logging.Filter):
     def filter(self, record):
         return 'State machine' not in record.msg
+class Filter2(logging.Filter):
+    def filter2(self, record):
+        return 'neighbor' not in record.msg
+
+
 logging.getLogger('rosout').addFilter(Filter())
+logging.getLogger('rosout').addFilter(Filter2())
+
  #transitioning
 
 
@@ -43,6 +50,10 @@ get_food_srv = None
 get_hive_srv = None
 
 get_received_location_srv = None
+
+prev_xpos = 0
+prev_ypos = 0
+prev_zpos = 0
 
 # config
 MAX_RETRY = 5
@@ -265,11 +276,9 @@ class SearchFood(smach.State):
         rate = rospy.Rate(RATE)
         found = False
         move_random_start()
-	print "SEARCHING..................................."
         userdata.pose_out = None
         pose = None
         while not found and not rospy.is_shutdown():
-	    print "SEARCHING_______________________________________"
             if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
                 move_random_stop()
                 return 'not_found'
@@ -382,6 +391,9 @@ class SearchHive(smach.State):
 	robot_is_foraging = False
 
     def execute(self, userdata):
+	global prev_xpos
+	global prev_ypos
+	global prev_zpos
         rate = rospy.Rate(RATE)
         start = rospy.Time.now()
         move_random_start()
@@ -394,7 +406,13 @@ class SearchHive(smach.State):
                 move_random_stop()
                 return 'success'
             rate.sleep()
-	rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	# only loginfo when robot moved
+	pose = utils.get_own_pose()
+	if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	   prev_xpos = pose.pose.position.x
+	   prev_ypos = pose.pose.position.y
+	   prev_zpos = pose.pose.position.z
+	   rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
 
 
 class InitHive(smach.State):
@@ -422,6 +440,9 @@ class MoveToInLocation(smach.State):
 
     def execute(self, userdata):
         global move_action_server
+	global prev_xpos
+	global prev_ypos
+	global prev_zpos
 
         target = None
 
@@ -492,7 +513,13 @@ class MoveToInLocation(smach.State):
                     rospy.sleep(MOVE_RANDOM_TIME)
                     move_random_stop()
                     move_action_server.send_goal(goal)
-	    rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
+	    # only loginfo when robot moved
+	    pose = utils.get_own_pose()
+	    if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	       prev_xpos = pose.pose.position.x
+	       prev_ypos = pose.pose.position.y
+	       prev_zpos = pose.pose.position.z
+	       rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
             rate.sleep()
 
 
@@ -503,6 +530,9 @@ class MoveToOutLocation(smach.State):
         self.TIME_OUT = 3.0
 
     def execute(self, userdata):
+	global prev_xpos
+	global prev_ypos
+	global prev_zpos
         target = None
         if self.loc == 'hive':
             target = hive_loc
@@ -543,7 +573,13 @@ class MoveToOutLocation(smach.State):
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
                 return 'failed'
-	    rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
+	    # only loginfo when robot moved
+	    pose = utils.get_own_pose()
+	    if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	       prev_xpos = pose.pose.position.x
+	       prev_ypos = pose.pose.position.y
+	       prev_zpos = pose.pose.position.z
+	       rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
             rate.sleep()
 
 
@@ -554,7 +590,10 @@ class MoveToHiveLocation(smach.State):
     def execute(self, userdata):
         global move_action_server
 	global robot_is_foraging
-
+	global prev_xpos
+	global prev_ypos
+	global prev_zpos
+	
         target = hive_loc
         goal = utils.create_goal_message(target)
         move_action_server.send_goal(goal)
@@ -603,7 +642,13 @@ class MoveToHiveLocation(smach.State):
                     move_action_server.cancel_all_goals()
 		    robot_is_foraging = False
                     return 'failed'
-	    rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
+	    # only loginfo when robot moved
+	    pose = utils.get_own_pose()
+	    if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	       prev_xpos = pose.pose.position.x
+	       prev_ypos = pose.pose.position.y
+	       prev_zpos = pose.pose.position.z
+	       rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
             rate.sleep()
 
 
@@ -615,7 +660,10 @@ class MoveToFoodLocation(smach.State):
     def execute(self, userdata):
         global move_action_server
 	global robot_is_foraging
-
+	global prev_xpos
+	global prev_ypos
+	global prev_zpos
+	
         target = get_food()
 
         if target is None and userdata.pose_in is not None:
@@ -693,7 +741,13 @@ class MoveToFoodLocation(smach.State):
                         print "forget_food failed"
 		    robot_is_foraging = False
                     return 'failed'
-	    rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
+	    # only loginfo when robot moved
+	    pose = utils.get_own_pose()
+	    if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	       prev_xpos = pose.pose.position.x
+	       prev_ypos = pose.pose.position.y
+	       prev_zpos = pose.pose.position.z
+	       rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
             rate.sleep()
 
 

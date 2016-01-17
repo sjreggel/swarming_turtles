@@ -27,7 +27,6 @@ food = None
 #time_now = 0
 #time_past = 0
 
-
 active = False
 
 SIMULATION = True
@@ -134,6 +133,10 @@ def cb_stall(msg):
 
 def main():
     global tf_listener, comm_pub
+    prev_xpos = 0
+    prev_ypos = 0
+    prev_zpos = 0
+    
     rospy.init_node('shepherding')
     utils.init_globals()
     rospy.Subscriber('stall', Stall, cb_stall)  # turtle in collision?
@@ -149,7 +152,13 @@ def main():
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         shep_pub.publish(active)
-	rospy.loginfo("%s -> Position", rob_debug())
+	# only loginfo when robot moved
+        pose = utils.get_own_pose()
+	if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+	   prev_xpos = pose.pose.position.x
+	   prev_ypos = pose.pose.position.y
+	   prev_zpos = pose.pose.position.z
+	   rospy.loginfo("%s -> Position", rob_debug())
         r.sleep()
 
 
