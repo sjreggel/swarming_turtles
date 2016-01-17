@@ -284,6 +284,9 @@ def move_random():
     stop()
     create_goal(dist)
 
+    print "RANDOM rotating to some angle and distance", ang, dist, obstacle()
+
+
     while active and not at_goal() and not count_low_speed > MAX_COUNT:
         if obstacle():
             twist = Twist()

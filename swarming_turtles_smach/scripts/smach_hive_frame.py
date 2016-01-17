@@ -425,7 +425,7 @@ class InitHive(smach.State):
         twist = Twist()
         twist.angular.z = utils.ROTATION_SPEED
         while not rospy.is_shutdown():
-            if seen_hive():
+            if True: #seen_hive(): #hive at startup has not to be in visual range
                 utils.stop()
                 rospy.sleep(1.0)
                 return 'success'
@@ -437,7 +437,8 @@ class MoveToInLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.loc = loc
-
+	self.TIME_OUT = 60.0
+	
     def execute(self, userdata):
         global move_action_server
 	global prev_xpos
@@ -449,19 +450,21 @@ class MoveToInLocation(smach.State):
         if self.loc == 'hive':
             target = hive_loc
             at_loc = at_hive
+	    print own_name, "################# target is hive"
         else:
             target = get_food()
 
             if target is None and userdata.pose_in is not None:
                 target = userdata.pose_in
                 userdata.pose_out = target
-
+	    print own_name, "################# target is food"
             if target is None:
+	        print own_name, "################# failed"
                 return 'failed'
             at_loc = at_food
             target = utils.move_location_inwards(target, INWARDS, offset=offset)
-
         if at_loc():
+	    print own_name, "################# sucesse"
             return 'success'
 
         goal = utils.move_location(target, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
@@ -473,19 +476,27 @@ class MoveToInLocation(smach.State):
 
         start = rospy.Time.now()
         stand_still = 0
+	self.retry = 0
         old_pose = utils.get_own_pose()
-
         retry = MAX_RETRY - 2
+	print own_name, "################# before loop", retry
+
         while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
-                print "standing still too long for moviing to in location"
+                print own_name, "standing still too long for moving to in location"
                 move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
                 move_action_server.wait_for_server()
-
-                return 'failed'
+ 		if self.retry < MAX_RETRY:
+		    self.retry += 1
+		    move_action_server.send_goal(goal)
+		else:
+		    move_action_server.cancel_all_goals()
+		    return 'failed'
+                 
             if utils.standing_still(old_pose):
                 stand_still += 1
+		print own_name, "################# standstill +1", stand_still, utils.standing_still(old_pose)
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
@@ -495,24 +506,36 @@ class MoveToInLocation(smach.State):
                 goal = utils.move_location_inwards(rec_pose, INWARDS, offset=offset)
                 goal = utils.move_location(goal, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
                 goal = utils.create_goal_message(goal)
-
+		print own_name, "################# sending to goal"
                 move_action_server.send_goal(goal)
                 rate.sleep()
                 continue
 
+            if (rospy.Time.now() - start).to_sec() > self.TIME_OUT:
+                move_action_server.cancel_all_goals()
+  		print own_name, "################# TIMED OUT"
+                return 'failed'
+
+
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
+		print own_name, "################# goal success"
                 return 'success'
-            if move_action_server.get_state() == GoalStatus.PREEMPTED:
+            
+	    if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
+		print own_name, "################# cancel goal, retry", retry
                 if retry > MAX_RETRY:
                     return 'failed'
                 else:
                     retry += 1
+		    print own_name, "################# move random start", retry
                     move_random_start()
                     rospy.sleep(MOVE_RANDOM_TIME)
                     move_random_stop()
+       		    print own_name, "################# move random stop", retry
                     move_action_server.send_goal(goal)
+	    
 	    # only loginfo when robot moved
 	    pose = utils.get_own_pose()
 	    if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
