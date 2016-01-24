@@ -2,17 +2,25 @@
 running the experiment
 -----------------------
 
+Using Keyboard for navigation: 
+# Keyboard control
+# > rosrun teleop_twist_keyboard teleop_twist_keyboard.py cmd_vel:=/robot_0/cmd_vel
+# Start Experiment
+# > rosservice call /start_all
+# Barking on
+# > rosservice call /shepherd/set_shepherding_status "target_status: true"
+
+
 Using PS3 (Now included in the experiment launchfile)
 # > sixad --start (when not already autostarted)
 # > roslaunch swarming_turtles_shepherd shepherd_teleop_joy.launch 
 # > rosrun swarming_turtles_shepherd shepherd_joy_control.py
-Hold Left1 to move the shepherd with the left thumb control
-START-button starts the robots (smach)
-X-button enables barking
+- Hold Left1 to move the shepherd with the left thumb control
+- START-button starts the robots (smach)
+- X-button enables barking
 
 publish food location
-#rosrun swarming_turtles_stage food_location_publisher.py
-
+# > rosrun swarming_turtles_stage food_location_publisher.py
 
 Start experiment
 ***** ALL PREVIOUS Command are now included in the LAUNCH files *******
@@ -27,7 +35,6 @@ after the experiment SAVE the logs to a file: e.g. Experiment_x.csv
 
 Monitor fooddrop count during experiment
 > rosrun swarming_turtles_smach food_counter.py
-
 
 Parse and Analyze the data
 > python parse.py /logfilelocation/Experiment_x.csv

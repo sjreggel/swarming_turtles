@@ -246,6 +246,38 @@ def get_received_location(asked_turtles):
 
         return None
 
+class SearchFoodNoAsking(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['found', 'not_found'], output_keys=['pose_out'])
+
+
+    def execute(self, userdata):
+	global robot_is_foraging
+	robot_is_foraging = False
+        start = rospy.Time.now()
+        rate = rospy.Rate(RATE)
+        found = False
+        move_random_start()
+        userdata.pose_out = None
+        pose = None
+#	print own_name, "################## SearchFoodNoAsking !!!!!!!!!!!!!!!!!!!!!!"
+        while not found and not rospy.is_shutdown():
+            if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
+                move_random_stop()
+                return 'not_found'
+            pose = get_food()
+            if pose is not None:
+                found = True
+                break
+	    rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+            rate.sleep()
+        userdata.pose_out = pose
+
+        move_random_stop()
+        return 'found'
+
+
+
 
 class SearchFood(smach.State):
     def __init__(self):
@@ -326,7 +358,6 @@ class CheckIfAtLocation(smach.State):
         self.loc = loc
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
 
-
     def execute(self, userdata):
 	global count_fooddeliveries
 	global robot_has_food
@@ -365,6 +396,7 @@ class CheckIfAtLocation(smach.State):
 
         ang = utils.get_jaw(target.pose.orientation) + math.pi
         rate = rospy.Rate(RATE)
+	start = rospy.Time.now()
 
         while not found() and not rospy.is_shutdown():
             if utils.rotation_aligned(ang, eps=0.05):
@@ -376,6 +408,15 @@ class CheckIfAtLocation(smach.State):
 		robot_is_foraging = False
                 return 'failed'
             utils.rotate_to_ang(ang)
+            if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
+                #move_action_server.cancel_all_goals()
+		try:
+                    self.forget_food()
+                except:
+		    pass
+  	        robot_is_foraging = False
+                return 'failed'	    
+	    
             rate.sleep()
 	if self.loc == 'food' and target is not None:
 		robot_has_food = True
@@ -450,21 +491,21 @@ class MoveToInLocation(smach.State):
         if self.loc == 'hive':
             target = hive_loc
             at_loc = at_hive
-	    print own_name, "################# target is hive"
+#	    print own_name, "################# target is hive"
         else:
             target = get_food()
 
             if target is None and userdata.pose_in is not None:
                 target = userdata.pose_in
                 userdata.pose_out = target
-	    print own_name, "################# target is food"
+#	    print own_name, "################# target is food"
             if target is None:
-	        print own_name, "################# failed"
+#	        print own_name, "################# failed"
                 return 'failed'
             at_loc = at_food
             target = utils.move_location_inwards(target, INWARDS, offset=offset)
         if at_loc():
-	    print own_name, "################# sucesse"
+#	    print own_name, "################# sucesse"
             return 'success'
 
         goal = utils.move_location(target, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
@@ -479,7 +520,7 @@ class MoveToInLocation(smach.State):
 	self.retry = 0
         old_pose = utils.get_own_pose()
         retry = MAX_RETRY - 2
-	print own_name, "################# before loop", retry
+#	print own_name, "################# before loop", retry
 
         while not rospy.is_shutdown():
             if stand_still > STAND_STILL_TIMES:
@@ -496,7 +537,7 @@ class MoveToInLocation(smach.State):
                  
             if utils.standing_still(old_pose):
                 stand_still += 1
-		print own_name, "################# standstill +1", stand_still, utils.standing_still(old_pose)
+#		print own_name, "################# standstill +1", stand_still, utils.standing_still(old_pose)
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
@@ -506,34 +547,34 @@ class MoveToInLocation(smach.State):
                 goal = utils.move_location_inwards(rec_pose, INWARDS, offset=offset)
                 goal = utils.move_location(goal, x=X_OFFSET_ENTRY, y=Y_OFFSET_ENTRY)
                 goal = utils.create_goal_message(goal)
-		print own_name, "################# sending to goal"
+#		print own_name, "################# sending to goal"
                 move_action_server.send_goal(goal)
                 rate.sleep()
                 continue
 
             if (rospy.Time.now() - start).to_sec() > self.TIME_OUT:
                 move_action_server.cancel_all_goals()
-  		print own_name, "################# TIMED OUT"
+# 		print own_name, "################# TIMED OUT"
                 return 'failed'
 
 
             if move_action_server.get_state() == GoalStatus.SUCCEEDED:
                 move_action_server.cancel_all_goals()
-		print own_name, "################# goal success"
+#		print own_name, "################# goal success"
                 return 'success'
             
 	    if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
-		print own_name, "################# cancel goal, retry", retry
+#		print own_name, "################# cancel goal, retry", retry
                 if retry > MAX_RETRY:
                     return 'failed'
                 else:
                     retry += 1
-		    print own_name, "################# move random start", retry
+#		    print own_name, "################# move random start", retry
                     move_random_start()
                     rospy.sleep(MOVE_RANDOM_TIME)
                     move_random_stop()
-       		    print own_name, "################# move random stop", retry
+#      		    print own_name, "################# move random stop", retry
                     move_action_server.send_goal(goal)
 	    
 	    # only loginfo when robot moved
@@ -609,6 +650,7 @@ class MoveToOutLocation(smach.State):
 class MoveToHiveLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
+	self.TIME_OUT = 3.0
 
     def execute(self, userdata):
         global move_action_server
@@ -621,6 +663,8 @@ class MoveToHiveLocation(smach.State):
         goal = utils.create_goal_message(target)
         move_action_server.send_goal(goal)
         rate = rospy.Rate(RATE)
+	
+	start = rospy.Time.now()
 
         self.retry = 0
         stand_still = 0
@@ -650,6 +694,9 @@ class MoveToHiveLocation(smach.State):
             else:
                 stand_still = 0
                 old_pose = utils.get_own_pose()
+            if (rospy.Time.now() - start).to_sec() > self.TIME_OUT:
+                move_action_server.cancel_all_goals()
+                return 'failed'
             if get_received_location([]) is not None:
                 move_action_server.cancel_all_goals()
                 return 'success'
@@ -679,6 +726,7 @@ class MoveToFoodLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
+	self.TIME_OUT = 3.0
 
     def execute(self, userdata):
         global move_action_server
@@ -705,6 +753,8 @@ class MoveToFoodLocation(smach.State):
         move_action_server.send_goal(goal)
 
         rate = rospy.Rate(RATE)
+	
+	start = rospy.Time.now()
 
         self.retry = 0
         stand_still = 0
@@ -736,6 +786,15 @@ class MoveToFoodLocation(smach.State):
                 rate.sleep()
                 continue
 
+            if (rospy.Time.now() - start).to_sec() > self.TIME_OUT:
+                move_action_server.cancel_all_goals()
+		try:
+                    self.forget_food()
+                except:
+		    pass
+  	        robot_is_foraging = False
+                return 'failed'
+		
             if utils.standing_still(old_pose):
                 stand_still += 1
             else:
@@ -805,21 +864,28 @@ def main():
         # #food states
         smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(),
                                transitions={'known': 'GoToFoodIn', 'not_known': 'SearchFood'})
+        smach.StateMachine.add("SearchFoodNoAsking", SearchFoodNoAsking(),
+                               transitions={'found': 'SearchFood', 'not_found': 'SearchFood'},
+                               remapping={'pose_out': 'pose'})
         smach.StateMachine.add("SearchFood", SearchFood(),
                                transitions={'found': 'GoToFoodIn', 'not_found': 'SearchFood'},
                                remapping={'pose_out': 'pose'})
-
         smach.StateMachine.add("GoToFoodIn", MoveToInLocation('food'),
                                transitions={'failed': 'GoToFood', 'success': 'GoToFood'},
                                remapping={'pose_in': 'pose', 'pose_out': 'pose'})
         smach.StateMachine.add("GoToFood", MoveToFoodLocation(),
-                               transitions={'failed': 'SearchFood', 'success': 'AtFood'},
+                               transitions={'failed': 'SearchFoodNoAsking', 'success': 'AtFood'},
+#			       transitions={'failed': 'SearchFood', 'success': 'AtFood'},
                                remapping={'pose_in': 'pose', 'pose_out': 'pose'})
+     
         smach.StateMachine.add("AtFood", CheckIfAtLocation('food'),
-                               transitions={'failed': 'SearchFood', 'success': 'GoToFoodOut'},
+                               transitions={'failed': 'SearchFoodNoAsking', 'success': 'GoToFoodOut'},
                                remapping={'pose_in': 'pose'})
         smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'),
                                transitions={'failed': 'GoToHiveIn', 'success': 'GoToHiveIn'})
+
+
+
 
 
         # smach.StateMachine.add("GoToFood", MoveToLocation('food'), transitions = {'failed':'end', 'success':'end'})
@@ -829,6 +895,7 @@ def main():
  
 
     # Create and start the introspection server
+#    sis = smach_ros.IntrospectionServer('server_name', sm, '/swarming_turtles')
     sis = smach_ros.IntrospectionServer('server_name', sm, '/swarming_turtles')
     sis.start()
 

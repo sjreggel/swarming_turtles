@@ -192,6 +192,7 @@ namespace collvoid{
           as_->setPreempted();
           geometry_msgs::Twist msg;
           twist_pub_.publish(msg);
+	  ROS_INFO("%s ACTION SERVER: limbo?",id_.c_str());
           return;
         }
         geometry_msgs::Twist msg;
@@ -221,17 +222,20 @@ namespace collvoid{
         else {
           counter = 0;
         }
+	ROS_INFO("%s ACTION SERVER: running?",id_.c_str());
 
         rate.sleep();
 
       }
       if (done) {
         // ROS_INFO("done");
+	ROS_INFO("%s ACTION SERVER: done?",id_.c_str());
 
         as_->setSucceeded();
       }
       if (failed) {
         // ROS_INFO("failed");
+	ROS_INFO("%s ACTION SERVER: failed?",id_.c_str());
 
         as_->setPreempted();
       }
@@ -1249,7 +1253,7 @@ int main(int argc, char **argv) {
   ROSAgentPtr me(new ROSAgent);
   tf::TransformListener tf;
   me->init(nh,&tf);
-  // ROS_INFO("ROSAgent initialized");
+  ROS_INFO("ROSAgent initialized");
   ros::spin();
 
 }
