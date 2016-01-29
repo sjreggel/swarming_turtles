@@ -358,7 +358,7 @@ def move_to_goal_cb(goal):
 
         twist = get_twist()
 #	print own_name, "move_to_goal , twist"
-        if abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
+        if False and abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
 #	    print own_name, "move_to_goal , Rotating Max speed"
             own_pose = get_own_pose()
             goal_pose = transformPose(goal.target_pose)
