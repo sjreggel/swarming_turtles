@@ -6,7 +6,7 @@ import copy
 from swarming_turtles_msgs.msg import Turtle, Turtles
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
- 
+
 pub = None
 pub_me = None
 
