@@ -6,7 +6,7 @@ import copy
 from swarming_turtles_msgs.msg import Turtle, Turtles
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
-
+ 
 pub = None
 pub_me = None
 
@@ -114,10 +114,10 @@ def publish_me():
 def main():
     global pub, pub_me
     rospy.init_node("visualize_turtles")
-
-    rospy.Subscriber("found_turtles", Turtles, cb_found_turtles)
     pub = rospy.Publisher("neighbors", MarkerArray, queue_size=1)
     pub_me = rospy.Publisher("me", MarkerArray, queue_size=1)
+    rospy.sleep(0.1)
+    rospy.Subscriber("found_turtles", Turtles, cb_found_turtles)
 
     rospy.spin()
 

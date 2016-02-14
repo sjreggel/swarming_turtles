@@ -10,12 +10,13 @@ from geometry_msgs.msg import Twist, PoseStamped, Vector3, Quaternion
 from kobuki_msgs.msg import SensorState
 from sensor_msgs.msg import LaserScan
 from move_base_msgs.msg import *
+from stage_ros.msg import Stall
 from std_srvs.srv import *
 from swarming_turtles_navigation.srv import *
 
 from socket import gethostname
-own_name = ''  # hostname used for communication
 
+own_name = ''  # hostname used for communication
 
 bumpers = [0, 0, 0]
 LEFT = 0
@@ -60,7 +61,7 @@ MAX_COUNT = 5
 EPS_SPEED = 0.1
 
 obstacle_front_bool = False
-
+stalled = False
 MIN_BELOW_MAX = 20
 
 
@@ -69,7 +70,7 @@ def init_globals():
     tfListen = tf.TransformListener()
     rospy.sleep(1)
     cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)  # publish Twist
-    
+
     own_name = rospy.get_namespace()
     if own_name == "/":
         own_name = gethostname()
@@ -111,7 +112,7 @@ def obstacle_right():
 
 
 def obstacle_front():
-    return bumpers[CENTER] or min_dist_laser < MIN_DIST_LASER or obstacle_front_bool
+    return bumpers[CENTER] or min_dist_laser < MIN_DIST_LASER or obstacle_front_bool or stalled
 
 
 def obstacle():
@@ -297,7 +298,6 @@ def move_random():
 
     print "RANDOM rotating to some angle and distance", ang, dist, obstacle()
 
-
     while active and not at_goal() and not count_low_speed > MAX_COUNT:
         if obstacle():
             twist = Twist()
@@ -332,58 +332,60 @@ def move_to_goal_cb(goal):
     while not dist_aligned():
         if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
             if action_server.is_new_goal_available():
-#		print own_name, "move_to_goal , new_goal", goal
+                #		print own_name, "move_to_goal , new_goal", goal
                 goal = action_server.accept_new_goal()
                 create_goal_from_pose(goal.target_pose)
             else:
                 action_server.set_preempted()
                 # action_server.set_aborted()
-#		print own_name, "move_to_goal , stop", goal
+                #		print own_name, "move_to_goal , stop", goal
                 stop()
                 return
 
-        if sum(bumpers) > 0:
+        if sum(bumpers) > 0 or stalled:
             twist = Twist()
-            while sum(bumpers) > 0:
+            while sum(bumpers) > 0 or stalled:
                 # print "obstacle"
                 if obstacle_left():
                     twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
-                else:
+                elif obstacle_right():
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+                else:
+                    twist.linear.x = -0.1
                 cmd_pub.publish(twist)
-#                print own_name, "move_to_goal , obstacle"
-		r.sleep()
+                #                print own_name, "move_to_goal , obstacle"
+                r.sleep()
             create_goal_from_pose(goal.target_pose)
-#	    print own_name, "move_to_goal , create_goal_from_pose"
+        #	    print own_name, "move_to_goal , create_goal_from_pose"
 
         twist = get_twist()
-#	print own_name, "move_to_goal , twist"
+        #	print own_name, "move_to_goal , twist"
         if False and abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
-#	    print own_name, "move_to_goal , Rotating Max speed"
+            #	    print own_name, "move_to_goal , Rotating Max speed"
             own_pose = get_own_pose()
             goal_pose = transformPose(goal.target_pose)
             tmp_vec = diff_vec(own_pose.pose.position, goal_pose.pose.position)
-	    dist = dist_vec(own_pose.pose.position, goal_pose.pose.position)
+            dist = dist_vec(own_pose.pose.position, goal_pose.pose.position)
             # tmp_goal = transformPose(goal.target_pose, frame = base_frame)
             ang = math.atan2(tmp_vec.y, tmp_vec.x)
 
             # ang = get_jaw(goal.target_pose.pose.orientation)
-#	    print own_name, "move_to_goal , twist.angular.z"
+            #	    print own_name, "move_to_goal , twist.angular.z"
             if rotation_aligned(ang, eps=0.5):
-		twist.angular.z = 0
-		#create_goal(dist)
+                twist.angular.z = 0
+                # create_goal(dist)
                 cmd_pub.publish(twist)
-#		print own_name, "rotation alligned", ang, get_twist()
+            #		print own_name, "rotation alligned", ang, get_twist()
             else:
-#		print own_name, "rotating to angle", ang
+                #		print own_name, "rotating to angle", ang
                 rotate_to_ang(ang)
         else:
             cmd_pub.publish(twist)
-#	    print own_name, "move_to_goal , cmd_pub.publish"
+        #	    print own_name, "move_to_goal , cmd_pub.publish"
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
             count_low_speed += 1
         r.sleep()
- #   print own_name, "move_to_goal , set_succeeded"
+        #   print own_name, "move_to_goal , set_succeeded"
     action_server.set_succeeded()
 
 
@@ -433,7 +435,7 @@ def move_location(pose, x=0, y=0):
     return pose_stamped
 
 
-def move_location_inwards(pose, dist, offset=math.pi/2.0):
+def move_location_inwards(pose, dist, offset=math.pi / 2.0):
     pose_stamped = PoseStamped()
     pose_stamped.header.frame_id = pose.header.frame_id
     ang = get_jaw(pose.pose.orientation)
@@ -452,6 +454,12 @@ def move_location_inwards(pose, dist, offset=math.pi/2.0):
     return pose_stamped
 
 
+def cb_stall(msg):
+    global stalled
+    assert isinstance(msg, Stall)
+    stalled = msg.stall
+
+
 def create_goal_message(goal):
     goal_msg = MoveBaseGoal()
     goal_msg.target_pose.pose = goal.pose
@@ -467,6 +475,7 @@ def main():
 
     rospy.Subscriber('/mobile_base/sensors/core', SensorState, cb_sensors)  # for bumpers
     rospy.Subscriber('/scan_obst', LaserScan, cb_laser_scan)  # for min dist
+    rospy.Subscriber("stall", Stall, cb_stall)
 
     rospy.Service('move_random_start', Empty, move_random_start)
     rospy.Service('move_random_stop', Empty, move_random_stop)

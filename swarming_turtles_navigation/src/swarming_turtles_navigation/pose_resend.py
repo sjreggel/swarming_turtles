@@ -88,7 +88,7 @@ def create_own_pose():
 
 def publish_poses():
     global turtles, publishing
-    if publishing:
+    if publishing or updating:
         return
     publishing = True
     pose_array = PositionShares()
@@ -101,7 +101,10 @@ def publish_poses():
         else:
             delete_keys.append(t)
     for t in delete_keys:
-        del turtles[t]
+        try:
+            del turtles[t]
+        except:
+            pass
     pub.publish(pose_array)
     publishing = False
 
@@ -210,6 +213,7 @@ def update_pose(turtle):
 def main():
     global pub, tfListen, own_name
     rospy.init_node("position_share")
+    pub = rospy.Publisher("position_share", PositionShares, queue_size=1)
 
     own_name = rospy.get_namespace()
     if own_name == "/":
@@ -223,7 +227,6 @@ def main():
     rospy.sleep(1)
 
     rospy.Subscriber("found_turtles", Turtles, cb_found_turtles)
-    pub = rospy.Publisher("position_share", PositionShares, queue_size=1)
 
     rate = rospy.Rate(RATE)
     while not rospy.is_shutdown():
