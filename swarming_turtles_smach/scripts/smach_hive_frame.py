@@ -14,7 +14,7 @@ from swarming_turtles_msgs.msg import Turtles
 from std_srvs.srv import Empty, EmptyResponse
 from stage_ros.msg import Stall
 import swarming_turtles_navigation.move_random as utils
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, String
 
 #disable ros_info messages from SMACH
 import logging
@@ -48,6 +48,9 @@ move_random_stop = None
 move_random_start = None
 get_food_srv = None
 get_hive_srv = None
+
+log_publisher = None
+
 
 get_received_location_srv = None
 
@@ -94,18 +97,23 @@ offset = 0
 
 started = False
 
+
+
+
 def rob_debug():
     global own_name
     global count_fooddeliveries
     global robot_has_food
     global robot_is_foraging
     global robot_in_collision
+    now = rospy.get_rostime()
+    time_now = float(now.secs) + (float(now.nsecs) / 1000000000)
     pos = utils.get_own_pose()
     x = format(pos.pose.position.x,'.3f')
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w, robot_is_foraging, count_fooddeliveries, robot_has_food, robot_in_collision
+    return time_now, own_name, x, y, z, w, robot_is_foraging, count_fooddeliveries, robot_has_food, robot_in_collision
 
 def init_globals():
     global own_name, hive, hive_loc, move_random_stop, move_random_start, get_food_srv, get_hive_srv, move_action_server, get_received_location_srv
@@ -269,7 +277,8 @@ class SearchFoodNoAsking(smach.State):
             if pose is not None:
                 found = True
                 break
-	    rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	    #rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	    log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
             rate.sleep()
         userdata.pose_out = pose
 
@@ -324,16 +333,19 @@ class SearchFood(smach.State):
                 break
             if not closest == '' and closest not in asked_turtles:
                 asked_turtles.append(closest)
-		rospy.loginfo("%s -> asking %s for food", rob_debug(), closest)
+		#rospy.loginfo("%s -> asking %s for food", rob_debug(), closest)
+		log_publisher.publish("%s -> asking %s for food" % (str(rob_debug()),closest))
 		asked_robot = closest
                 #print "asking ", closest
                 self.ask_food(closest)
 	    else:
 		asked_robot = None
-	    rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	    #rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	    log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
             rate.sleep()
 	if asked_robot == closest:
-		rospy.loginfo("%s -> Foodlocation received from %s", rob_debug(), closest)
+		#rospy.loginfo("%s -> Foodlocation received from %s", rob_debug(), closest)
+		log_publisher.publish("%s -> Foodlocation received from %s" % (str(rob_debug()),closest))
 		asked_robot = None
         userdata.pose_out = pose
 
@@ -374,7 +386,8 @@ class CheckIfAtLocation(smach.State):
 	    if robot_has_food is True:
 		robot_has_food = False # Food is deliverd
 		count_fooddeliveries += 1
-		rospy.loginfo("%s -> Delivered_Food", rob_debug())
+		#rospy.loginfo("%s -> Delivered_Food", rob_debug())
+		log_publisher.publish("%s -> Delivered_Food" % (str(rob_debug())))
 		drop_pub.publish(count_fooddeliveries)
 		robot_is_foraging = True
         else:  # food
@@ -421,7 +434,8 @@ class CheckIfAtLocation(smach.State):
 	if self.loc == 'food' and target is not None:
 		robot_has_food = True
 	    	#print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
-		rospy.loginfo("%s -> Aquired_Food", rob_debug())
+		#rospy.loginfo("%s -> Aquired_Food", rob_debug())
+		log_publisher.publish("%s -> Aquired_Food" % (str(rob_debug())))
         return 'success'
 
 
@@ -453,7 +467,8 @@ class SearchHive(smach.State):
 	   prev_xpos = pose.pose.position.x
 	   prev_ypos = pose.pose.position.y
 	   prev_zpos = pose.pose.position.z
-	   rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	   #rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+	   log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
 
 
 class InitHive(smach.State):
@@ -583,7 +598,8 @@ class MoveToInLocation(smach.State):
 	       prev_xpos = pose.pose.position.x
 	       prev_ypos = pose.pose.position.y
 	       prev_zpos = pose.pose.position.z
-	       rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
+	       #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
+	       log_publisher.publish("%s -> %s %s " % (str(rob_debug()),type(self).__name__, self.loc)) 
             rate.sleep()
 
 
@@ -643,7 +659,8 @@ class MoveToOutLocation(smach.State):
 	       prev_xpos = pose.pose.position.x
 	       prev_ypos = pose.pose.position.y
 	       prev_zpos = pose.pose.position.z
-	       rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc) 
+	       #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
+	       log_publisher.publish("%s -> %s %s " % (str(rob_debug()),type(self).__name__, self.loc)) 
             rate.sleep()
 
 
@@ -718,7 +735,8 @@ class MoveToHiveLocation(smach.State):
 	       prev_xpos = pose.pose.position.x
 	       prev_ypos = pose.pose.position.y
 	       prev_zpos = pose.pose.position.z
-	       rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
+	       #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
+	       log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
             rate.sleep()
 
 
@@ -829,7 +847,8 @@ class MoveToFoodLocation(smach.State):
 	       prev_xpos = pose.pose.position.x
 	       prev_ypos = pose.pose.position.y
 	       prev_zpos = pose.pose.position.z
-	       rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__) 
+	       #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
+	       log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__)) 
             rate.sleep()
 
 
@@ -842,6 +861,11 @@ def start_srv_cb(req):
 def main():
     rospy.init_node('swarming_turtles_machine')
     init_globals()
+ 
+    global log_publisher
+
+    log_publisher = rospy.Publisher("/logging", String, queue_size=10)
+ 
     # create a SMACH state machine
     sm = smach.StateMachine(outcomes=['end'])
     sm.userdata.pose = None
@@ -905,9 +929,9 @@ def main():
         r.sleep()
     # Execute SMACH plan
 
-
     rospy.loginfo("%s -> Starting Experiment", rob_debug())
-    #rospy.loginfo("starting!")
+    log_publisher.publish("%s -> Starting Experiment" % str(rob_debug()))
+
     outcome = sm.execute()
 
     rospy.spin()

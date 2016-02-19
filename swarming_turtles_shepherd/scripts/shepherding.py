@@ -11,6 +11,7 @@ from std_msgs.msg import Bool
 from stage_ros.msg import Stall
 #from swarming_turtles_navigation.move_random import dist_vec
 import swarming_turtles_navigation.move_random as utils
+from std_msgs.msg import String
 
 turtles = []
 own_name = 'mitro' # gethostname()  # hostname used for communication
@@ -18,6 +19,7 @@ robot_in_collision = False
 
 tf_listener = None
 comm_pub = None
+log_publisher = None
 
 HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
 BASE_FRAME = rospy.get_param('shepherd_base_frame', '/robot_0/base_link')
@@ -34,15 +36,18 @@ SEEN_DIST = rospy.get_param('seen_dist_shepherd', 1)
 SEEN_ANG = rospy.get_param('seen_ang_shepherd', math.pi/4.0)
 
 
+
 def rob_debug():
     global own_name
     global robot_in_collision
+    now = rospy.get_rostime()
+    time_now = float(now.secs) + (float(now.nsecs) / 1000000000)
     pos = utils.get_own_pose()
     x = format(pos.pose.position.x,'.3f')
     y = format(pos.pose.position.y,'.3f')
     z = format(pos.pose.orientation.z,'.3f')
     w = format(pos.pose.orientation.w,'.3f')
-    return own_name, x, y, z, w, False, 0, False, robot_in_collision
+    return time_now, own_name, x, y, z, w, False, 0, False, robot_in_collision
 
 def transform_pose(pose_in, frame=HIVE_FRAME):
     if tf_listener.frameExists(pose_in.header.frame_id) and tf_listener.frameExists(frame):
@@ -87,7 +92,8 @@ def cb_set_status(request):
             result.result = "Shepherding enabled!"
 	    #time_now = rospy.get_time()
 	    #rospy.loginfo("Current time %i", time_now)
-    rospy.loginfo("%s -> %s ", rob_debug(), result.result)
+    #rospy.loginfo("%s -> %s ", rob_debug(), result.result)
+    log_publisher.publish("%s -> %s" % (str(rob_debug()),result.result))
     return result
 
 
@@ -110,7 +116,8 @@ def cb_found_turtles(msg):
 def cb_found_food(msg):
     global food
     food = transform_pose(msg)
-    rospy.loginfo("%s -> Found food!", rob_debug())
+    #rospy.loginfo("%s -> Found food!", rob_debug())
+    log_publisher.publish("%s -> Found food!" % (str(rob_debug())))
 
 
 def bark_at(turtle):
@@ -124,8 +131,8 @@ def bark_at(turtle):
     if turtle_pose is not None:
         msg.robot_location = turtle_pose
         comm_pub.publish(msg)
-        #rospy.loginfo("%s -> Barked at %s", own_name, turtle.name)
-	rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
+	#rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
+	log_publisher.publish("%s -> Barked at %s " % (str(rob_debug()), turtle.name))
 
 def cb_stall(msg):
     global robot_in_collision
@@ -133,6 +140,8 @@ def cb_stall(msg):
 
 def main():
     global tf_listener, comm_pub
+    global log_publisher
+
     prev_xpos = 0
     prev_ypos = 0
     prev_zpos = 0
@@ -140,8 +149,11 @@ def main():
     rospy.init_node('shepherding')
     utils.init_globals()
     rospy.Subscriber('stall', Stall, cb_stall)  # turtle in collision?
+   
 
     tf_listener = tf.TransformListener()
+
+    log_publisher = rospy.Publisher("/logging", String, queue_size=10)
 
     comm_pub = rospy.Publisher('/communication', CommunicationProtocol, queue_size=10)
     shep_pub = rospy.Publisher('/mitro_shepherd/status', Bool, queue_size=1)
@@ -158,7 +170,8 @@ def main():
 	   prev_xpos = pose.pose.position.x
 	   prev_ypos = pose.pose.position.y
 	   prev_zpos = pose.pose.position.z
-	   rospy.loginfo("%s -> Position", rob_debug())
+	   #rospy.loginfo("%s -> Position", rob_debug())
+	   log_publisher.publish("%s -> Position" % (str(rob_debug())))
         r.sleep()
 
 
