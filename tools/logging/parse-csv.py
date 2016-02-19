@@ -7,8 +7,7 @@ import math
 
 file_name = sys.argv[1]
 ifile  = open(file_name, "rb")
-#reader = csv.reader(ifile)
-reader = open(file_name, 'r')
+reader = csv.reader(ifile)
 basename = os.path.splitext(sys.argv[1])[0]
 outfile = basename+"-out.txt"
 ofile = open(outfile,'w')
@@ -82,23 +81,15 @@ def decode(strs):
     global Food_moved, food_xpos, food_ypos, food_zpos,convergence_time_food, conv_start_time_food, New_Foodfound
 
     #decode the raw data
-    #res = [","] * 10 #comas
-    #res = re.findall(r"\"(.*?)\"", strs, re.DOTALL)[2:3] # time
-    #res += re.findall(r"> (.*?);", strs, re.DOTALL) #2nd part
-    #mylist = strs.split(" ->", 1)[0] 
-    #mylist = mylist.replace(')',',')
-    #mylist = mylist.replace(" ","")
-    #res += mylist.split(',')[5:9]
-    
+    res = [","] * 10
+    res = re.findall(r"\"(.*?)\"", strs, re.DOTALL)[2:3]
+    res += re.findall(r"'(.*?)'", strs, re.DOTALL)
+    res += re.findall(r"> (.*?);", strs, re.DOTALL)
     mylist = strs.split(" ->", 1)[0]
-    mylist = mylist.replace('\'','')
-    mylist = mylist.replace(')','')
+    mylist = mylist.replace(')',',')
     mylist = mylist.replace(" ","")
-    mylist = mylist.replace('data:(','')
-    res = mylist.split(',')
-    res += re.findall(r"> (.*?)$", strs, re.DOTALL)
-
-
+    res += mylist.split(',')[5:9]
+    
 
     #write to output file
     for item in res:
@@ -117,29 +108,25 @@ def decode(strs):
       ypos = res[3]
       zpos = res[4]
       wpos = res[5]
+      action = res[6]
     except:
 	pass
     try:
-	foraging = res[6]
+	foraging = res[7]
     except:
 	foraging = ""
     try:
-	foodcount = res[7]
+	foodcount = res[8]
     except:
 	foodcount = ""
     try:
-	hasfood = res[8]
+	hasfood = res[9]
     except:
 	hasfood = ""
     try:
-	collision = res[9]
+	collision = res[10]
     except:
 	collision = ""
-    try:
-	action = res[10]
-    except:
-	action = ""
-	
     #print time, robot, xpos, ypos, zpos, wpos, action, foraging, foodcount, hasfood
 
     #log experiment time
@@ -336,24 +323,19 @@ ofile.write("time, robot, xpos, ypos, zpos', wpos, action, foraging, foodcount, 
 
 
 # iterate trough the file and decode
-#rownum = 0
-#for row in reversed(list(reader)):
-    ## Save header row.
-    #if rownum == 0:
-        #header = row
-    #else:
-        #colnum = 0
-        #for col in row:
-            ##print '%-8s: %s' % (header[colnum], col)
-	    #if colnum == 0:
-	    	#decode(col)
-            #colnum += 1
-    #rownum += 1
-    
-for line in reader:
-     if "---" not in line:
-       decode(line)
-    
+rownum = 0
+for row in reversed(list(reader)):
+    # Save header row.
+    if rownum == 0:
+        header = row
+    else:
+        colnum = 0
+        for col in row:
+            #print '%-8s: %s' % (header[colnum], col)
+	    if colnum == 0:
+	    	decode(col)
+            colnum += 1
+    rownum += 1
 
 
 #adjust foraged time when still foraging at end of experiment
