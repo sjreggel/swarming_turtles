@@ -29,9 +29,9 @@ Start experiment
 
 
 Log experiment data (now from logging topic)
-> rosbag record /logging
+> rosbag record /logging -O logfile.bag
 convert logfile to txt file
-> rostopic echo /logging >> outputfile.txt
+> rostopic echo /logging >> logfile.txt
 > rosbag play -r 100 logfile.bag
 
 

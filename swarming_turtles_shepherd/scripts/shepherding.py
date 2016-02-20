@@ -9,12 +9,11 @@ from swarming_turtles_msgs.msg import Turtles, CommunicationProtocol
 from swarming_turtles_shepherd.srv import *
 from std_msgs.msg import Bool
 from stage_ros.msg import Stall
-#from swarming_turtles_navigation.move_random import dist_vec
 import swarming_turtles_navigation.move_random as utils
 from std_msgs.msg import String
 
 turtles = []
-own_name = 'mitro' # gethostname()  # hostname used for communication
+own_name = 'mitro' # hostname used for communication
 robot_in_collision = False
 
 tf_listener = None
@@ -24,10 +23,6 @@ log_publisher = None
 HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
 BASE_FRAME = rospy.get_param('shepherd_base_frame', '/robot_0/base_link')
 food = None
-#bark_time = 0
-#bark_counter = 0
-#time_now = 0
-#time_past = 0
 
 active = False
 
@@ -72,16 +67,10 @@ def seen_loc(pos, name):
 
 def cb_set_status(request):
     global active
-    #global time_now
-    #global time_past
-    #global bark_time 
 
     result = SetShepherdingStatusResponse()
     if request.target_status is False:
         active = False
-	#time_past = rospy.get_time() - time_now
-	#bark_time += time_past
-	#rospy.loginfo("Elapsed time %i %i", time_past, bark_time)
         result.result = "Shepherding disabled"
     else:
         if food is None:
@@ -90,8 +79,6 @@ def cb_set_status(request):
         else:
             active = True
             result.result = "Shepherding enabled!"
-	    #time_now = rospy.get_time()
-	    #rospy.loginfo("Current time %i", time_now)
     #rospy.loginfo("%s -> %s ", rob_debug(), result.result)
     log_publisher.publish("%s -> %s" % (str(rob_debug()),result.result))
     return result
@@ -100,17 +87,14 @@ def cb_set_status(request):
 def cb_found_turtles(msg):
     global turtles
     current_turtles = []
-    # rospy.loginfo("Previous turtles: %s"%str(turtles))
 
     for turtle in msg.turtles:
         if seen_loc(turtle.position, turtle.name):
             current_turtles.append(turtle.name)
             if active and turtle.name not in turtles:
                 bark_at(turtle)
-
     if active:
         turtles = current_turtles
-        # rospy.loginfo("Barked at: %s"%str(turtles))
 
 
 def cb_found_food(msg):
@@ -164,15 +148,16 @@ def main():
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         shep_pub.publish(active)
-	# only loginfo when robot moved
+        # only loginfo when robot moved
         pose = utils.get_own_pose()
-	if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-	   prev_xpos = pose.pose.position.x
-	   prev_ypos = pose.pose.position.y
-	   prev_zpos = pose.pose.position.z
-	   #rospy.loginfo("%s -> Position", rob_debug())
-	   log_publisher.publish("%s -> Position" % (str(rob_debug())))
+        if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+            prev_xpos = pose.pose.position.x
+            prev_ypos = pose.pose.position.y
+            prev_zpos = pose.pose.position.z
+        #rospy.loginfo("%s -> Position", rob_debug())
+        log_publisher.publish("%s -> Position" % (str(rob_debug())))
         r.sleep()
+        
 
 
 if __name__ == "__main__":
