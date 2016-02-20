@@ -208,7 +208,7 @@ def get_random_walk():
 def create_goal_from_pose(pose):
     global cur_goal
     req = GetCollvoidTwistRequest()
-    print "creating goal from target"
+    print own_name, "creating goal from target"
     pose.header.stamp = rospy.Time.now()
     req.goal = transformPose(pose)
     cur_goal = req
@@ -332,36 +332,31 @@ def move_to_goal_cb(goal):
     while not dist_aligned():
         if count_low_speed > MAX_COUNT or action_server.is_preempt_requested():
             if action_server.is_new_goal_available():
-                #		print own_name, "move_to_goal , new_goal", goal
                 goal = action_server.accept_new_goal()
                 create_goal_from_pose(goal.target_pose)
             else:
                 action_server.set_preempted()
                 # action_server.set_aborted()
-                #		print own_name, "move_to_goal , stop", goal
                 stop()
                 return
 
-        if sum(bumpers) > 0 or stalled:
+        if (sum(bumpers) > 0) or stalled:
             twist = Twist()
-            while sum(bumpers) > 0 or stalled:
+            while (sum(bumpers) > 0) or stalled:
                 # print "obstacle"
                 if obstacle_left():
                     twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
                 elif obstacle_right():
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
                 else:
-                    twist.linear.x = -0.1
+                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED/2
+                    #twist.linear.x = -0.1
                 cmd_pub.publish(twist)
-                #                print own_name, "move_to_goal , obstacle"
                 r.sleep()
             create_goal_from_pose(goal.target_pose)
-        #	    print own_name, "move_to_goal , create_goal_from_pose"
 
         twist = get_twist()
-        #	print own_name, "move_to_goal , twist"
         if False and abs(abs(twist.angular.z) - 1.3) < 0.01 and twist.linear.x == 0:
-            #	    print own_name, "move_to_goal , Rotating Max speed"
             own_pose = get_own_pose()
             goal_pose = transformPose(goal.target_pose)
             tmp_vec = diff_vec(own_pose.pose.position, goal_pose.pose.position)
@@ -370,22 +365,17 @@ def move_to_goal_cb(goal):
             ang = math.atan2(tmp_vec.y, tmp_vec.x)
 
             # ang = get_jaw(goal.target_pose.pose.orientation)
-            #	    print own_name, "move_to_goal , twist.angular.z"
             if rotation_aligned(ang, eps=0.5):
                 twist.angular.z = 0
                 # create_goal(dist)
                 cmd_pub.publish(twist)
-            #		print own_name, "rotation alligned", ang, get_twist()
             else:
-                #		print own_name, "rotating to angle", ang
                 rotate_to_ang(ang)
         else:
             cmd_pub.publish(twist)
-        #	    print own_name, "move_to_goal , cmd_pub.publish"
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
             count_low_speed += 1
         r.sleep()
-        #   print own_name, "move_to_goal , set_succeeded"
     action_server.set_succeeded()
 
 

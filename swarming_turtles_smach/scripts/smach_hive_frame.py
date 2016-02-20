@@ -63,6 +63,11 @@ MAX_RETRY = 5
 SEARCH_TIMEOUT = 15
 ASK_TIMEOUT = 1.0
 
+INLOCATION_TIMEOUT = 60.0
+
+MOVETOLOCATION_TIMEOUT = 6.0
+
+
 MOVE_RANDOM_TIME = 3.0
 
 STAND_STILL_TIMES = 10
@@ -72,7 +77,7 @@ FIND_TIMEOUT = 1.0
 LAST_SEEN = 3.0  # check last seen for other turtle
 EPS_TARGETS = 0.2  # if targets are further away than that resend goal
 
-INWARDS = 0.4  # move loc xx meters inwards from detected marker locations
+INWARDS = 0.8 #0.4  # move loc xx meters inwards from detected marker locations
 
 Y_OFFSET_EXIT = -0.5  # move loc xx towards exit
 X_OFFSET_EXIT = 0.2  # move loc xx towards exit
@@ -491,7 +496,7 @@ class MoveToInLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.loc = loc
-        self.TIME_OUT = 60.0
+        self.TIME_OUT = INLOCATION_TIMEOUT
 
     def execute(self, userdata):
         global move_action_server
@@ -593,7 +598,7 @@ class MoveToOutLocation(smach.State):
     def __init__(self, loc):
         smach.State.__init__(self, outcomes=['failed', 'success'])
         self.loc = loc
-        self.TIME_OUT = 3.0
+        self.TIME_OUT = MOVETOLOCATION_TIMEOUT
 
     def execute(self, userdata):
         global prev_xpos
@@ -653,7 +658,7 @@ class MoveToOutLocation(smach.State):
 class MoveToHiveLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'])
-        self.TIME_OUT = 3.0
+        self.TIME_OUT = MOVETOLOCATION_TIMEOUT
 
     def execute(self, userdata):
         global move_action_server
@@ -730,7 +735,7 @@ class MoveToFoodLocation(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['failed', 'success'], input_keys=['pose_in'], output_keys=['pose_out'])
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
-        self.TIME_OUT = 3.0
+        self.TIME_OUT = MOVETOLOCATION_TIMEOUT
 
     def execute(self, userdata):
         global move_action_server
