@@ -115,8 +115,9 @@ def bark_at(turtle):
     if turtle_pose is not None:
         msg.robot_location = turtle_pose
         comm_pub.publish(msg)
-	#rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
-	log_publisher.publish("%s -> Barked at %s " % (str(rob_debug()), turtle.name))
+        #rospy.loginfo("%s -> Barked at %s ", rob_debug(), turtle.name)
+        log_publisher.publish("%s -> Barked at %s " % (str(rob_debug()), turtle.name))
+        print own_name, "Barked at" , turtle.name
 
 def cb_stall(msg):
     global robot_in_collision
@@ -148,13 +149,13 @@ def main():
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         shep_pub.publish(active)
-        # only loginfo when robot moved
-        pose = utils.get_own_pose()
-        if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-            prev_xpos = pose.pose.position.x
-            prev_ypos = pose.pose.position.y
-            prev_zpos = pose.pose.position.z
-        #rospy.loginfo("%s -> Position", rob_debug())
+        #~ # only loginfo when robot moved
+        #~ pose = utils.get_own_pose()
+        #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+            #~ prev_xpos = pose.pose.position.x
+            #~ prev_ypos = pose.pose.position.y
+            #~ prev_zpos = pose.pose.position.z
+            #~ #rospy.loginfo("%s -> Position", rob_debug())
         log_publisher.publish("%s -> Position" % (str(rob_debug())))
         r.sleep()
         

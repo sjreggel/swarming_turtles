@@ -385,6 +385,7 @@ class CheckIfAtLocation(smach.State):
                 count_fooddeliveries += 1
                 #rospy.loginfo("%s -> Delivered_Food", rob_debug())
                 log_publisher.publish("%s -> Delivered_Food" % (str(rob_debug())))
+                print own_name, "Delivered_Food", count_fooddeliveries
                 drop_pub.publish(count_fooddeliveries)
                 robot_is_foraging = True
         else:  # food
@@ -397,7 +398,7 @@ class CheckIfAtLocation(smach.State):
                 try:
                     self.forget_food()
                 except:
-                    print "forget_food failed"
+                    print own_name, "forget_food failed"
                     robot_is_foraging = False
                 return 'failed'
             found = at_food
@@ -414,7 +415,7 @@ class CheckIfAtLocation(smach.State):
                     try:
                         self.forget_food()
                     except:
-                        print "forget_food failed"
+                        print own_name,"forget_food failed"
                 robot_is_foraging = False
                 return 'failed'
             utils.rotate_to_ang(ang)
@@ -433,6 +434,7 @@ class CheckIfAtLocation(smach.State):
             #print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
             #rospy.loginfo("%s -> Aquired_Food", rob_debug())
             log_publisher.publish("%s -> Aquired_Food" % (str(rob_debug())))
+            print own_name, "Aquired_Food"
         return 'success'
 
 
@@ -457,13 +459,13 @@ class SearchHive(smach.State):
                 move_random_stop()
                 return 'success'
             rate.sleep()
-        # only loginfo when robot moved
-        pose = utils.get_own_pose()
-        if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-            prev_xpos = pose.pose.position.x
-            prev_ypos = pose.pose.position.y
-            prev_zpos = pose.pose.position.z
-        #rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
+        #~ # only loginfo when robot moved
+        #~ pose = utils.get_own_pose()
+        #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+            #~ prev_xpos = pose.pose.position.x
+            #~ prev_ypos = pose.pose.position.y
+            #~ prev_zpos = pose.pose.position.z
+            #~ #rospy.loginfo("%s -> %s ", rob_debug(), type(self).__name__)
         log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
 
 
@@ -576,13 +578,13 @@ class MoveToInLocation(smach.State):
                     move_random_stop()
                     move_action_server.send_goal(goal)
         
-            # only loginfo when robot moved
-            pose = utils.get_own_pose()
-            if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-                prev_xpos = pose.pose.position.x
-                prev_ypos = pose.pose.position.y
-                prev_zpos = pose.pose.position.z
-            #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
+            #~ # only loginfo when robot moved
+            #~ pose = utils.get_own_pose()
+            #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+                #~ prev_xpos = pose.pose.position.x
+                #~ prev_ypos = pose.pose.position.y
+                #~ prev_zpos = pose.pose.position.z
+                #~ #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
             log_publisher.publish("%s -> %s %s " % (str(rob_debug()),type(self).__name__, self.loc)) 
             rate.sleep()
 
@@ -637,13 +639,13 @@ class MoveToOutLocation(smach.State):
             if move_action_server.get_state() == GoalStatus.PREEMPTED:
                 move_action_server.cancel_all_goals()
                 return 'failed'
-            # only loginfo when robot moved
-            pose = utils.get_own_pose()
-            if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-                prev_xpos = pose.pose.position.x
-                prev_ypos = pose.pose.position.y
-                prev_zpos = pose.pose.position.z
-            #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
+            #~ # only loginfo when robot moved
+            #~ pose = utils.get_own_pose()
+            #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+                #~ prev_xpos = pose.pose.position.x
+                #~ prev_ypos = pose.pose.position.y
+                #~ prev_zpos = pose.pose.position.z
+                #~ #rospy.loginfo("%s -> %s %s ", rob_debug(), type(self).__name__, self.loc)
             log_publisher.publish("%s -> %s %s " % (str(rob_debug()),type(self).__name__, self.loc)) 
             rate.sleep()
 
@@ -675,10 +677,10 @@ class MoveToHiveLocation(smach.State):
             if stand_still > STAND_STILL_TIMES:
                 move_action_server.cancel_all_goals()
                 if at_hive():
-                    print 'standing still too long, but close to hive'
+                    print own_name,'standing still too long, but close to hive'
                     return 'success'
                 else:
-                    print 'standing still to long'
+                    print own_name,'standing still to long'
                     move_action_server.cancel_all_goals()
                     move_action_server = actionlib.SimpleActionClient('move_to_goal', MoveBaseAction)
                     move_action_server.wait_for_server()
@@ -713,13 +715,13 @@ class MoveToHiveLocation(smach.State):
                     move_action_server.cancel_all_goals()
                     robot_is_foraging = False
                     return 'failed'
-            # only loginfo when robot moved
-            pose = utils.get_own_pose()
-            if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-                prev_xpos = pose.pose.position.x
-                prev_ypos = pose.pose.position.y
-                prev_zpos = pose.pose.position.z
-            #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
+            #~ # only loginfo when robot moved
+            #~ pose = utils.get_own_pose()
+            #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+                #~ prev_xpos = pose.pose.position.x
+                #~ prev_ypos = pose.pose.position.y
+                #~ prev_zpos = pose.pose.position.z
+                #~ #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
             log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__))
             rate.sleep()
 
@@ -747,8 +749,8 @@ class MoveToFoodLocation(smach.State):
             try:
                 self.forget_food(location="")
             except:
-                print "forget_food failed"
-            print "target is None"
+                print own_name,"forget_food failed"
+            print own_name,"target is None"
             robot_is_foraging = False
             return 'failed'
         goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS, offset=offset))
@@ -769,15 +771,15 @@ class MoveToFoodLocation(smach.State):
                 move_action_server.wait_for_server()
 
                 if at_food():
-                    print "standing still too long, but close to food"
+                    print own_name,"standing still too long, but close to food"
                     return 'success'
                 else:
-                    print "standing still too long, failed to go to food"
+                    print own_name,"standing still too long, failed to go to food"
 
                     try:
                         self.forget_food(location="")
                     except:
-                        print "forget_food failed"
+                        print own_name,"forget_food failed"
                     robot_is_foraging = False
                     return 'failed'
             rec_pose = get_received_location([])
@@ -804,7 +806,7 @@ class MoveToFoodLocation(smach.State):
                 old_pose = utils.get_own_pose()
             pose = get_food()
             if pose is not None and (utils.dist_vec(pose.pose.position, target.pose.position) > EPS_TARGETS):
-                print "resending goal"
+                print own_name,"resending goal"
                 move_action_server.cancel_all_goals()
                 target = pose
                 goal = utils.create_goal_message(utils.move_location_inwards(target, INWARDS, offset=offset))
@@ -822,16 +824,16 @@ class MoveToFoodLocation(smach.State):
                     try:
                         self.forget_food(location="")
                     except:
-                        print "forget_food failed"
+                        print own_name,"forget_food failed"
                     robot_is_foraging = False
                     return 'failed'
-            # only loginfo when robot moved
-            pose = utils.get_own_pose()
-            if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
-                prev_xpos = pose.pose.position.x
-                prev_ypos = pose.pose.position.y
-                prev_zpos = pose.pose.position.z
-            #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
+            #~ # only loginfo when robot moved
+            #~ pose = utils.get_own_pose()
+            #~ if (prev_xpos != pose.pose.position.x) or (prev_ypos != pose.pose.position.y) or (prev_zpos != pose.pose.position.z):
+                #~ prev_xpos = pose.pose.position.x
+                #~ prev_ypos = pose.pose.position.y
+                #~ prev_zpos = pose.pose.position.z
+                #~ #rospy.loginfo("%s -> %s", rob_debug(), type(self).__name__)
             log_publisher.publish("%s -> %s" % (str(rob_debug()),type(self).__name__)) 
             rate.sleep()
 
