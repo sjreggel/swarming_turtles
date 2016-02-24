@@ -147,22 +147,21 @@ class RunExperiments(object):
 
         self.start_all()
 
-    def stop_experiment(self, wait=0.):
-        # self.launch_process.send_signal(signal.SIGINT)
+    def stop_experiment(self, wait=0.1):
+        if self.launch_process.poll() is None:
+            self.launch_process.send_signal(signal.SIGINT)
+        if self.rosbag_process.poll() is None:
+            terminate_process_and_children(self.rosbag_process)
         # self.rosbag_process.send_signal(signal.SIGINT)
-        terminate_process_and_children(self.rosbag_process)
-        terminate_process_and_children(self.launch_process)
-        # self.launch_process.wait()
-        # self.rosbag_process.wait()
-        rospy.loginfo("Terminated all processes")
+        self.launch_process.wait()
+        self.rosbag_process.wait()
         time.sleep(wait)
-        self.rosbag_process.terminate()
-        self.launch_process.terminate()
+
+        rospy.loginfo("Terminated all processes")
 
     def run_experiment(self, launchfile, num_robots):
         self.start_experiment(launchfile, num_robots)
-        rate = rospy.Rate(10)
-        while not self.run_completed:
+        while not self.run_completed and not rospy.is_shutdown():
             if self.restart_run:
                 rospy.logwarn("Restart required for run %d, launchfile %s", self.run, launchfile)
                 self.stop_experiment(SHUTDOWN_TIME)
@@ -170,7 +169,7 @@ class RunExperiments(object):
             if (rospy.Time.now() - self.start_time).to_sec() > self.time_limit:
                 rospy.logwarn("Timelimit exceeded for run %d, launchfile %s", self.run, launchfile)
                 break
-            rate.sleep()
+            time.sleep(0.1)
         rospy.loginfo("Run completed foodrun count: %d of %d", self.total_food, self.total_food_runs)
         self.stop_experiment(SHUTDOWN_TIME)
 
@@ -182,6 +181,8 @@ class RunExperiments(object):
 
             for i in range(1, repetitions+1):
                 self.run = i
+                if rospy.is_shutdown():
+                    return
                 rospy.loginfo("Starting run %d, for launchfile %s", self.run, launch_file)
                 self.run_experiment(launch_file, num_robots)
 
