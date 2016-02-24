@@ -415,7 +415,8 @@ class CheckIfAtLocation(smach.State):
         start = rospy.Time.now()
 
         while not found() and not rospy.is_shutdown():
-            if utils.rotation_aligned(ang, eps=0.05):
+            rot_aligned, diff = utils.rotation_aligned(ang, eps=0.05)
+            if rot_aligned:
                 if self.loc == 'food':
                     try:
                         self.forget_food()
@@ -423,7 +424,7 @@ class CheckIfAtLocation(smach.State):
                         print own_name,"forget_food failed"
                 robot_is_foraging = False
                 return 'failed'
-            utils.rotate_to_ang(ang)
+            utils.rotate_to_ang(ang, diff)
             if (rospy.Time.now() - start).to_sec() > SEARCH_TIMEOUT:
                 #move_action_server.cancel_all_goals()
                 try:

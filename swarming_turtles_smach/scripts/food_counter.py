@@ -3,7 +3,7 @@ import rospy
 from std_msgs.msg import Int32
 
 NUM_ROBOTS = 10
-food_counts = [0] * NUM_ROBOTS
+food_counts = [0] * (NUM_ROBOTS + 1)
 total_food = 0
 
 
