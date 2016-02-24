@@ -9,8 +9,11 @@ services = []
 
 
 def start_all(req):
-    for s in services:
-        s()
+    try:
+        for s in services:
+            s()
+    except Exception as e:
+        print e
     return EmptyResponse()
 
 

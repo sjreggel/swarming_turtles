@@ -64,8 +64,8 @@ EPS_SPEED = 0.1
 obstacle_front_bool = False
 stalled = False
 MIN_BELOW_MAX = 20
-MIN_SCAN_ANGLE_RAD = -30. / 180. * math.pi
-MAX_SCAN_ANGLE_RAD = +30. / 180. * math.pi
+MIN_SCAN_ANGLE_RAD = -40. / 180. * math.pi
+MAX_SCAN_ANGLE_RAD = +40. / 180. * math.pi
 
 
 def init_globals():
@@ -216,7 +216,7 @@ def get_random_walk():
 def create_goal_from_pose(pose):
     global cur_goal
     req = GetCollvoidTwistRequest()
-    print own_name, "creating goal from target"
+    # print own_name, "creating goal from target"
     pose.header.stamp = rospy.Time.now()
     req.goal = transformPose(pose)
     cur_goal = req
@@ -298,13 +298,13 @@ def move_random():
 
     r = rospy.Rate(RATE)
     rotation_aligned_bool, diff_ang = rotation_aligned(ang)
-    rospy.loginfo("rotation aligning to ang = %f", ang)
+    # rospy.loginfo("rotation aligning to ang = %f", ang)
     while active and not rotation_aligned_bool:
         rotate_to_ang(ang, diff_ang)
         rotation_aligned_bool, diff_ang = rotation_aligned(ang)
         r.sleep()
     stop()
-    rospy.loginfo("rotation aligned, forward dist = %f", dist)
+    # rospy.loginfo("rotation aligned, forward dist = %f", dist)
     create_goal(dist)
     printed_obstacle = False
     while active and not at_goal() and not count_low_speed > MAX_COUNT:
@@ -331,14 +331,14 @@ def move_random():
 
             dist, ang = get_random_walk()
             rotation_aligned_bool, diff_ang = rotation_aligned(ang)
-            rospy.loginfo("rotation aligning to ang = %f", ang)
+            # rospy.loginfo("rotation aligning to ang = %f", ang)
             while active and not rotation_aligned_bool:
                 rotate_to_ang(ang, diff_ang)
                 rotation_aligned_bool, diff_ang = rotation_aligned(ang)
                 r.sleep()
             stop()
             create_goal(dist)
-            rospy.loginfo("rotation aligned, forward dist = %f", dist)
+            # rospy.loginfo("rotation aligned, forward dist = %f", dist)
 
         twist = get_twist()
         cmd_pub.publish(twist)
@@ -369,15 +369,18 @@ def move_to_goal_cb(goal):
             twist = Twist()
             while (sum(bumpers) > 0) or stalled:
                 # print "obstacle"
-                try_back = random.randint(0, 2) and stalled
+                try_back = random.randint(0, 1)
+                rospy.loginfo("I am in obstacle")
 
-                if obstacle_left() and not try_back:
-                    twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
-                elif obstacle_right() and not try_back:
-                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
-                else:
-                    # twist.angular.z = ROTATE_LEFT * ROTATION_SPEED/2
+                try_back = try_back and stalled
+                if try_back:
                     twist.linear.x = -0.1
+                else:
+                    if obstacle_left():
+                        twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
+                    else:  # elif obstacle_right():
+                        twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+
                 cmd_pub.publish(twist)
                 r.sleep()
             create_goal_from_pose(goal.target_pose)
