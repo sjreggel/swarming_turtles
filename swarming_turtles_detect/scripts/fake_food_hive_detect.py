@@ -15,9 +15,6 @@ WORLD_FRAME = '/world'
 HIVE_FRAME = rospy.get_param('hive_frame', '/hive')
 BASE_FRAME = rospy.get_param('base_frame', '/base_link')
 
-SEEN_FOOD = [False] * len(FOOD_TOPICS)
-SEEN_HIVE = False
-
 SEEN_DIST = 1.5
 
 SEEN_ANG = math.pi / 4
@@ -45,6 +42,9 @@ def diff_vec(a, b):
 
 class FakeFoodHiveDetect(object):
     def __init__(self):
+        self.seen_food = [False] * len(FOOD_TOPICS)
+        self.seen_hive = False
+        self.last_forget_time = rospy.Time.now()
         self.tf = tf.TransformListener()
         self.food_locations = {}
         self.hive_location = PoseStamped()
@@ -57,6 +57,13 @@ class FakeFoodHiveDetect(object):
         rospy.Service('get_hive', GetLocation, self.get_hive)
         rospy.Service('get_location', GetLocation, self.get_food)
         rospy.Service('forget_location', ForgetLocation, self.forget_food_location)
+        rospy.Service('get_last_forget_time', GetLastForgetTime, self.get_last_forget_time)
+
+    def get_last_forget_time(self, req):
+        assert isinstance(req, GetLastForgetTimeRequest)
+        res = GetLastForgetTimeResponse()
+        res.forget_time = self.last_forget_time
+        return res
 
     def seen_loc(self, pos):
         res = self.transform_pose(pos, BASE_FRAME)
@@ -69,7 +76,6 @@ class FakeFoodHiveDetect(object):
         return False
 
     def food_cb(self, msg, idx):
-        global SEEN_FOOD
         """
         :param msg:
         :type msg: Odometry
@@ -84,7 +90,7 @@ class FakeFoodHiveDetect(object):
         if p is not None and self.seen_loc(p):
             self.food_locations[key] = p
             self.food_pub.publish(p)
-            SEEN_FOOD[idx] = True
+            self.seen_food[idx] = True
 
     def transform_pose(self, pose_in, frame, time_in=None):
         if self.tf.frameExists(pose_in.header.frame_id) and self.tf.frameExists(frame):
@@ -103,9 +109,8 @@ class FakeFoodHiveDetect(object):
                 return None
         return None
 
-
     def hive_cb(self, msg):
-        global transform, SEEN_HIVE
+        global transform
         """
         :param msg:
         :type msg: Odometry
@@ -116,7 +121,7 @@ class FakeFoodHiveDetect(object):
         transform['quat'] = tuple(quat_msg_to_array(self.hive_location.pose.orientation))
         transform['stamp'] = rospy.Time.now()
         if self.seen_loc(self.hive_location):
-            SEEN_HIVE = True
+            self.seen_hive = True
             self.last_seen_hive = rospy.Time.now()
 
     def get_hive(self, req):
@@ -127,7 +132,7 @@ class FakeFoodHiveDetect(object):
         :rtype: GetLocationResponse
         """
         res = GetLocationResponse()
-        if SEEN_HIVE:
+        if self.seen_hive:
             res.res = "last_seen"
             res.pose = self.hive_location
             res.pose.header.stamp = self.last_seen_hive
@@ -144,19 +149,18 @@ class FakeFoodHiveDetect(object):
         if req.location == '':
             for l in self.food_locations.keys():
                 idx = int(l[-1:])
-                if self.food_locations[l] is not None and SEEN_FOOD[idx]:
+                if self.food_locations[l] is not None and self.seen_food[idx]:
                     res.res = l
                     res.pose = self.food_locations[l]
                     break
         else:
             idx = int(req.location[-1:])
-            if req.location in self.food_locations.keys() and SEEN_FOOD[idx]:
+            if req.location in self.food_locations.keys() and self.seen_food[idx]:
                 res.res = req.location
                 res.pose = self.food_locations[req.location]
         return res
 
     def forget_food_location(self, req):
-        global SEEN_FOOD
         """
         :param req:
         :type req: ForgetLocationRequest
@@ -165,12 +169,14 @@ class FakeFoodHiveDetect(object):
         """
         if req.location == '':
             self.food_locations = {}
-            SEEN_FOOD = [False] * len(FOOD_TOPICS)
+            self.seen_food = [False] * len(FOOD_TOPICS)
+            self.last_forget_time = rospy.Time.now()
         else:
             if req.location in self.food_locations.keys():
                 idx = int(req.location[-1:])
                 self.food_locations[req.location] = None
-                SEEN_FOOD[idx] = False
+                self.seen_food[idx] = False
+                self.last_forget_time = rospy.Time.now()
         return ForgetLocationResponse()
 
 

@@ -30,6 +30,7 @@ catkin_python_setup()
  add_service_files(
    FILES
    GetLocation.srv
+   GetLastForgetTime.srv
    ForgetLocation.srv
    SetHive.srv
  )

@@ -879,9 +879,9 @@ def main():
         # #food states
         smach.StateMachine.add("PreSearchFood", PreSearchFoodLocation(),
                                transitions={'known': 'GoToFoodIn', 'not_known': 'SearchFood'})
-        smach.StateMachine.add("SearchFoodNoAsking", SearchFoodNoAsking(),
-                               transitions={'found': 'SearchFood', 'not_found': 'SearchFood'},
-                               remapping={'pose_out': 'pose'})
+        # smach.StateMachine.add("SearchFoodNoAsking", SearchFoodNoAsking(),
+        #                        transitions={'found': 'SearchFood', 'not_found': 'SearchFood'},
+        #                        remapping={'pose_out': 'pose'})
         smach.StateMachine.add("SearchFood", SearchFood(),
                                transitions={'found': 'GoToFoodIn', 'not_found': 'SearchFood'},
                                remapping={'pose_out': 'pose'})
@@ -889,11 +889,11 @@ def main():
                                transitions={'failed': 'GoToFood', 'success': 'GoToFood'},
                                remapping={'pose_in': 'pose', 'pose_out': 'pose'})
         smach.StateMachine.add("GoToFood", MoveToFoodLocation(),
-                               transitions={'failed': 'SearchFoodNoAsking', 'success': 'AtFood'},
+                               transitions={'failed': 'SearchFood', 'success': 'AtFood'},
                                remapping={'pose_in': 'pose', 'pose_out': 'pose'})
      
         smach.StateMachine.add("AtFood", CheckIfAtLocation('food'),
-                               transitions={'failed': 'SearchFoodNoAsking', 'success': 'GoToFoodOut'},
+                               transitions={'failed': 'SearchFood', 'success': 'GoToFoodOut'},
                                remapping={'pose_in': 'pose'})
         smach.StateMachine.add("GoToFoodOut", MoveToOutLocation('food'),
                                transitions={'failed': 'GoToHiveIn', 'success': 'GoToHiveIn'})

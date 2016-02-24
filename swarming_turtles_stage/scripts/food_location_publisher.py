@@ -4,6 +4,7 @@ import rospy
 import tf
 from geometry_msgs.msg import PoseStamped, Vector3
 from nav_msgs.msg import Odometry
+
 __author__ = 'danielclaes'
 
 HIVE_TOPIC = '/hive/base_pose_ground_truth'
@@ -23,12 +24,13 @@ prev_xpos = 0
 prev_ypos = 0
 prev_zpos = 0
 
+
 def rob_debug(pos):
     global own_name
-    x = format(pos.pose.position.x,'.3f')
-    y = format(pos.pose.position.y,'.3f')
-    z = format(pos.pose.orientation.z,'.3f')
-    w = format(pos.pose.orientation.w,'.3f')
+    x = format(pos.pose.position.x, '.3f')
+    y = format(pos.pose.position.y, '.3f')
+    z = format(pos.pose.orientation.z, '.3f')
+    w = format(pos.pose.orientation.w, '.3f')
     return own_name, x, y, z, w, False, 0, False, False
 
 
@@ -46,23 +48,23 @@ class FoodPublisher(object):
             rospy.Subscriber(food_topic, Odometry, self.food_cb, idx)
 
     def food_cb(self, msg, idx):
-	global prev_xpos
-	global prev_ypos
-	global prev_zpos
+        global prev_xpos
+        global prev_ypos
+        global prev_zpos
         p = PoseStamped()
         p.pose = msg.pose.pose
         p.header = msg.header
         p = self.transform_pose(p, HIVE_FRAME, time_in=msg.header.stamp)
         if p is not None:
-	    # only loginfo when food moved
-	    if (prev_xpos != p.pose.position.x) or (prev_ypos != p.pose.position.y) or (prev_zpos != p.pose.position.z):
-	      prev_xpos = p.pose.position.x
-	      prev_ypos = p.pose.position.y
-	      prev_zpos = p.pose.position.z
-	      rospy.loginfo("%s -> Food Position", rob_debug(p))
-              # Here you could also do:
-              # rospy.loginfo("Food Position %.2f, %.2f", p.pose.position.x, p.pose.position.y)
-	    self.food_pub.publish(p)
+            # only loginfo when food moved
+            if (prev_xpos != p.pose.position.x) or (prev_ypos != p.pose.position.y) or (prev_zpos != p.pose.position.z):
+                prev_xpos = p.pose.position.x
+                prev_ypos = p.pose.position.y
+                prev_zpos = p.pose.position.z
+                rospy.loginfo("%s -> Food Position", rob_debug(p))
+                # Here you could also do:
+                # rospy.loginfo("Food Position %.2f, %.2f", p.pose.position.x, p.pose.position.y)
+            self.food_pub.publish(p)
 
     def transform_pose(self, pose_in, frame, time_in=None):
         if self.tf.frameExists(pose_in.header.frame_id) and self.tf.frameExists(frame):

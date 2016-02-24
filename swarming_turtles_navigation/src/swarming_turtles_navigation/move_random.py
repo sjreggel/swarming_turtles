@@ -32,6 +32,7 @@ tfListen = None
 
 # config
 ROTATION_SPEED = 1.5
+MIN_ROTATION_SPEED = 1.0
 
 get_twist_srv = None
 cmd_pub = None
@@ -63,6 +64,8 @@ EPS_SPEED = 0.1
 obstacle_front_bool = False
 stalled = False
 MIN_BELOW_MAX = 20
+MIN_SCAN_ANGLE_RAD = -30. / 180. * math.pi
+MAX_SCAN_ANGLE_RAD = +30. / 180. * math.pi
 
 
 def init_globals():
@@ -81,19 +84,23 @@ def init_globals():
 
 def cb_laser_scan(msg):
     global min_dist_laser, obstacle_front_bool
-    min_dist_laser_tmp = msg.range_max
-    # todo maybe limit range to front view only?
+    # min_dist_laser_tmp = msg.range_max
 
+    min_dist = msg.range_max
+    min_idx = int((MIN_SCAN_ANGLE_RAD - msg.angle_min) / msg.angle_increment)
+    max_idx = int((MAX_SCAN_ANGLE_RAD - msg.angle_min) / msg.angle_increment)
     count_below_max = 0
-    for i in msg.ranges:
 
-        if i < min_dist_laser_tmp:
-            min_dist_laser_tmp = i
-        if i < msg.range_max:
+    for i, r in enumerate(msg.ranges):
+        if min_idx < i < max_idx:
+            if r < min_dist:
+                min_dist = r
+        if r < msg.range_max:
             count_below_max += 1
 
     obstacle_front_bool = count_below_max < MIN_BELOW_MAX
-    min_dist_laser = min_dist_laser_tmp
+    min_dist_laser = min_dist
+    # rospy.loginfo("%d obstacle front", obstacle_front_bool)
 
 
 def cb_sensors(msg):
@@ -112,11 +119,11 @@ def obstacle_right():
 
 
 def obstacle_front():
-    return bumpers[CENTER] or min_dist_laser < MIN_DIST_LASER or obstacle_front_bool or stalled
+    return bumpers[CENTER] or min_dist_laser < MIN_DIST_LASER or obstacle_front_bool
 
 
 def obstacle():
-    return obstacle_left() or obstacle_right() or obstacle_front()
+    return obstacle_left() or obstacle_right() or obstacle_front() or stalled
 
 
 def stop():
@@ -160,10 +167,11 @@ def get_jaw(orientation):
     return theta
 
 
-def rotate_to_ang(ang):
+def rotate_to_ang(ang, speed):
     twist = Twist()
     twist.linear.x = 0
-    twist.angular.z = rotate_side(ang) * ROTATION_SPEED
+    rot_speed = max(min(ROTATE_RIGHT, speed), MIN_ROTATION_SPEED)
+    twist.angular.z = rotate_side(ang) * rot_speed
     cmd_pub.publish(twist)
 
 
@@ -194,9 +202,9 @@ def rotation_aligned(ang, eps=None):
 
     # print diff
     if eps is None:
-        return abs(diff) < EPS_ALIGN_THETA
+        return abs(diff) < EPS_ALIGN_THETA, diff
     else:
-        return abs(diff) < eps
+        return abs(diff) < eps, diff
 
 
 def get_random_walk():
@@ -269,8 +277,8 @@ def at_goal():
     # own_pose = get_own_pose()
     goal = cur_goal.goal
     ang = get_jaw(goal.pose.orientation)
-
-    return dist_aligned() and rotation_aligned(ang)
+    rot_aligned, diff = rotation_aligned(ang)
+    return dist_aligned() and rot_aligned
 
 
 def reset_counts():
@@ -289,32 +297,49 @@ def move_random():
     # print dist, ang, jaw
 
     r = rospy.Rate(RATE)
-
-    while active and not rotation_aligned(ang):
-        rotate_to_ang(ang)
+    rotation_aligned_bool, diff_ang = rotation_aligned(ang)
+    rospy.loginfo("rotation aligning to ang = %f", ang)
+    while active and not rotation_aligned_bool:
+        rotate_to_ang(ang, diff_ang)
+        rotation_aligned_bool, diff_ang = rotation_aligned(ang)
         r.sleep()
     stop()
+    rospy.loginfo("rotation aligned, forward dist = %f", dist)
     create_goal(dist)
-
-    print "RANDOM rotating to some angle and distance", ang, dist, obstacle()
-
+    printed_obstacle = False
     while active and not at_goal() and not count_low_speed > MAX_COUNT:
-        if obstacle():
+        if obstacle() or stalled:
             twist = Twist()
             while active and obstacle():
                 # print "obstacle"
-                if obstacle_left():
-                    twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
+                try_back = random.randint(0, 1)
+                if not printed_obstacle:
+                    rospy.loginfo("I am in obstacle")
+                    printed_obstacle = True
+                try_back = try_back and stalled
+                if try_back:
+                    twist.linear.x = -0.1
                 else:
-                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+                    if obstacle_left():
+                        twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
+                    else:  # elif obstacle_right():
+                        twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
+
                 cmd_pub.publish(twist)
                 r.sleep()
+            printed_obstacle = False
 
             dist, ang = get_random_walk()
-            while active and not rotation_aligned(ang):
-                rotate_to_ang(ang)
+            rotation_aligned_bool, diff_ang = rotation_aligned(ang)
+            rospy.loginfo("rotation aligning to ang = %f", ang)
+            while active and not rotation_aligned_bool:
+                rotate_to_ang(ang, diff_ang)
+                rotation_aligned_bool, diff_ang = rotation_aligned(ang)
                 r.sleep()
+            stop()
             create_goal(dist)
+            rospy.loginfo("rotation aligned, forward dist = %f", dist)
+
         twist = get_twist()
         cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:
@@ -344,13 +369,15 @@ def move_to_goal_cb(goal):
             twist = Twist()
             while (sum(bumpers) > 0) or stalled:
                 # print "obstacle"
-                if obstacle_left():
+                try_back = random.randint(0, 2) and stalled
+
+                if obstacle_left() and not try_back:
                     twist.angular.z = ROTATE_RIGHT * ROTATION_SPEED
-                elif obstacle_right():
+                elif obstacle_right() and not try_back:
                     twist.angular.z = ROTATE_LEFT * ROTATION_SPEED
                 else:
-                    twist.angular.z = ROTATE_LEFT * ROTATION_SPEED/2
-                    #twist.linear.x = -0.1
+                    # twist.angular.z = ROTATE_LEFT * ROTATION_SPEED/2
+                    twist.linear.x = -0.1
                 cmd_pub.publish(twist)
                 r.sleep()
             create_goal_from_pose(goal.target_pose)
@@ -365,12 +392,13 @@ def move_to_goal_cb(goal):
             ang = math.atan2(tmp_vec.y, tmp_vec.x)
 
             # ang = get_jaw(goal.target_pose.pose.orientation)
-            if rotation_aligned(ang, eps=0.5):
+            rot_aligned, diff = rotation_aligned(ang, eps=0.5)
+            if rot_aligned:
                 twist.angular.z = 0
                 # create_goal(dist)
                 cmd_pub.publish(twist)
             else:
-                rotate_to_ang(ang)
+                rotate_to_ang(ang, diff)
         else:
             cmd_pub.publish(twist)
         if twist.linear.x < EPS_SPEED and abs(twist.angular.z) < EPS_SPEED:

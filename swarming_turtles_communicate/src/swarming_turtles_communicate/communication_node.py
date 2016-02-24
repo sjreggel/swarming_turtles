@@ -12,9 +12,10 @@ comm_pub = None
 get_food_srv = None
 forget_food_srv = None
 set_hive_srv = None
-
+get_forget_food_time_srv = None
 
 def cb_communication(msg):
+    assert isinstance(msg, CommunicationProtocol)
     if not msg.receiver == own_name:
         return
     req = msg.request.split(' ')
@@ -29,7 +30,7 @@ def cb_communication(msg):
         if pose is not None:
             answer(msg.sender, req[1], pose)
     elif "answer" == req[0]:
-        print "GOT ANSWER", req[1]
+        rospy.loginfo("GOT ANSWER %s", req[1])
         process_msg(msg)
     elif "mitro_message" == req[0]:
         print "GOT MESSAGE FROM MITRO"
@@ -38,12 +39,13 @@ def cb_communication(msg):
 
 def process_mitro_msg(msg):
     global location_received
-    location_received['from'] = msg.sender
-    location_received['pose'] = msg.food_location
     try:
         forget_food_srv()
     except rospy.ServiceException as e:
         print "could not forget food", e
+
+    location_received['from'] = msg.sender
+    location_received['pose'] = msg.food_location
 
     robot_location = msg.robot_location
     try:
@@ -53,12 +55,35 @@ def process_mitro_msg(msg):
 
 
 def process_msg(msg):
+    assert isinstance(msg, CommunicationProtocol)
     global location_received
     # if (rospy.Time.now() - turtle.header.stamp).to_sec() > LAST_SEEN:
     #    print 'message too old'
     #    return False
-    location_received['from'] = msg.sender
-    location_received['pose'] = msg.food_location
+    # Check if food is newer than last forget time
+    if compare_with_last_forget_food(msg.food_location.header.stamp):
+        rospy.loginfo("Time is newer then last forget time using received food location")
+
+        location_received['from'] = msg.sender
+        location_received['pose'] = msg.food_location
+        location_received['pose'].header.stamp = rospy.Time.now()
+    else:
+        rospy.loginfo("Disregarding last food location, since time is too old")
+
+
+def compare_with_last_forget_food(time):
+    try:
+        resp = get_forget_food_time_srv()
+        assert isinstance(resp, GetLastForgetTimeResponse)
+        if time > resp.forget_time:
+            return True
+        else:
+            return False
+
+    except rospy.ServiceException as e:
+        print "Communication service call to get food forget time failed", e
+
+        return True
 
 
 def get_food():
@@ -78,7 +103,7 @@ def answer(receiver, loc_name, pose):
     msg.receiver = receiver
     msg.request = "answer %s" % (loc_name)
     msg.food_location = pose
-    msg.food_location.header.stamp = rospy.Time.now()
+    # msg.food_location.header.stamp = rospy.Time.now()
     comm_pub.publish(msg)
 
 
@@ -111,7 +136,7 @@ def request(receiver, loc_name):
 
 
 def main():
-    global get_food_srv, forget_food_srv, comm_pub, set_hive_srv, own_name
+    global get_food_srv, forget_food_srv, comm_pub, set_hive_srv, own_name, get_forget_food_time_srv
     rospy.init_node("communicate_node")
     rospy.Subscriber(topic, CommunicationProtocol, cb_communication)
 
@@ -126,7 +151,7 @@ def main():
     set_hive_srv = rospy.ServiceProxy('set_hive', SetHive)
 
     forget_food_srv = rospy.ServiceProxy('forget_location', ForgetLocation)
-
+    get_forget_food_time_srv = rospy.ServiceProxy('get_last_forget_time', GetLastForgetTime)
 
     comm_pub = rospy.Publisher(topic, CommunicationProtocol, queue_size=1)
 
