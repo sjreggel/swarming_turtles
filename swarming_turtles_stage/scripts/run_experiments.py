@@ -7,22 +7,26 @@ import rospy
 import time
 
 import signal
+
+from geometry_msgs.msg import Twist
 from stage_ros.msg import Stall
 from std_msgs.msg import Int32
 from std_srvs.srv import Empty
 from subprocess import Popen, PIPE
 
 STALL_RESTART_TIME = 10.  # How long have the robots to be stalled to restart
-SHUTDOWN_TIME = 5.  # How long does it take to shutdown everything
+SHUTDOWN_TIME = 10.  # How long does it take to shutdown everything
 START_WAIT = 5.  # How long before sending the start command
+
+MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
 
 FOOD_PRINT = 5   # How often food should be printed
 
-SHOW_OUTPUT_FROM_LAUNCH = False
+SHOW_OUTPUT_FROM_LAUNCH = True
 
 configs = [
     # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s
-    ('5x5-sim-3-robots', 10, 50, 3, 600),
+    # ('5x5-sim-3-robots', 10, 50, 3, 600),
     ('5x5-sim-6-robots', 10, 50, 6, 900),
     ('5x5-sim-9-robots', 10, 50, 9, 900),
 ]
@@ -53,9 +57,11 @@ def start_environment(launch_file):
 class RunExperiments(object):
     food_listeners = []
     stall_listeners = []
+    cmd_listeners = []
     total_food = 0
     food_counts = []
     stalled = []
+    cmd_zero_counts = []
     total_food_runs = 0
     start_time = None
     time_limit = 0
@@ -102,6 +108,16 @@ class RunExperiments(object):
         else:
             self.stalled[idx] = 0
 
+    def cmd_cb(self, msg, idx):
+        assert isinstance(msg, Twist)
+        if rospy.Time.now() > self.start_time + rospy.Duration(0.5):
+            if msg.angular.z == 0 and msg.linear.x == 0:
+                self.cmd_zero_counts[idx] += 1
+                if self.cmd_zero_counts[idx] > MAX_ZERO_CMD:
+                    self.restart_run = True
+            else:
+                self.cmd_zero_counts[idx] = 0
+
     def init_for_num(self, num_robots):
         self.run_completed = False
         self.restart_run = False
@@ -109,6 +125,8 @@ class RunExperiments(object):
         self.total_food = 0
         self.food_counts = [0] * (num_robots+1)
         self.stalled = [0] * (num_robots+1)
+        self.cmd_zero_counts = [0] * (num_robots+1)
+
         self.update_listeners(num_robots)
 
     def update_listeners(self, num_robots):
@@ -120,12 +138,18 @@ class RunExperiments(object):
             assert isinstance(l, rospy.Subscriber)
             l.unregister()
 
+        for l in self.cmd_listeners:
+            assert isinstance(l, rospy.Subscriber)
+            l.unregister()
+
+        time.sleep(0.5)
         self.food_listeners = []
         self.stall_listeners = []
 
         for i in range(1, num_robots+1):
             self.food_listeners.append(rospy.Subscriber("/robot_%d/fooddrops" % i, Int32, self.food_cb, i))
             self.stall_listeners.append(rospy.Subscriber("/robot_%d/stall" % i, Stall, self.stall_cb, i))
+            self.cmd_listeners.append(rospy.Subscriber("/robot_%d/cmd_vel" % i, Twist, self.cmd_cb, i))
 
     def start_experiment(self, launchfile, num_robots):
         self.init_for_num(num_robots)
@@ -183,7 +207,7 @@ class RunExperiments(object):
                 self.run = i
                 if rospy.is_shutdown():
                     return
-                rospy.loginfo("Starting run %d, for launchfile %s", self.run, launch_file)
+                rospy.loginfo("Starting run %d, for launchfile %s, num_robots %d", self.run, launch_file, num_robots)
                 self.run_experiment(launch_file, num_robots)
 
 

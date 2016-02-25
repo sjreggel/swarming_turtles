@@ -3,15 +3,15 @@ import rospy
 from std_msgs.msg import Int32
 
 NUM_ROBOTS = 10
-food_counts = [0] * (NUM_ROBOTS + 1)
+food_counts = [0] * NUM_ROBOTS
 total_food = 0
 
 
 def rob_cb(data, idx):
     global food_counts, total_food
-    food_counts[idx] = data.data
+    food_counts[idx-1] = data.data
     total_food = sum(food_counts)
-    print "rob%d_food = %d total = %d" % (idx, food_counts[idx], total_food)
+    print "rob%d_food = %d total = %d" % (idx, food_counts[idx-1], total_food)
 
 
 def listener():
