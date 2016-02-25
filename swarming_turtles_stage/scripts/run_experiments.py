@@ -22,9 +22,9 @@ SHOW_OUTPUT_FROM_LAUNCH = False
 
 configs = [
     # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s
-    ('5x5-sim-3-robots', 10, 50, 3, 400),
-    ('5x5-sim-6-robots', 10, 50, 6, 600),
-    ('5x5-sim-9-robots', 10, 50, 9, 600),
+    ('5x5-sim-3-robots', 10, 50, 3, 600),
+    ('5x5-sim-6-robots', 10, 50, 6, 900),
+    ('5x5-sim-9-robots', 10, 50, 9, 900),
 ]
 
 
