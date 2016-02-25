@@ -3,7 +3,7 @@
   
     <include file="$(find swarming_turtles_stage)/launch/simulation_environment.launch" >
            <arg name="map" value="5x5_map.yaml" />
-	   <arg name="stage_world" value="5x5-3-robots.world" />
+	   <arg name="stage_world" value="5x5-2-robots-shepherd.world" />
     </include>
 
     <include file="$(find swarming_turtles_shepherd)/launch/shepherd_teleop_joy.launch" >
@@ -21,9 +21,6 @@
      <arg name="robot" value="robot_2" />
     </include>
 
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_3" />
-    </include>
 
 
 

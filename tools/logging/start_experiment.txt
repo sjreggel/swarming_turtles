@@ -27,13 +27,22 @@ Start experiment
 > roslaunch swarming_turtles_stage swarm_sim-x-robots.launch 
 
 
-
 Log experiment data (now from logging topic)
 > rosbag record /logging -O logfile.bag
+
+Monitor fooddrop count during experiment
+> rosrun swarming_turtles_smach food_counter.py
+
+After Experiment:
 convert logfile to txt file
-> rostopic echo /logging >> logfile.txt
+> rostopic echo /logging > logfile.txt
 > rosbag play -r 100 logfile.bag
 
+Parse and Analyze the data
+> python parse.py /logfilelocation/logfile.txt
+This will parse and analysis the inputfile, and will output  
+/logfilelocation/logfile-out.txt containing the parsed data
+/logfilelocation/logfile-out.log containing the analysis results
 
 
 # Log experiment data (OBSOLETE)
@@ -43,12 +52,5 @@ convert logfile to txt file
 # clear the console before starting the experiment and make sure the logging is RUNNING
 # after the experiment SAVE the logs to a file: e.g. Experiment_x.csv
 
-Monitor fooddrop count during experiment
-> rosrun swarming_turtles_smach food_counter.py
 
-Parse and Analyze the data
-> python parse.py /logfilelocation/Experiment_x.csv
-This will parse and analysis the inputfile, and will output  
-/logfilelocation/Experiment_x-out.txt containing the parsed data
-/logfilelocation/Experiment_x-out.log containing the analysis results
 

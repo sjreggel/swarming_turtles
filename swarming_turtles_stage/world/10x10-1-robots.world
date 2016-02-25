@@ -24,10 +24,10 @@ define map model
 
 map
 (
-  name "5x5_map"
+  name "10x10_map"
   size [10.500  10.500 0.500]
   pose [0.000 0.000 0.000 0.000]
-  bitmap "5x5_map.pgm"
+  bitmap "10x10_map.pgm"
 )
 
 
@@ -117,13 +117,13 @@ define obst model
 )
 
 obst( pose [ -4.000 -4.900 0.000 90.000 ] name "hive" color "blue")
-obst( pose [ -1.000 -0.290 0.000 -90.000 ] name "food" color "red")
+obst( pose [ 4.000 4.900 0.000 -90.000 ] name "food" color "red")
 
 # add here robots
 diff_robot( pose [ -6.000 -6.000 0.000 125.000 ] name "shepherd" color "black")
 roomba( pose [ -3.620 -4.420 0.000 -165.000 ] name "robot_1" color "SlateGray")
-roomba( pose [ -4.370 -4.470 0.000 -105.000 ] name "robot_2" color "LightGrey")
-roomba( pose [ -4.020 -4.120 0.000 -45.000 ] name "robot_3" color "dark slate blue")
+# roomba( pose [ -4.370 -4.470 0.000 -105.000 ] name "robot_2" color "LightGrey")
+# roomba( pose [ -4.020 -4.120 0.000 -45.000 ] name "robot_3" color "dark slate blue")
 # roomba( pose [ -4.500 -4.100 0.000 15.000 ] name "robot_4" color "royal blue")
 # roomba( pose [ -3.630 -4.00 0.000 75.000 ] name "robot_5" color "LightSkyBlue")
 # roomba( pose [ -4.006 -3.680 0.000 87.000 ] name "robot_6" color "Yellow")

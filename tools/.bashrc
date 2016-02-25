@@ -1,60 +1,56 @@
-[ -z "$PS1" ] && return
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
 
-# Basic options
-# don't put duplicate lines in the history. See bash(1) for more options
-# ... or force ignoredups and ignorespace
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
 HISTCONTROL=ignoreboth
-OS_NAME_STR=$(uname)
-
-# Macthigs
-if [[ "$OS_NAME_STR" == 'Darwin' ]]; then
-    nl ~/.bash_eternal_history | sort -rk 2 | uniq -f 1 | sort -n | cut -f 2 > ~/.temp_file
-else
-    nl ~/.bash_eternal_history | sort -k 2 | uniq -f 1 | sort -n | cut -f 2 > ~/.temp_file
-fi
-
-cat ~/.temp_file > ~/.bash_eternal_history
-#rm temp_file
 
 # append to the history file, don't overwrite it
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-# Eternal bash history.
-# ---------------------
-# Undocumented feature which sets the size to "unlimited".
-# http://stackoverflow.com/questions/9457233/unlimited-bash-history
-export HISTFILESIZE=
-export HISTSIZE=
-#export HISTTIMEFORMAT="[%F %T] "
-# Change the file location because certain bash sessions truncate .bash_history file upon close.
-# http://superuser.com/questions/575479/bash-history-truncated-to-500-lines-on-each-login
-export HISTFILE=~/.bash_eternal_history
-# Force prompt to write history after every command.
-# http://superuser.com/questions/20900/bash-history-loss
-PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+HISTSIZE=1000
+HISTFILESIZE=2000
 
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
 
-#export HISTCONTROL=ignoredups
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+force_color_prompt=yes
+
+# colors
 export COLORFGBG='default;default'
 
 declare -x CLICOLOR=1
 declare -x LSCOLORS="DxGxFxdxCxdxdxhbadExEx"
 
-# Aliases
-alias ..='cd ..'
-alias cd..='cd ..'
-alias ...='cd ../..'
-alias back='cd $OLDPWD'
-alias dfh='df -h'
-alias 'll'='ls -la'
-
-# Use custom aliases
-if [ -f ~/.bash_aliases ]; then
-. ~/.bash_aliases
-fi
-
-# Prompt
 BGREEN='\[\033[1;32m\]'
 GREEN='\[\033[0;32m\]'
 BRED='\[\033[1;31m\]'
@@ -63,21 +59,83 @@ BBLUE='\[\033[1;34m\]'
 BLUE='\[\033[0;34m\]'
 NORMAL='\[\033[00m\]'
 BYELLOW='\[\033[1;33m\]'
-PS1="${BRED}\u${NORMAL}@${BBLUE}\h${NORMAL}:${BGREEN}\w${NORMAL} "
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    if [ -n "$SSH_TTY" ] || [ -n "$SSH_CLIENT" ]; then
+	PS1="${debian_chroot:+($debian_chroot)}${BYELLOW}\u${NORMAL}@${GREEN}\h${NORMAL}:${BBLUE}\w${NORMAL}\$ "
+    else
+	PS1="${debian_chroot:+($debian_chroot)}${BYELLOW}\u${NORMAL}:${BBLUE}\w${NORMAL}\$ "
+    fi
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-    eval "`dircolors -b`"
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
 
-if [ -f /etc/bash_completion ]; then
-    source /etc/bash_completion
+# Aliases
+alias ..='cd ..'
+alias cd..='cd ..'
+alias ...='cd ../..'
+alias back='cd $OLDPWD'
+alias dfh='df -h'
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
 fi
 
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
 
 # make bash autocomplete with up arrow
 bind '"\e[A":history-search-backward'
@@ -87,104 +145,17 @@ bind '"\e[B":history-search-forward'
 #------------------------------------------------------------------------------
 # ROS
 #------------------------------------------------------------------------------
+source /opt/ros/indigo/setup.bash
+source ~/ros/devel/setup.bash
 
-if [ -x /opt/ros/indigo ]; then
-    export TURTLEBOT_3D_SENSOR=kinect
-    export TURTLEBOT_BATTERY=/sys/class/power_supply/BAT1
-    source /opt/ros/indigo/setup.bash
-    source ~/ros/devel/setup.bash
-
-elif [ -x ~/ros_hydro_ws/devel_isolated ]; then
-    source ~/ros_hydro_ws/install_isolated/setup.bash
-    source ~/ros/devel/setup.bash
-    
-elif [ -x /opt/ros/hydro ]; then
-    source /opt/ros/hydro/setup.bash
-    source ~/ros/devel/setup.bash
-   
-fi
-
-export ROS_WORKSPACE=~/ros/src/
-export ROS_PACKAGE_PATH=$ROS_WORKSPACE:$ROS_PACKAGE_PATH
-
-#export EDITOR='gedit'
 export EDITOR='emacs'
+export PATH=$HOME/bin:$PATH
+export ROS_WORKSPACE=$HOME/ros/src
 
 alias 'rviz'='rosrun rviz rviz'
-alias 'dynreconf'='rosrun rqt_reconfigure rqt_reconfigure'
 alias 'emacs'='emacs -nw'
-alias sudo='sudo '
-
-alias catkin_ws_make='catkin_make -C "$ROS_WORKSPACE/.."'
-
-function copy-ssh-to {
-    cat ~/.ssh/id_rsa.pub | ssh $1 'cat >> .ssh/authorized_keys && echo "Key copied"'
-}
+alias 'meow_make'='catkin_make -C $HOME/ros/'
 
 function ros {
     export ROS_MASTER_URI=http://$1:11311
 }
-
-function rospath {
-    export ROS_PACKAGE_PATH=$1:$ROS_PACKAGE_PATH
-}
-
-function roswspath {
-    source /opt/ros/indigo/setup.bash
-    source $(pwd $1)/devel/setup.bash
-    export ROS_WORKSPACE=$(pwd $1)/src
-    export ROS_PACKAGE_PATH=$ROS_WORKSPACE:$ROS_PACKAGE_PATH
-}
-
-
-# Macthigs
-if [[ "$OS_NAME_STR" == 'Darwin' ]]; then
-    if [ -f $(brew --prefix)/etc/bash_completion ]; then
-	source $(brew --prefix)/etc/bash_completion
-    fi
-    
-    #export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/include/boost:${LD_LIBRARY_PATH}
-    export CPATH=/usr/local/include
-    export LIBRARY_PATH=/usr/local/lib
-    #export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:/usr/local/lib
-    export BOOST_HOME=/usr/local/include/boost
-    
-    export PATH=/usr/local/bin:$PATH
-
-    if [ -x /usr/local/mysql/bin ]; then
-	export PATH=/usr/local/mysql/bin:$PATH
-    fi
-    
-    if [ -x /Applications/MATLAB_R2011b.app ]; then
-	export PATH=/Applications/MATLAB_R2011b.app/bin:$PATH
-    fi
-    
-    if [ -x /usr/texbin ]; then
-	export PATH=/usr/texbin:$PATH
-    fi
-    export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH
-    # OPAM configuration
-    . /Volumes/MacData/User/danielclaes/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
-    export PAPARAZZI_HOME=~/paparazzi
-    export PAPARAZZI_SRC=~/paparazzi
-    export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig
-    
-    
-else
-    #ros slaw
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/opt/softkinetic/DepthSenseSDK/lib    
-fi
-
-# Enable tab completion
-source ~/git-completion.bash
-
-
-# Change command prompt
-source ~/git-prompt.sh
-export GIT_PS1_SHOWDIRTYSTATE=1
-# '\u' adds the name of the current user to the prompt
-# '\$(__git_ps1)' adds git-related stuff
-# '\W' adds the name of the current directory
-#export PS1="$purple\u$green\$(__git_ps1)$blue \W $ $reset"
-PS1="${BRED}\u${NORMAL}@${BBLUE}\h$BYELLOW\$(__git_ps1)${NORMAL}:${BGREEN}\w${NORMAL} "
-

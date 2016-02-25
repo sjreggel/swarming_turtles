@@ -388,9 +388,9 @@ NrRobots = robots_in_experiment+1
 #log output
 lfile.write("\n****************************************************************************************\n")
 lfile.write( "Decoding " + file_name + " --> %s \n" % outfile)
-lfile.write( "General:      MaxRobots           = %s \n" % MaxRobots )
-lfile.write( "General:      Robots in experiment        = %s \n" % robots_in_experiment)
-lfile.write( "General:      Runtime experiment (sec)    = %s \n" % runtime)
+lfile.write( "General:              MaxRobots                       = %s \n" % MaxRobots )
+lfile.write( "General:              Robots in experiment            = %s \n" % robots_in_experiment)
+lfile.write( "General:              Runtime experiment (sec)        = %s \n" % runtime)
 lfile.write( "****************************************************************************************\n")
 lfile.write( "Sherpherding:         Times enabled                   = %s \n" % Shepherd_count)
 lfile.write( "Sherpherding:         Total enabled time (sec)        = %s \n" %  Sheptotaltime)
