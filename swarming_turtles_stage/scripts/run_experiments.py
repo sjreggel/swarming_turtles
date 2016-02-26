@@ -15,7 +15,7 @@ from std_srvs.srv import Empty
 from subprocess import Popen, PIPE
 
 STALL_RESTART_TIME = 10.  # How long have the robots to be stalled to restart
-SHUTDOWN_TIME = 10.  # How long does it take to shutdown everything
+SHUTDOWN_TIME = 15.  # How long does it take to shutdown everything
 START_WAIT = 5.  # How long before sending the start command
 
 MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
@@ -42,14 +42,33 @@ configs = [
 #    ('5x5-sim-7-robots', 10, 50, 7, 1000),
 #    ('5x5-sim-6-robots', 10, 50, 6, 1000),
 #    ('5x5-sim-5-robots', 10, 50, 5, 1000),
-    ('5x5-sim-4-robots', 1, 50, 4, 1000),
-    ('5x5-sim-3-robots', 1, 50, 3, 1000),
-    ('5x5-sim-2-robots', 1, 50, 2, 1200),
-    ('5x5-sim-1-robots', 1, 50, 1, 1800),
+#    ('5x5-sim-4-robots', 9, 50, 4, 1000),
+#    ('5x5-sim-3-robots', 9, 50, 3, 1000),
+#    ('5x5-sim-2-robots', 9, 50, 2, 1200),
+#    ('5x5-sim-1-robots', 9, 50, 1, 1800),
 
-#    ('5x5-sim-3-robots', 10, 50, 3, 600),
-#    ('5x5-sim-6-robots', 10, 50, 6, 900),
-#    ('5x5-sim-9-robots', 10, 50, 9, 900),
+#    ('10x10-sim-1-robots-shepherd', 5, 50, 1, 1500),
+#    ('10x10-sim-2-robots-shepherd', 10, 50, 2, 1200),
+#    ('10x10-sim-3-robots-shepherd', 10, 50, 3, 900),
+#    ('10x10-sim-4-robots-shepherd', 10, 50, 4, 900),
+#    ('10x10-sim-5-robots-shepherd', 10, 50, 5, 900),
+#    ('10x10-sim-6-robots-shepherd', 5, 50, 6, 900),
+#    ('10x10-sim-7-robots-shepherd', 10, 50, 7, 900),
+#    ('10x10-sim-8-robots-shepherd', 10, 50, 8, 1000),
+#    ('10x10-sim-9-robots-shepherd', 10, 50, 9, 1800),
+
+    ('10x10-sim-9-robots', 7, 50, 9, 1800),
+#    ('10x10-sim-8-robots', 10, 50, 8, 1200),
+#    ('10x10-sim-7-robots', 10, 50, 7, 1000),
+#    ('10x10-sim-6-robots', 10, 50, 6, 1000),
+#    ('10x10-sim-5-robots', 10, 50, 5, 1000),
+#    ('10x10-sim-4-robots', 9, 50, 4, 1000),
+#    ('10x10-sim-3-robots', 9, 50, 3, 1000),
+#    ('10x10-sim-2-robots', 9, 50, 2, 1200),
+#    ('10x10-sim-1-robots', 9, 50, 1, 1800),
+
+
+
 ]
 
 

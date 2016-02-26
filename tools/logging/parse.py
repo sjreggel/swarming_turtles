@@ -346,7 +346,7 @@ def decode(strs):
         pass         
         
     try:
-        for robotnr in range(1,robots_in_experiment+1): # check if all robots are communicating (10 seconds)
+        for robotnr in range(1,robots_in_experiment+1): # check if all robots are communicating within the last (30) seconds
             if ((float(time) - float(30)) >= last_seen_time[robotnr]) and (last_seen[robotnr] ==  True):
                 notseen_count[robotnr] += 1
                 last_seen[robotnr] = False
