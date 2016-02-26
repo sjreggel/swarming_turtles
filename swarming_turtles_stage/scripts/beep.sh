@@ -1,1 +1,1 @@
-speaker-test -t sine -f 4000 -l 1
+speaker-test -t sine -f 666 -l 1

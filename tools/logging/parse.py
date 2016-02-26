@@ -47,6 +47,10 @@ collision_start = [0] * Elements
 collision_time = [0] * Elements
 collision_total = 0
 
+last_seen = [False] * Elements
+last_seen_time = [0] * Elements
+notseen_count = [0] * Elements
+
 
 starttime = 0
 endtime = 0
@@ -80,6 +84,7 @@ def decode(strs):
     global hasfood_robot, hasfood_count, hasfood_start, hasfood_time
     global prev_xpos, prev_ypos, distance
     global Food_moved, food_xpos, food_ypos, food_zpos,convergence_time_food, conv_start_time_food, New_Foodfound
+    global last_seen, notseen_count, last_seen_time
 
     #decode the raw data
     #res = [","] * 10 #comas
@@ -147,6 +152,8 @@ def decode(strs):
         if action == 'Starting Experiment':
             print "Starting Experiment"
             starttime = float(time)
+            for robotnr in range(1,robots_in_experiment+1):
+                last_seen_time[robotnr] = float(time)
         endtime = float(time)
     except:
         pass
@@ -331,6 +338,23 @@ def decode(strs):
     except:
         pass
 
+    # log robot-seen time per robot
+    try:
+        last_seen_time[current_robot] = float(time)
+        last_seen[current_robot] = True
+    except:
+        pass         
+        
+    try:
+        for robotnr in range(1,robots_in_experiment+1): # check if all robots are communicating (10 seconds)
+            if ((float(time) - float(30)) >= last_seen_time[robotnr]) and (last_seen[robotnr] ==  True):
+                notseen_count[robotnr] += 1
+                last_seen[robotnr] = False
+    except:
+        pass        
+
+
+
 # write column lables to file
 ofile.write("time, robot, xpos, ypos, zpos', wpos, action, foraging, foodcount, hasfood, collision \n")
 
@@ -422,6 +446,7 @@ lfile.write( "Distance travelled:   mitro (m)                       = %s \n" % d
 lfile.write( "****************************************************************************************\n")
 lfile.write( "calc troughput:       food deliveries per second      = %s \n" %  troughput)
 lfile.write( "calc troughput:       food deliveries per minute      = %s \n" %  (troughput*60))
+lfile.write( "ERROR:                robots not moving               = %s \n" % notseen_count[1:NrRobots])
 lfile.write( "****************************************************************************************\n")
 
 
