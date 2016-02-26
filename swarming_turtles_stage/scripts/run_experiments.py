@@ -7,8 +7,9 @@ import rospy
 import time
 
 import signal
+import math
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose2D
 from stage_ros.msg import Stall
 from std_msgs.msg import Int32
 from std_srvs.srv import Empty
@@ -27,7 +28,7 @@ FOOD_PRINT = 1   # How often food should be printed
 SHOW_OUTPUT_FROM_LAUNCH = True
 
 configs = [
-    # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s
+    # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
 
 #    ('5x5-sim-1-robots-shepherd', 5, 50, 1, 1500),
 #    ('5x5-sim-2-robots-shepherd', 10, 50, 2, 1200),
@@ -44,10 +45,10 @@ configs = [
 #    ('5x5-sim-7-robots', 10, 50, 7, 1000),
 #    ('5x5-sim-6-robots', 10, 50, 6, 1000),
 #    ('5x5-sim-5-robots', 10, 50, 5, 1000),
-    ('5x5-sim-4-robots', 1, 50, 4, 1000),
-    ('5x5-sim-3-robots', 1, 50, 3, 1000),
-    ('5x5-sim-2-robots', 1, 50, 2, 1200),
-    ('5x5-sim-1-robots', 1, 50, 1, 1800),
+    # ('5x5-sim-4-robots', 1, 50, 4, 1000, [(5, Pose2D(2,3, math.pi))]),
+    ('5x5-sim-3-robots', 1, 50, 3, 1000, [(5, Pose2D(2,3, math.pi))]),
+    ('5x5-sim-2-robots', 1, 50, 2, 1200, [(5, Pose2D(2,3, math.pi))]),
+    ('5x5-sim-1-robots', 1, 50, 1, 1800, [(5, Pose2D(2,3, math.pi))]),
 
 #    ('5x5-sim-3-robots', 10, 50, 3, 600),
 #    ('5x5-sim-6-robots', 10, 50, 6, 900),
@@ -81,6 +82,8 @@ class RunExperiments(object):
     food_listeners = []
     stall_listeners = []
     cmd_listeners = []
+    current_food_pose = 0
+    food_poses = []
     total_food = 0
     food_counts = []
     stalled = []
@@ -112,6 +115,7 @@ class RunExperiments(object):
                     rospy.logerr('could not create path %s', path)
                     exit(1)
         self.path = path
+        self.food_pose_pub = rospy.Publisher('/food/set_pose', Pose2D, queue_size=1)
         rospy.loginfo("Logging to path %s", self.path)
 
     def food_cb(self, msg, idx):
@@ -119,6 +123,13 @@ class RunExperiments(object):
         self.total_food = sum(self.food_counts)
         if self.total_food % FOOD_PRINT == 0:
             rospy.loginfo("Foodruns %d of %d", self.total_food, self.total_food_runs)
+
+        if len(self.food_poses) > 0 and self.current_food_pose < len(self.food_poses):  # check if we have more than one food poses, and if the current one is not the last one
+            if self.total_food >= self.food_poses[self.current_food_pose][0]:
+                rospy.loginfo("Changing food pose after %d runs to %s", self.total_food, str(self.food_poses[self.current_food_pose][1]))
+                self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
+                self.current_food_pose += 1
+
         if self.total_food >= self.total_food_runs:
             self.run_completed = True
 
@@ -128,6 +139,7 @@ class RunExperiments(object):
             if self.stalled[idx] == 0:
                 self.stalled[idx] = rospy.Time.now()
             elif (rospy.Time.now()-self.stalled[idx]).to_sec() > STALL_RESTART_TIME:
+                rospy.logwarn("Stall Time exceeded in run %d for robot %d", self.run, idx)
                 self.restart_run = True
         else:
             self.stalled[idx] = 0
@@ -148,10 +160,11 @@ class RunExperiments(object):
         self.restart_run = False
 
         self.total_food = 0
+        self.current_food_pose = 0
         self.food_counts = [0] * (num_robots+1)
         self.stalled = [0] * (num_robots+1)
         self.cmd_zero_counts = [0] * (num_robots+1)
-        self.last_cmd_vels = [0] * (num_robots)
+        self.last_cmd_vels = [rospy.Time(0)] * (num_robots)
         self.update_listeners(num_robots)
 
     def update_listeners(self, num_robots):
@@ -195,15 +208,18 @@ class RunExperiments(object):
         rospy.loginfo("rosbag filename: %s", rosbag_file)
 
         self.rosbag_process = Popen(["rosbag", "record", "/logging", "-O", rosbag_file])
+
         self.start_time = rospy.Time.now()
-        for i in self.last_cmd_vels:
-            i = rospy.Time.now()
+
+        # set last cmd received to start time for checking if they send cmd_vels
+        for i in range(len(self.last_cmd_vels)):
+            self.last_cmd_vels[i] = self.start_time
         self.start_all()
 
     def stop_experiment(self, wait=0.1):
         if self.launch_process.poll() is None:
             self.launch_process.send_signal(signal.SIGINT)
-        if self.rosbag_process.poll() is None:
+        if self.rosbag_process is not None and self.rosbag_process.poll() is None:
             terminate_process_and_children(self.rosbag_process)
         # self.rosbag_process.send_signal(signal.SIGINT)
         self.launch_process.wait()
@@ -230,23 +246,27 @@ class RunExperiments(object):
             if (rospy.Time.now() - self.start_time).to_sec() > self.time_limit:
                 rospy.logwarn("Timelimit exceeded for run %d, launchfile %s", self.run, launchfile)
                 break
+
             if not self.check_cmd_vels():
                 self.restart_run = True
             time.sleep(0.1)
-        rospy.loginfo("Run completed foodrun count: %d of %d", self.total_food, self.total_food_runs)
-        self.stop_experiment(SHUTDOWN_TIME)
+        if not rospy.is_shutdown():
+            rospy.loginfo("Run completed foodrun count: %d of %d", self.total_food, self.total_food_runs)
+            self.stop_experiment(SHUTDOWN_TIME)
+        else:
+            rospy.loginfo("rospy shutdown")
 
     def run_all_experiments(self):
-        for launch_file, repetitions, num_food_runs, num_robots, time_limit in configs:
+        for launch_file, repetitions, num_food_runs, num_robots, time_limit, next_food_poses in configs:
 
             self.total_food_runs = num_food_runs
             self.time_limit = time_limit
-
+            self.food_poses = next_food_poses
             for i in range(1, repetitions+1):
                 self.run = i
                 if rospy.is_shutdown():
                     return
-                rospy.loginfo("Starting run %d, for launchfile %s, num_robots %d", self.run, launch_file, num_robots)
+                rospy.loginfo("Starting run %d of %d, for launchfile %s, num_robots %d", self.run, repetitions, launch_file, num_robots)
                 self.run_experiment(launch_file, num_robots)
 
 
