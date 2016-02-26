@@ -70,7 +70,7 @@ food_ypos = 0
 food_zpos = 0
 Food_moved = False
 convergence_time_food = [0] * Elements
-conv_start_time_food = 0
+conv_start_time_food = 0.0
 New_Foodfound = False
 
 def decode(strs):
@@ -249,6 +249,8 @@ def decode(strs):
                     # convergence_time_first = float(time) - starttime 
                     # if conv_start_time_food != starttime:
                     convergence_time_food[convergence_counter] = float(time) - conv_start_time_food
+                    print float(time) 
+                    print conv_start_time_food
                     lfile.write("convergence to new food location in (sec) %s \n" % convergence_time_food[convergence_counter])
                     convergence_counter += 1
 

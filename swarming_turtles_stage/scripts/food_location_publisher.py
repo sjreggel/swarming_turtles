@@ -4,6 +4,8 @@ import rospy
 import tf
 from geometry_msgs.msg import PoseStamped, Vector3
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Int32, String
+
 
 __author__ = 'danielclaes'
 
@@ -24,14 +26,17 @@ prev_xpos = 0
 prev_ypos = 0
 prev_zpos = 0
 
-
+    
 def rob_debug(pos):
     global own_name
-    x = format(pos.pose.position.x, '.3f')
-    y = format(pos.pose.position.y, '.3f')
-    z = format(pos.pose.orientation.z, '.3f')
-    w = format(pos.pose.orientation.w, '.3f')
-    return own_name, x, y, z, w, False, 0, False, False
+    now = rospy.get_rostime()
+    time_now = float(now.secs) + (float(now.nsecs) / 1000000000)
+    x = format(pos.pose.position.x,'.3f')
+    y = format(pos.pose.position.y,'.3f')
+    z = format(pos.pose.orientation.z,'.3f')
+    w = format(pos.pose.orientation.w,'.3f')
+    return time_now, own_name, x, y, z, w, False, 0, False, False
+
 
 
 def quat_msg_to_array(quat):
@@ -61,7 +66,8 @@ class FoodPublisher(object):
                 prev_xpos = p.pose.position.x
                 prev_ypos = p.pose.position.y
                 prev_zpos = p.pose.position.z
-                rospy.loginfo("%s -> Food Position", rob_debug(p))
+                #rospy.loginfo("%s -> Food Position", rob_debug(p))
+                log_publisher.publish("%s -> Food Position" % (str(rob_debug(p))))
                 # Here you could also do:
                 # rospy.loginfo("Food Position %.2f, %.2f", p.pose.position.x, p.pose.position.y)
             self.food_pub.publish(p)
@@ -91,10 +97,12 @@ class FoodPublisher(object):
 
 
 def main():
-    global transform
+    global transform, log_publisher
 
     rospy.init_node('fake_food_hive_detection')
     food_pub = FoodPublisher()
+    log_publisher = rospy.Publisher("/logging", String, queue_size=10)
+
 
     tf_br = tf.TransformBroadcaster()
     transform['pose'] = (0, 0, 0)
