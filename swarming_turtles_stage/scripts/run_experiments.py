@@ -20,6 +20,8 @@ START_WAIT = 5.  # How long before sending the start command
 
 MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
 
+MAX_NO_CMD_RECEIVED = 30  # After how long there should be a restart when no cmd is received
+
 FOOD_PRINT = 1   # How often food should be printed
 
 SHOW_OUTPUT_FROM_LAUNCH = True
@@ -102,6 +104,7 @@ class RunExperiments(object):
     food_counts = []
     stalled = []
     cmd_zero_counts = []
+    last_cmd_vels = []
     total_food_runs = 0
     start_time = None
     time_limit = 0
@@ -150,7 +153,8 @@ class RunExperiments(object):
 
     def cmd_cb(self, msg, idx):
         assert isinstance(msg, Twist)
-        if rospy.Time.now() > self.start_time + rospy.Duration(0.5):
+        self.last_cmd_vels[idx-1] = rospy.Time.now()
+        if rospy.Time.now() > self.start_time + rospy.Duration(0.5):  #only start checkin after 0.5 seconds after start
             if msg.angular.z == 0 and msg.linear.x == 0:
                 self.cmd_zero_counts[idx] += 1
                 if self.cmd_zero_counts[idx] > MAX_ZERO_CMD:
@@ -166,7 +170,7 @@ class RunExperiments(object):
         self.food_counts = [0] * (num_robots+1)
         self.stalled = [0] * (num_robots+1)
         self.cmd_zero_counts = [0] * (num_robots+1)
-
+        self.last_cmd_vels = [0] * (num_robots)
         self.update_listeners(num_robots)
 
     def update_listeners(self, num_robots):
@@ -211,7 +215,8 @@ class RunExperiments(object):
 
         self.rosbag_process = Popen(["rosbag", "record", "/logging", "-O", rosbag_file])
         self.start_time = rospy.Time.now()
-
+        for i in self.last_cmd_vels:
+            i = rospy.Time.now()
         self.start_all()
 
     def stop_experiment(self, wait=0.1):
@@ -226,6 +231,14 @@ class RunExperiments(object):
 
         rospy.loginfo("Terminated all processes")
 
+    def check_cmd_vels(self):
+        now = rospy.Time.now()
+        for idx, r in enumerate(self.last_cmd_vels):
+            if (now - r).to_sec() > MAX_NO_CMD_RECEIVED:
+                rospy.logwarn("No cmd_vel received for robot %d for %f seconds", idx+1, (now-r).to_sec())
+                return False
+        return True
+
     def run_experiment(self, launchfile, num_robots):
         self.start_experiment(launchfile, num_robots)
         while not self.run_completed and not rospy.is_shutdown():
@@ -236,6 +249,8 @@ class RunExperiments(object):
             if (rospy.Time.now() - self.start_time).to_sec() > self.time_limit:
                 rospy.logwarn("Timelimit exceeded for run %d, launchfile %s", self.run, launchfile)
                 break
+            if not self.check_cmd_vels():
+                self.restart_run = True
             time.sleep(0.1)
         rospy.loginfo("Run completed foodrun count: %d of %d", self.total_food, self.total_food_runs)
         self.stop_experiment(SHUTDOWN_TIME)
