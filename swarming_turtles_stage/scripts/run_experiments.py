@@ -15,7 +15,7 @@ from std_msgs.msg import Int32
 from std_srvs.srv import Empty
 from subprocess import Popen, PIPE
 
-STALL_RESTART_TIME = 10.  # How long have the robots to be stalled to restart
+STALL_RESTART_TIME = 30.  # How long have the robots to be stalled to restart
 SHUTDOWN_TIME = 10.  # How long does it take to shutdown everything
 START_WAIT = 5.  # How long before sending the start command
 
@@ -25,34 +25,51 @@ MAX_NO_CMD_RECEIVED = 30  # After how long there should be a restart when no cmd
 
 FOOD_PRINT = 1   # How often food should be printed
 
-SHOW_OUTPUT_FROM_LAUNCH = True
+SHOW_OUTPUT_FROM_LAUNCH = False
 
 configs = [
     # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
 
 #    ('5x5-sim-1-robots-shepherd', 5, 50, 1, 1500, []),
-#    ('5x5-sim-2-robots-shepherd', 10, 50, 2, 1200, []),
-#    ('5x5-sim-3-robots-shepherd', 10, 50, 3, 900, []),
+#    ('5x5-sim-2-robots-shepherd', 5, 50, 2, 1200, []),
+#    ('5x5-sim-3-robots-shepherd', 5, 50, 3, 900, []),
 #    ('5x5-sim-4-robots-shepherd', 10, 50, 4, 900, []),
 #    ('5x5-sim-5-robots-shepherd', 10, 50, 5, 900, []),
 #    ('5x5-sim-6-robots-shepherd', 5, 50, 6, 900, []),
 #    ('5x5-sim-7-robots-shepherd', 5, 50, 7, 900, []),
-#    ('5x5-sim-8-robots-shepherd', 10, 50, 8, 1000, []),
-#    ('5x5-sim-9-robots-shepherd', 10, 50, 9, 1500, []),
+#    ('5x5-sim-8-robots-shepherd', 2, 50, 8, 1200, []),
+#    ('5x5-sim-9-robots-shepherd', 4, 50, 9, 1800, []),
 
-#    ('5x5-sim-9-robots', 10, 50, 9, 1800),
-#    ('5x5-sim-8-robots', 10, 50, 8, 1200),
-#    ('5x5-sim-7-robots', 10, 50, 7, 1000),
-#    ('5x5-sim-6-robots', 10, 50, 6, 1000),
-#    ('5x5-sim-5-robots', 10, 50, 5, 1000),
-    # ('5x5-sim-4-robots', 1, 50, 4, 1000, [(5, Pose2D(2,3, math.pi))]),
-    ('5x5-sim-3-robots-shepherd', 1, 15, 3, 1000, [(5, Pose2D(-4.0,-0.29, math.radians(-90))),(10, Pose2D(-1.0,-0.29, math.radians(-90)))]),
+
+#    ('10x10-sim-9-robots-shepherd', 10, 50, 9, 1500, []),
+#    ('10x10-sim-9-robots-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-9-robots-2food-distx2', 10, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-9-robots', 7, 50, 9, 2000, []),
+#    ('10x10-sim-9-robots-2food-shepherd', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+
+    ('10xL-sim-9-robots-3food', 1, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+
+
+#    ('5x5-sim-9-robots', 10, 50, 9, 1800, []),
+#    ('5x5-sim-8-robots', 10, 50, 8, 1200, []),
+#    ('5x5-sim-7-robots', 1, 50, 7, 1000, []),
+#    ('5x5-sim-6-robots', 1, 50, 6, 1000, []),
+#    ('5x5-sim-5-robots', 5, 50, 5, 1000, []),
+#    ('5x5-sim-4-robots', 9, 50, 4, 1000, []),
+#    ('5x5-sim-3-robots', 9, 50, 3, 1000, []),
+#    ('5x5-sim-2-robots', 9, 50, 2, 1200, []),
+#    ('5x5-sim-1-robots', 9, 50, 1, 1800, []),
+
+
+
+
+
+#    ('5x5-sim-4-robots', 1, 50, 4, 1000, [(5, Pose2D(2,3, math.pi))]),
+#    ('5x5-sim-3-robots-shepherd', 1, 15, 3, 1000, [(5, Pose2D(-4.0,-0.29, math.radians(-90))),(10, Pose2D(-1.0,-0.29, math.radians(-90)))]),
 #    ('5x5-sim-2-robots', 1, 50, 2, 1200, [(5, Pose2D(2,3, math.pi))]),
 #    ('5x5-sim-1-robots', 1, 50, 1, 1800, [(5, Pose2D(2,3, math.pi))]),
 
-#    ('5x5-sim-3-robots', 10, 50, 3, 600),
-#    ('5x5-sim-6-robots', 10, 50, 6, 900),
-#    ('5x5-sim-9-robots', 10, 50, 9, 900),
+
 ]
 
 
@@ -129,6 +146,10 @@ class RunExperiments(object):
                 rospy.loginfo("Changing food pose after %d runs to %s", self.total_food, str(self.food_poses[self.current_food_pose][1]))
                 self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
                 self.current_food_pose += 1
+                try:
+                    os.system("sh beep.sh")
+                except:
+                    pass
 
         if self.total_food >= self.total_food_runs:
             self.run_completed = True

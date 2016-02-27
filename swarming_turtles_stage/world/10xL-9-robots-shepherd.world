@@ -117,7 +117,7 @@ define obst model
 )
 
 obst( pose [ -4.000 -4.900 0.000 90.000 ] name "hive" color "blue")
-obst( pose [ -2.500 4.900 0.000 -90.000 ] name "food" color "red")
+obst( pose [ 0.000 0.000 0.000 -135.000 ] name "food" color "red")
 
 # add here robots
 diff_robot( pose [ -2.000 4.000 0.000 125.000 ] name "shepherd" color "black")
