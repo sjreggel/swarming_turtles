@@ -19,7 +19,8 @@ SEEN_DIST = 1.5
 
 SEEN_ANG = math.pi / 4
 
-RATE = 20
+#RATE = 20
+RATE = 10
 
 transform = {}  # transform of world to hive
 

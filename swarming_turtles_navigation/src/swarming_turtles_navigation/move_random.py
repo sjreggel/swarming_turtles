@@ -23,8 +23,8 @@ LEFT = 0
 CENTER = 1
 RIGHT = 2
 
-MOVE_RANDOM_DIST = 5.
-#MOVE_RANDOM_DIST = 10.
+#MOVE_RANDOM_DIST = 5.
+MOVE_RANDOM_DIST = 10.
 
 
 ROTATE_RIGHT = -1
@@ -97,10 +97,10 @@ def cb_laser_scan(msg):
         if min_idx < i < max_idx:
             if r < min_dist:
                 min_dist = r
-        if r < msg.range_max:
-            count_below_max += 1
+            if r < msg.range_max:
+                count_below_max += 1
 
-    obstacle_front_bool = count_below_max < MIN_BELOW_MAX
+    obstacle_front_bool = (count_below_max < MIN_BELOW_MAX) and (min_dist < MIN_DIST_LASER)
     min_dist_laser = min_dist
     # rospy.loginfo("%d obstacle front", obstacle_front_bool)
 
@@ -186,10 +186,8 @@ def rotate_side(ang):
     if res < -math.pi:
         res += 2 * math.pi
     if res < 0:
-        # print "right"
         return ROTATE_RIGHT
     else:
-        # print "left"
         return ROTATE_LEFT
 
 
@@ -202,7 +200,6 @@ def rotation_aligned(ang, eps=None):
     if diff > math.pi:
         diff -= 2 * math.pi
 
-    # print diff
     if eps is None:
         return abs(diff) < EPS_ALIGN_THETA, diff
     else:
@@ -218,7 +215,6 @@ def get_random_walk():
 def create_goal_from_pose(pose):
     global cur_goal
     req = GetCollvoidTwistRequest()
-    # print own_name, "creating goal from target"
     pose.header.stamp = rospy.Time.now()
     req.goal = transformPose(pose)
     cur_goal = req
@@ -276,7 +272,6 @@ def dist_aligned():
 
 
 def at_goal():
-    # own_pose = get_own_pose()
     goal = cur_goal.goal
     ang = get_jaw(goal.pose.orientation)
     rot_aligned, diff = rotation_aligned(ang)
@@ -296,8 +291,6 @@ def move_random():
 
     jaw = get_jaw(get_own_pose().pose.orientation)
 
-    # print dist, ang, jaw
-
     r = rospy.Rate(RATE)
     rotation_aligned_bool, diff_ang = rotation_aligned(ang)
     # rospy.loginfo("rotation aligning to ang = %f", ang)
@@ -313,10 +306,9 @@ def move_random():
         if obstacle() or stalled:
             twist = Twist()
             while active and obstacle():
-                # print "obstacle"
                 try_back = random.randint(0, 1)
                 if not printed_obstacle:
-                    rospy.loginfo("I am in obstacle")
+                    rospy.loginfo("%s I am in obstacle - move_random", own_name)
                     printed_obstacle = True
                 try_back = try_back and stalled
                 if try_back:
@@ -370,9 +362,8 @@ def move_to_goal_cb(goal):
         if (sum(bumpers) > 0) or stalled:
             twist = Twist()
             while (sum(bumpers) > 0) or stalled:
-                # print "obstacle"
                 try_back = random.randint(0, 1)
-                rospy.loginfo("I am in obstacle")
+                rospy.loginfo("%s I am in obstacle - move_to_goal",own_name)
 
                 try_back = try_back and stalled
                 if try_back:
@@ -416,7 +407,6 @@ def get_twist():
     global get_twist_srv
     try:
         res = get_twist_srv(cur_goal)
-        # print res
         return res.twist
     except rospy.ServiceException as exc:
         print("Service did not process request: " + str(exc))

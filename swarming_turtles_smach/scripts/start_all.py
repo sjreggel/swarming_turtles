@@ -3,7 +3,7 @@ import rospy
 from std_srvs.srv import Empty, EmptyResponse
 __author__ = 'daniel'
 
-MAX_NUM_TURTLES = 10
+MAX_NUM_TURTLES = 20
 
 services = []
 

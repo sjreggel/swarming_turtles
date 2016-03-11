@@ -18,56 +18,120 @@ from subprocess import Popen, PIPE
 STALL_RESTART_TIME = 30.  # How long have the robots to be stalled to restart
 SHUTDOWN_TIME = 10.  # How long does it take to shutdown everything
 START_WAIT = 5.  # How long before sending the start command
+START_WAIT_SVC = 30.  # How long to eait for the service to start
 
+
+#MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
 MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
+
 
 MAX_NO_CMD_RECEIVED = 30  # After how long there should be a restart when no cmd is received
 
 FOOD_PRINT = 1   # How often food should be printed
 
-SHOW_OUTPUT_FROM_LAUNCH = False
+SHOW_OUTPUT_FROM_LAUNCH = True
 
 configs = [
-    # launchfile (without .launch), repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
-
-#    ('5x5-sim-1-robots-shepherd', 5, 50, 1, 1500, []),
-#    ('5x5-sim-2-robots-shepherd', 5, 50, 2, 1200, []),
-#    ('5x5-sim-3-robots-shepherd', 5, 50, 3, 900, []),
-#    ('5x5-sim-4-robots-shepherd', 10, 50, 4, 900, []),
-#    ('5x5-sim-5-robots-shepherd', 10, 50, 5, 900, []),
-#    ('5x5-sim-6-robots-shepherd', 5, 50, 6, 900, []),
-#    ('5x5-sim-7-robots-shepherd', 5, 50, 7, 900, []),
-#    ('5x5-sim-8-robots-shepherd', 2, 50, 8, 1200, []),
-#    ('5x5-sim-9-robots-shepherd', 4, 50, 9, 1800, []),
+    # launchfile (without .launch), additional_file-naming, repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
 
 
-#    ('10x10-sim-9-robots-shepherd', 10, 50, 9, 1500, []),
-#    ('10x10-sim-9-robots-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
-#    ('10x10-sim-9-robots-2food-distx2', 10, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
-#    ('10x10-sim-9-robots', 7, 50, 9, 2000, []),
-#    ('10x10-sim-9-robots-2food-shepherd', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#################### SHEPHERDING #####################
 
-    ('10xL-sim-9-robots-3food', 1, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+#    ('5x5-sim-1-robots-shepherd','', 5, 50, 1, 1500, []),
+#    ('5x5-sim-2-robots-shepherd','', 5, 50, 2, 1200, []),
+#    ('5x5-sim-3-robots-shepherd','', 5, 50, 3, 900, []),
+#    ('5x5-sim-4-robots-shepherd','', 10, 50, 4, 900, []),
+#    ('5x5-sim-5-robots-shepherd','', 10, 50, 5, 900, []),
+#    ('5x5-sim-6-robots-shepherd','', 5, 50, 6, 900, []),
+#    ('5x5-sim-7-robots-shepherd','', 5, 50, 7, 900, []),
+#    ('5x5-sim-8-robots-shepherd','', 2, 50, 8, 1200, []),
+#    ('5x5-sim-9-robots-shepherd','', 4, 50, 9, 1800, []),
 
+#    ('10x10-sim-9-robots-shepherd','', 10, 50, 9, 1500, []),
 
-#    ('5x5-sim-9-robots', 10, 50, 9, 1800, []),
-#    ('5x5-sim-8-robots', 10, 50, 8, 1200, []),
-#    ('5x5-sim-7-robots', 1, 50, 7, 1000, []),
-#    ('5x5-sim-6-robots', 1, 50, 6, 1000, []),
-#    ('5x5-sim-5-robots', 5, 50, 5, 1000, []),
-#    ('5x5-sim-4-robots', 9, 50, 4, 1000, []),
-#    ('5x5-sim-3-robots', 9, 50, 3, 1000, []),
-#    ('5x5-sim-2-robots', 9, 50, 2, 1200, []),
-#    ('5x5-sim-1-robots', 9, 50, 1, 1800, []),
+#    ('10x10-sim-9-robots-shepherd','-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
 
+#    ('10xL-sim-9-robots-shepherd','-3food', 5, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
 
 
+##################### SWARMING #####################
+#
+#---------------------5x5 1 food------------------
+#    ('5x5-sim-9-robots','', 10, 50, 9, 1800, []),
+#    ('5x5-sim-8-robots','', 10, 50, 8, 1200, []),
+#    ('5x5-sim-7-robots','', 10, 50, 7, 1000, []),
+#    ('5x5-sim-6-robots','', 10, 50, 6, 1000, []),
+#    ('5x5-sim-5-robots','', 10, 50, 5, 1000, []),
+#    ('5x5-sim-4-robots','', 10, 50, 4, 1000, []),
+#    ('5x5-sim-3-robots','', 10, 50, 3, 1000, []),
+#    ('5x5-sim-2-robots','', 10, 50, 2, 1200, []),
+#    ('5x5-sim-1-robots','', 10, 50, 1, 1800, []),
+#----------------------------------------------------
+
+#-------------------10x10 1 food------------------
+#    ('10x10-sim-9-robots','', 10, 50, 9, 2000, []),
+#    ('10x10-sim-8-robots','', 1, 50, 8, 2000, []),
+#    ('10x10-sim-7-robots','', 10, 50, 7, 2000, []),
+#    ('10x10-sim-6-robots','', 10, 50, 6, 2000, []),
+#    ('10x10-sim-5-robots','', 10, 50, 5, 2000, []),
+#    ('10x10-sim-4-robots','', 10, 50, 4, 2000, []),
+#    ('10x10-sim-3-robots','', 10, 50, 3, 2500, []),
+#    ('10x10-sim-2-robots','', 10, 50, 2, 3000, []),
+#    ('10x10-sim-1-robots','', 6, 50, 1, 4000, []),
+#    ('10x10-sim-10-robots','', 10, 50, 10, 4000, []),
+#    ('10x10-sim-11-robots','', 9, 50, 11, 4000, []),
+#    ('10x10-sim-12-robots','', 9, 50, 12, 4000, []),
+#    ('10x10-sim-13-robots','', 9, 50, 13, 4000, []),
+#    ('10x10-sim-14-robots','', 9, 50, 14, 4000, []),
+#    ('10x10-sim-15-robots','', 1, 50, 15, 4000, []),
+#    ('10x10-sim-16-robots','', 1, 50, 16, 4000, []),
+#    ('10x10-sim-17-robots','', 1, 50, 17, 4000, []),
+#    ('10x10-sim-18-robots','', 1, 50, 18, 4000, []),
+#----------------------------------------------------
+
+#-----------------10x10 1 food distx2----------------
+#  for distx2 make sure to change the random walk distance parameter 
+#  in move_random.py, move_random_stage.py
+#----------------------------------------------------
+#    ('10x10-sim-10-robots','-distx2', 10, 50, 10, 4000, []),
+#    ('10x10-sim-11-robots','-distx2', 10, 50, 11, 4000, []),
+#    ('10x10-sim-12-robots','-distx2', 10, 50, 12, 4000, []),
+#    ('10x10-sim-13-robots','-distx2', 10, 50, 13, 4000, []),
+#    ('10x10-sim-14-robots','-distx2', 1, 50, 14, 4000, []),
+#    ('10x10-sim-9-robots','-distx2', 10, 50, 9, 2000, []),
+#    ('10x10-sim-8-robots','-distx2', 10, 50, 8, 2000, []),
+#    ('10x10-sim-7-robots','-distx2', 10, 50, 7, 2000, []),
+#    ('10x10-sim-6-robots','-distx2', 10, 50, 6, 2000, []),
+#    ('10x10-sim-5-robots','-distx2', 2, 50, 5, 2000, []),
+#    ('10x10-sim-4-robots','-distx2', 8, 50, 4, 2000, []),
+#    ('10x10-sim-3-robots','-distx2', 10, 50, 3, 2500, []),
+#    ('10x10-sim-2-robots','-distx2', 10, 50, 2, 3000, []),
+#    ('10x10-sim-1-robots','-distx2', 7, 50, 1, 4000, []),
+#----------------------------------------------------
+
+#--------------------- 10x10 2 food ----------------
+    ('10x10-sim-9-robots','-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#----------------------------------------------------
+
+#-----------------10x10 2 food distx2----------------
+#  for distx2 make sure to change the random walk distance parameter 
+#----------------------------------------------------
+#    ('10x10-sim-9-robots','-2food-distx2', 10, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#----------------------------------------------------
+
+#-----------------10xL 3 food ----------------
+#    ('10xL-sim-9-robots','-3food', 7, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+#----------------------------------------------------
 
 
-#    ('5x5-sim-4-robots', 1, 50, 4, 1000, [(5, Pose2D(2,3, math.pi))]),
-#    ('5x5-sim-3-robots-shepherd', 1, 15, 3, 1000, [(5, Pose2D(-4.0,-0.29, math.radians(-90))),(10, Pose2D(-1.0,-0.29, math.radians(-90)))]),
-#    ('5x5-sim-2-robots', 1, 50, 2, 1200, [(5, Pose2D(2,3, math.pi))]),
-#    ('5x5-sim-1-robots', 1, 50, 1, 1800, [(5, Pose2D(2,3, math.pi))]),
+
+
+###### EXAMPLES #######
+
+#    ('5x5-sim-4-robots','', 1, 50, 4, 1000, [(5, Pose2D(2,3, math.pi))]),
+#    ('5x5-sim-3-robots-shepherd','', 1, 15, 3, 1000, [(5, Pose2D(-4.0,-0.29, math.radians(-90))),(10, Pose2D(-1.0,-0.29, math.radians(-90)))]),
+#    ('5x5-sim-2-robots','', 1, 50, 2, 1200, [(5, Pose2D(2,3, math.pi))]),
+#    ('5x5-sim-1-robots','', 1, 50, 1, 1800, [(5, Pose2D(2,3, math.pi))]),
 
 
 ]
@@ -170,6 +234,9 @@ class RunExperiments(object):
         self.last_cmd_vels[idx-1] = rospy.Time.now()
         if rospy.Time.now() > self.start_time + rospy.Duration(0.5):  #only start checkin after 0.5 seconds after start
             if msg.angular.z == 0 and msg.linear.x == 0:
+#            prev_msg_angular_z = 
+#            if msg.linear.x == 0 and (msg.angular.z == prev_msg_angular_z):
+#            if msg.linear.x == 0:
                 self.cmd_zero_counts[idx] += 1
                 if self.cmd_zero_counts[idx] > MAX_ZERO_CMD:
                     self.restart_run = True
@@ -210,14 +277,14 @@ class RunExperiments(object):
             self.stall_listeners.append(rospy.Subscriber("/robot_%d/stall" % i, Stall, self.stall_cb, i))
             self.cmd_listeners.append(rospy.Subscriber("/robot_%d/cmd_vel" % i, Twist, self.cmd_cb, i))
 
-    def start_experiment(self, launchfile, num_robots):
+    def start_experiment(self, launchfile,nameext, num_robots):
         self.init_for_num(num_robots)
         self.launch_process = start_environment(launchfile)
         for i in range(1, num_robots + 1):
             try:
-                rospy.wait_for_service("/robot_%d/start_smach" % i, 10.)
+                rospy.wait_for_service("/robot_%d/start_smach" % i, START_WAIT_SVC)
             except Exception as e:
-                rospy.logwarn("Robot not started after 10 seconds, restarting, %s", e)
+                rospy.logwarn("Robot not started after %s seconds, restarting, %s", START_WAIT_SVC, e)
                 self.restart_run = True
                 return
         time.sleep(START_WAIT)
@@ -225,7 +292,7 @@ class RunExperiments(object):
             os.system("sh beep.sh")
         except:
             pass
-        rosbag_file = os.path.join(self.path, launchfile + "_run" + str(self.run) + ".bag")
+        rosbag_file = os.path.join(self.path, launchfile + nameext + "_run" + str(self.run) + ".bag")
         rospy.loginfo("rosbag filename: %s", rosbag_file)
 
         self.rosbag_process = Popen(["rosbag", "record", "/logging", "-O", rosbag_file])
@@ -257,15 +324,15 @@ class RunExperiments(object):
                 return False
         return True
 
-    def run_experiment(self, launchfile, num_robots):
-        self.start_experiment(launchfile, num_robots)
+    def run_experiment(self, launchfile, nameext, num_robots):
+        self.start_experiment(launchfile, nameext, num_robots)
         while not self.run_completed and not rospy.is_shutdown():
             if self.restart_run:
-                rospy.logwarn("Restart required for run %d, launchfile %s", self.run, launchfile)
+                rospy.logwarn("Restart required for run %d, launchfile %s%s", self.run, launchfile, nameext)
                 self.stop_experiment(SHUTDOWN_TIME)
-                self.start_experiment(launchfile, num_robots)
+                self.start_experiment(launchfile, nameext, num_robots)
             if (rospy.Time.now() - self.start_time).to_sec() > self.time_limit:
-                rospy.logwarn("Timelimit exceeded for run %d, launchfile %s", self.run, launchfile)
+                rospy.logwarn("Timelimit exceeded for run %d, launchfile %s%s", self.run, launchfile,nameext)
                 break
 
             if not self.check_cmd_vels():
@@ -278,7 +345,7 @@ class RunExperiments(object):
             rospy.loginfo("rospy shutdown")
 
     def run_all_experiments(self):
-        for launch_file, repetitions, num_food_runs, num_robots, time_limit, next_food_poses in configs:
+        for launch_file, name_ext, repetitions, num_food_runs, num_robots, time_limit, next_food_poses in configs:
 
             self.total_food_runs = num_food_runs
             self.time_limit = time_limit
@@ -287,8 +354,8 @@ class RunExperiments(object):
                 self.run = i
                 if rospy.is_shutdown():
                     return
-                rospy.loginfo("Starting run %d of %d, for launchfile %s, num_robots %d", self.run, repetitions, launch_file, num_robots)
-                self.run_experiment(launch_file, num_robots)
+                rospy.loginfo("Starting run %d of %d, for launchfile %s%s, num_robots %d", self.run, repetitions, launch_file, name_ext, num_robots)
+                self.run_experiment(launch_file, name_ext, num_robots)
 
 
 if __name__ == '__main__':
