@@ -18,7 +18,7 @@ from subprocess import Popen, PIPE
 STALL_RESTART_TIME = 30.  # How long have the robots to be stalled to restart
 SHUTDOWN_TIME = 10.  # How long does it take to shutdown everything
 START_WAIT = 5.  # How long before sending the start command
-START_WAIT_SVC = 30.  # How long to eait for the service to start
+START_WAIT_SVC = 60.  # How long to eait for the service to start
 
 
 #MAX_ZERO_CMD = 30  # How many should we see a 0 cmd vel to restart
@@ -51,7 +51,7 @@ configs = [
 
 #    ('10x10-sim-9-robots-shepherd','-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
 
-#    ('10xL-sim-9-robots-shepherd','-3food', 5, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+#    ('10xL-sim-9-robots-shepherd','-3food', 1, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
 
 
 ##################### SWARMING #####################
@@ -71,18 +71,18 @@ configs = [
 #-------------------10x10 1 food------------------
 #    ('10x10-sim-9-robots','', 10, 50, 9, 2000, []),
 #    ('10x10-sim-8-robots','', 1, 50, 8, 2000, []),
-#    ('10x10-sim-7-robots','', 10, 50, 7, 2000, []),
+#    ('10x10-sim-7-robots','', 1, 50, 7, 2000, []),
 #    ('10x10-sim-6-robots','', 10, 50, 6, 2000, []),
 #    ('10x10-sim-5-robots','', 10, 50, 5, 2000, []),
-#    ('10x10-sim-4-robots','', 10, 50, 4, 2000, []),
+#    ('10x10-sim-4-robots','', 1, 50, 4, 2000, []),
 #    ('10x10-sim-3-robots','', 10, 50, 3, 2500, []),
 #    ('10x10-sim-2-robots','', 10, 50, 2, 3000, []),
-#    ('10x10-sim-1-robots','', 6, 50, 1, 4000, []),
-#    ('10x10-sim-10-robots','', 10, 50, 10, 4000, []),
+#    ('10x10-sim-1-robots','', 1, 50, 1, 4500, []),
+#    ('10x10-sim-10-robots','', 1, 50, 10, 4000, []),
 #    ('10x10-sim-11-robots','', 9, 50, 11, 4000, []),
 #    ('10x10-sim-12-robots','', 9, 50, 12, 4000, []),
-#    ('10x10-sim-13-robots','', 9, 50, 13, 4000, []),
-#    ('10x10-sim-14-robots','', 9, 50, 14, 4000, []),
+#    ('10x10-sim-13-robots','', 1, 50, 13, 4000, []),
+#    ('10x10-sim-14-robots','', 9, 50, 14, 4500, []),
 #    ('10x10-sim-15-robots','', 1, 50, 15, 4000, []),
 #    ('10x10-sim-16-robots','', 1, 50, 16, 4000, []),
 #    ('10x10-sim-17-robots','', 1, 50, 17, 4000, []),
@@ -93,24 +93,37 @@ configs = [
 #  for distx2 make sure to change the random walk distance parameter 
 #  in move_random.py, move_random_stage.py
 #----------------------------------------------------
-#    ('10x10-sim-10-robots','-distx2', 10, 50, 10, 4000, []),
-#    ('10x10-sim-11-robots','-distx2', 10, 50, 11, 4000, []),
-#    ('10x10-sim-12-robots','-distx2', 10, 50, 12, 4000, []),
-#    ('10x10-sim-13-robots','-distx2', 10, 50, 13, 4000, []),
-#    ('10x10-sim-14-robots','-distx2', 1, 50, 14, 4000, []),
-#    ('10x10-sim-9-robots','-distx2', 10, 50, 9, 2000, []),
-#    ('10x10-sim-8-robots','-distx2', 10, 50, 8, 2000, []),
-#    ('10x10-sim-7-robots','-distx2', 10, 50, 7, 2000, []),
-#    ('10x10-sim-6-robots','-distx2', 10, 50, 6, 2000, []),
-#    ('10x10-sim-5-robots','-distx2', 2, 50, 5, 2000, []),
-#    ('10x10-sim-4-robots','-distx2', 8, 50, 4, 2000, []),
-#    ('10x10-sim-3-robots','-distx2', 10, 50, 3, 2500, []),
-#    ('10x10-sim-2-robots','-distx2', 10, 50, 2, 3000, []),
-#    ('10x10-sim-1-robots','-distx2', 7, 50, 1, 4000, []),
+    ('10x10-sim-10-robots','-dist20m', 4, 50, 10, 4000, []),
+    ('10x10-sim-11-robots','-dist20m', 4, 50, 11, 4000, []),
+    ('10x10-sim-12-robots','-dist20m', 4, 50, 12, 4000, []),
+    ('10x10-sim-13-robots','-dist20m', 4, 50, 13, 4000, []),
+    ('10x10-sim-9-robots','-dist20m', 4, 50, 9, 3000, []),
+    ('10x10-sim-8-robots','-dist20m', 4, 50, 8, 3000, []),
+    ('10x10-sim-7-robots','-dist20m', 4, 50, 7, 3000, []),
+    ('10x10-sim-6-robots','-dist20m', 4, 50, 6, 3000, []),
+    ('10x10-sim-5-robots','-dist20m', 4, 50, 5, 3000, []),
+    ('10x10-sim-4-robots','-dist20m', 4, 50, 4, 3000, []),
+    ('10x10-sim-3-robots','-dist20m', 4, 50, 3, 3000, []),
+    ('10x10-sim-2-robots','-dist20m', 4, 50, 2, 3000, []),
+    ('10x10-sim-1-robots','-dist20m', 4, 50, 1, 5000, []),
+    ('10x10-sim-14-robots','-dist20m', 4, 50, 14, 4000, []),
 #----------------------------------------------------
 
 #--------------------- 10x10 2 food ----------------
-    ('10x10-sim-9-robots','-2food', 8, 100, 9, 2000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-9-robots','-2food', 8, 100, 9, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-8-robots','-2food', 10, 100, 8, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-7-robots','-2food', 10, 100, 7, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-6-robots','-2food', 10, 100, 6, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-5-robots','-2food', 10, 100, 5, 4000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-4-robots','-2food', 10, 100, 4, 4000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-3-robots','-2food', 10, 100, 3, 4000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-2-robots','-2food', 10, 100, 2, 5000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-1-robots','-2food', 10, 100, 1, 6000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-10-robots','-2food', 10, 100, 10, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-11-robots','-2food', 10, 100, 11, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-12-robots','-2food', 10, 100, 12, 4000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-13-robots','-2food', 10, 100, 13, 5000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
+#    ('10x10-sim-14-robots','-2food', 10, 100, 14, 6000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
 #----------------------------------------------------
 
 #-----------------10x10 2 food distx2----------------
@@ -120,7 +133,7 @@ configs = [
 #----------------------------------------------------
 
 #-----------------10xL 3 food ----------------
-#    ('10xL-sim-9-robots','-3food', 7, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+#    ('10xL-sim-9-robots','-3food', 1, 150, 9, 3000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
 #----------------------------------------------------
 
 

@@ -20,6 +20,24 @@ import time
 import string
 import os #for file management make directory
 import shutil #for file management, copy file
+import signal
+from subprocess import Popen, PIPE
+
+
+os.nice(20)
+
+def terminate_process_and_children(p):
+    try:
+        ps_command = Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=PIPE)
+        #print ("ps -o pid --ppid %d --noheaders" % p.pid)
+        ps_output = ps_command.stdout.read()
+        retcode = ps_command.wait()
+        assert retcode == 0, "ps command returned %d" % retcode
+        for pid_str in ps_output.split("\n")[:-1]:
+                os.kill(int(pid_str), signal.SIGINT)
+        p.terminate()
+    except Exception as e:
+        print('something went wrong during shutdown %s', e)
 
 #verify correct input arguments: 1 or 2
 if (len(sys.argv) > 2):
@@ -44,6 +62,7 @@ else:
 	print "bad argument(s): " + str(sys.argv)	#shouldnt really come up
 	sys.exit(1)
 
+
 count = 0
 for bagFile in listOfBagFiles:
 	count += 1
@@ -52,18 +71,44 @@ for bagFile in listOfBagFiles:
 	bag = rosbag.Bag(bagFile)
 	bagContents = bag.read_messages()
 	bagName = bag.filename
+        fileName = string.rstrip(bagName, ".bag")
 
-        msg = str("rm "+ bagName +".txt")
+
+        
+
+        msg = str("rm "+ fileName +".txt")
         os.system(msg)
-        msg = str("rostopic echo /logging >| "+ bagName +".txt &")
-        print msg
-        os.system(msg)
+        #echo_process = Popen(["rostopic", "echo", "/logging", ">|", logfile])
+        cmd = str("rostopic echo /logging >| " + fileName + ".txt")
+        echo_process = Popen(['/bin/bash', '-c', cmd])
+        
+        #msg = str("rostopic echo /logging >| "+ fileName +".txt &")
+        #print msg
+        #os.system(msg)
+        time.sleep(1)
         msg = str("rosbag play -r 100 " + bagName)
         os.system(msg)
-        msg = str("kill %-")
-        msg = str("python parse.py "+ bagName + ".txt")
+        time.sleep(1)
+        #msg = str("kill %-")
+        #os.system(msg)
+        terminate_process_and_children(echo_process)
+        time.sleep(1)
+
+        msg = str("python ../scripts/parse.py "+ fileName + ".txt")
         os.system(msg)
         
-        
+        folder = "output"
+        try: 
+                os.makedirs(folder)
+        except:
+                pass
 
+        shutil.move(fileName+"-out.log", folder + '/' + fileName+"-out.log")
+        
+        msg = str("rm "+ fileName +".txt")
+        os.system(msg)
+        msg = str("rm "+ fileName +"-out.txt")
+        os.system(msg)
+
+        
 print "Done reading all " + numberOfFiles + " bag files."
