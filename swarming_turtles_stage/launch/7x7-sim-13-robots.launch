@@ -2,7 +2,7 @@
     <param name="use_sim_time" value="true" />
   
     <include file="$(find swarming_turtles_stage)/launch/simulation_environment.launch" >
-           <arg name="map" value="10x10_map.yaml" />
+           <arg name="map" value="7x7_map.yaml" />
 	   <arg name="stage_world" value="7x7-13-robots.world" />
     </include>
 

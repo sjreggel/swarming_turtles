@@ -3,8 +3,8 @@
     <arg name="stage_world" />
         
     <node name="map_server" pkg="map_server" type="map_server" args="$(find swarming_turtles_stage)/world/$(arg map)"/>
-    <!--node pkg="stage_ros" type="stageros" name="stageros" args="$(find swarming_turtles_stage)/world/$(arg stage_world)" respawn="false" output="screen" /-->
-    <node pkg="stage_ros" type="stageros" name="stageros" args="-g $(find swarming_turtles_stage)/world/$(arg stage_world)" respawn="false" output="screen" />
+    <node pkg="stage_ros" type="stageros" name="stageros" args="$(find swarming_turtles_stage)/world/$(arg stage_world)" respawn="false" output="screen" />
+    <!--node pkg="stage_ros" type="stageros" name="stageros" args="-g $(find swarming_turtles_stage)/world/$(arg stage_world)" respawn="false" output="screen" /-->
 
     <node pkg="tf" type="static_transform_publisher" name="tf_world_map" args="0 0 0 0 0 0 /map /world 100" respawn="false" output="screen" />
 

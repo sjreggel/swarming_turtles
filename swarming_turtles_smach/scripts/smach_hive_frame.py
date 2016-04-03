@@ -35,6 +35,7 @@ logging.getLogger('rosout').addFilter(Filter2())
 turtles = {}
 closest = ''
 count_fooddeliveries = 0
+count_foodpicks = 0
 robot_has_food = False
 robot_is_foraging = False
 robot_in_collision = False
@@ -373,11 +374,12 @@ class CheckIfAtLocation(smach.State):
         self.forget_food = rospy.ServiceProxy('forget_location', ForgetLocation)
 
     def execute(self, userdata):
-        global count_fooddeliveries
+        global count_fooddeliveries, count_foodpicks
         global robot_has_food
         global robot_is_foraging
 
         drop_pub = rospy.Publisher('fooddrops', Int32, queue_size=10)
+        pick_pub = rospy.Publisher('foodpicks', Int32, queue_size=10)
 
 
         target = None
@@ -439,6 +441,9 @@ class CheckIfAtLocation(smach.State):
             robot_has_food = True
             #print ">>>>>>>>", own_name, "Aquired_food" ,"<<<<<<<<"
             #rospy.loginfo("%s -> Aquired_Food", rob_debug())
+            count_foodpicks += 1
+            print own_name, "Aquired_Food", count_foodpicks
+            pick_pub.publish(count_foodpicks)
             log_publisher.publish("%s -> Aquired_Food" % (str(rob_debug())))
             print own_name, "Aquired_Food"
         return 'success'

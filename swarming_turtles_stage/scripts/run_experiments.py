@@ -31,6 +31,14 @@ FOOD_PRINT = 1   # How often food should be printed
 
 SHOW_OUTPUT_FROM_LAUNCH = True
 
+cm = -0.10
+pos = 4.0
+
+def move():
+    global cm, pos
+    pos += cm
+    return pos
+
 configs = [
     # launchfile (without .launch), additional_file-naming, repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
 
@@ -93,21 +101,74 @@ configs = [
 #  for distx2 make sure to change the random walk distance parameter 
 #  in move_random.py, move_random_stage.py
 #----------------------------------------------------
-    ('10x10-sim-10-robots','-dist20m', 4, 50, 10, 4000, []),
-    ('10x10-sim-11-robots','-dist20m', 4, 50, 11, 4000, []),
-    ('10x10-sim-12-robots','-dist20m', 4, 50, 12, 4000, []),
-    ('10x10-sim-13-robots','-dist20m', 4, 50, 13, 4000, []),
-    ('10x10-sim-9-robots','-dist20m', 4, 50, 9, 3000, []),
-    ('10x10-sim-8-robots','-dist20m', 4, 50, 8, 3000, []),
-    ('10x10-sim-7-robots','-dist20m', 4, 50, 7, 3000, []),
-    ('10x10-sim-6-robots','-dist20m', 4, 50, 6, 3000, []),
-    ('10x10-sim-5-robots','-dist20m', 4, 50, 5, 3000, []),
-    ('10x10-sim-4-robots','-dist20m', 4, 50, 4, 3000, []),
-    ('10x10-sim-3-robots','-dist20m', 4, 50, 3, 3000, []),
-    ('10x10-sim-2-robots','-dist20m', 4, 50, 2, 3000, []),
-    ('10x10-sim-1-robots','-dist20m', 4, 50, 1, 5000, []),
-    ('10x10-sim-14-robots','-dist20m', 4, 50, 14, 4000, []),
+#    ('10x10-sim-10-robots','-dist20m', 4, 50, 10, 4000, []),
+#    ('10x10-sim-11-robots','-dist20m', 4, 50, 11, 4000, []),
+#    ('10x10-sim-12-robots','-dist20m', 4, 50, 12, 4000, []),
+#    ('10x10-sim-13-robots','-dist20m', 4, 50, 13, 4000, []),
+#    ('10x10-sim-9-robots','-dist20m', 4, 50, 9, 3000, []),
+#    ('10x10-sim-8-robots','-dist20m', 4, 50, 8, 3000, []),
+#    ('10x10-sim-7-robots','-dist20m', 4, 50, 7, 3000, []),
+#    ('10x10-sim-6-robots','-dist20m', 4, 50, 6, 3000, []),
+#    ('10x10-sim-5-robots','-dist20m', 4, 50, 5, 3000, []),
+#    ('10x10-sim-4-robots','-dist20m', 4, 50, 4, 3000, []),
+#    ('10x10-sim-3-robots','-dist20m', 4, 50, 3, 3000, []),
+#    ('10x10-sim-2-robots','-dist20m', 4, 50, 2, 3000, []),
+#    ('10x10-sim-1-robots','-dist20m', 4, 50, 1, 5000, []),
+#    ('10x10-sim-14-robots','-dist20m', 4, 50, 14, 4000, []),
 #----------------------------------------------------
+
+#-----------------7x7 1 food ----------------
+#  Make sure to change the random walk distance parameter 
+#  in move_random.py
+#----------------------------------------------------
+#    ('7x7-sim-10-robots','', 10, 50, 10, 4000, []),
+#    ('7x7-sim-11-robots','', 10, 50, 11, 4000, []),
+#    ('7x7-sim-9-robots','', 10, 50, 9, 3000, []),
+    ('7x7-sim-8-robots','', 10, 50, 8, 3000, []),
+    ('7x7-sim-7-robots','', 10, 50, 7, 3000, []),
+    ('7x7-sim-6-robots','', 10, 50, 6, 3000, []),
+    ('7x7-sim-5-robots','', 10, 50, 5, 3000, []),
+    ('7x7-sim-4-robots','', 10, 50, 4, 3000, []),
+    ('7x7-sim-3-robots','', 10, 50, 3, 3000, []),
+    ('7x7-sim-2-robots','', 10, 50, 2, 3000, []),
+    ('7x7-sim-1-robots','', 10, 50, 1, 5000, []),
+    ('7x7-sim-12-robots','', 9, 50, 12, 4000, []),
+    ('7x7-sim-13-robots','', 10, 50, 13, 4000, []),
+    ('7x7-sim-14-robots','', 10, 50, 14, 4000, []),
+#----------------------------------------------------
+
+
+
+#--------------------- 10x10 x food ----------------
+
+
+    #('10x10-sim-11-robots','-movingfoodtest', 10, 50, 11, 3000, [(22, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(23, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(24, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(25, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(26, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(27, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(28, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(29, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(30, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(31, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(32, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(33, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(34, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(35, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(36, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(37, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(38, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(39, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(40, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(41, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(42, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(43, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(44, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(45, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #]),
+#----------------------------------------------------
+
 
 #--------------------- 10x10 2 food ----------------
 #    ('10x10-sim-9-robots','-2food', 8, 100, 9, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
@@ -174,12 +235,15 @@ def start_environment(launch_file):
 
 class RunExperiments(object):
     food_listeners = []
+    foodpick_listeners = []
     stall_listeners = []
     cmd_listeners = []
     current_food_pose = 0
     food_poses = []
     total_food = 0
     food_counts = []
+    totalpick_food = 0
+    foodpick_counts = []
     stalled = []
     cmd_zero_counts = []
     last_cmd_vels = []
@@ -218,18 +282,31 @@ class RunExperiments(object):
         if self.total_food % FOOD_PRINT == 0:
             rospy.loginfo("Foodruns %d of %d", self.total_food, self.total_food_runs)
 
-        if len(self.food_poses) > 0 and self.current_food_pose < len(self.food_poses):  # check if we have more than one food poses, and if the current one is not the last one
-            if self.total_food >= self.food_poses[self.current_food_pose][0]:
-                rospy.loginfo("Changing food pose after %d runs to %s", self.total_food, str(self.food_poses[self.current_food_pose][1]))
-                self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
-                self.current_food_pose += 1
-                try:
-                    os.system("sh beep.sh")
-                except:
-                    pass
-
+#        if len(self.food_poses) > 0 and self.current_food_pose < len(self.food_poses):  # check if we have more than one food poses, and if the current one is not the last one
+#            if self.total_food >= self.food_poses[self.current_food_pose][0]:
+#                rospy.loginfo("Changing food pose after %d runs to %s", self.total_food, str(self.food_poses[self.current_food_pose][1]))
+#                self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
+#                self.current_food_pose += 1
+#                try:
+#                    os.system("sh beep.sh")
+#                except:
+#                    pass
         if self.total_food >= self.total_food_runs:
             self.run_completed = True
+
+    def foodpick_cb(self, msg, idx):
+        self.foodpick_counts[idx] = msg.data
+        self.totalpick_food = sum(self.foodpick_counts)
+        if self.totalpick_food % FOOD_PRINT == 0:
+            rospy.loginfo("Foodpicks %d of %d", self.totalpick_food, self.total_food_runs)
+
+        if len(self.food_poses) > 0 and self.current_food_pose < len(self.food_poses):  # check if we have more than one food poses, and if the current one is not the last one
+            if self.totalpick_food >= self.food_poses[self.current_food_pose][0]:
+                rospy.loginfo("Changing food pose after %d runs to %s", self.totalpick_food, str(self.food_poses[self.current_food_pose][1]))
+                self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
+                self.current_food_pose += 1
+
+
 
     def stall_cb(self, msg, idx):
         assert isinstance(msg, Stall)
@@ -261,8 +338,10 @@ class RunExperiments(object):
         self.restart_run = False
 
         self.total_food = 0
+        self.totalpick_food = 0
         self.current_food_pose = 0
         self.food_counts = [0] * (num_robots+1)
+        self.foodpick_counts = [0] * (num_robots+1)
         self.stalled = [0] * (num_robots+1)
         self.cmd_zero_counts = [0] * (num_robots+1)
         self.last_cmd_vels = [rospy.Time(0)] * (num_robots)
@@ -270,6 +349,10 @@ class RunExperiments(object):
 
     def update_listeners(self, num_robots):
         for l in self.food_listeners:
+            assert isinstance(l, rospy.Subscriber)
+            l.unregister()
+
+        for l in self.foodpick_listeners:
             assert isinstance(l, rospy.Subscriber)
             l.unregister()
 
@@ -283,9 +366,11 @@ class RunExperiments(object):
 
         time.sleep(0.5)
         self.food_listeners = []
+        self.foodpick_listeners = []
         self.stall_listeners = []
 
         for i in range(1, num_robots+1):
+            self.foodpick_listeners.append(rospy.Subscriber("/robot_%d/foodpicks" % i, Int32, self.foodpick_cb, i))
             self.food_listeners.append(rospy.Subscriber("/robot_%d/fooddrops" % i, Int32, self.food_cb, i))
             self.stall_listeners.append(rospy.Subscriber("/robot_%d/stall" % i, Stall, self.stall_cb, i))
             self.cmd_listeners.append(rospy.Subscriber("/robot_%d/cmd_vel" % i, Twist, self.cmd_cb, i))
@@ -301,17 +386,24 @@ class RunExperiments(object):
                 self.restart_run = True
                 return
         time.sleep(START_WAIT)
-        try:
-            os.system("sh beep.sh")
-        except:
-            pass
+#        try:
+#            os.system("sh beep.sh")
+#        except:
+#            pass
         rosbag_file = os.path.join(self.path, launchfile + nameext + "_run" + str(self.run) + ".bag")
         rospy.loginfo("rosbag filename: %s", rosbag_file)
 
         self.rosbag_process = Popen(["rosbag", "record", "/logging", "-O", rosbag_file])
 
         self.start_time = rospy.Time.now()
-
+    
+        # move the initial food position with configuration parameter (0 fooddrops)
+        if len(self.food_poses) > 0 and self.current_food_pose < len(self.food_poses):  # check if we have more than one food poses, and if the current one is not the last one
+            if self.totalpick_food >= self.food_poses[self.current_food_pose][0]:
+                rospy.loginfo("Changing food pose after %d runs to %s", self.totalpick_food, str(self.food_poses[self.current_food_pose][1]))
+                self.food_pose_pub.publish(self.food_poses[self.current_food_pose][1])
+                self.current_food_pose += 1
+                
         # set last cmd received to start time for checking if they send cmd_vels
         for i in range(len(self.last_cmd_vels)):
             self.last_cmd_vels[i] = self.start_time

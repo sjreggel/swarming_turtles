@@ -2,9 +2,12 @@
 import rospy
 from std_msgs.msg import Int32
 
-NUM_ROBOTS = 10
+NUM_ROBOTS = 14
 food_counts = [0] * NUM_ROBOTS
 total_food = 0
+
+foodpick_counts = [0] * NUM_ROBOTS
+totalpick_food = 0
 
 
 def rob_cb(data, idx):
@@ -13,6 +16,11 @@ def rob_cb(data, idx):
     total_food = sum(food_counts)
     print "rob%d_food = %d total = %d" % (idx, food_counts[idx-1], total_food)
 
+def pick_cb(data, idx):
+    global foodpick_counts, totalpick_food
+    foodpick_counts[idx-1] = data.data
+    totalpick_food = sum(foodpick_counts)
+    print "rob%d_foodpick = %d total = %d" % (idx, foodpick_counts[idx-1], totalpick_food)
 
 def listener():
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -25,6 +33,10 @@ def listener():
 
     for i in range(1, NUM_ROBOTS+1):
         rospy.Subscriber("/robot_%d/fooddrops" % i, Int32, rob_cb, i)
+
+    for i in range(1, NUM_ROBOTS+1):
+        rospy.Subscriber("/robot_%d/foodpicks" % i, Int32, pick_cb, i)
+
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
