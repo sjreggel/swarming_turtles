@@ -117,6 +117,27 @@ configs = [
 #    ('10x10-sim-14-robots','-dist20m', 4, 50, 14, 4000, []),
 #----------------------------------------------------
 
+
+#-----------------18x10 1 food distx2----------------
+#  for distx2 make sure to change the random walk distance parameter 
+#  in move_random.py, move_random_stage.py
+#----------------------------------------------------
+    #('18x10-sim-10-robots','-dist10m', 10, 50, 10, 4000, []),
+#    ('18x10-sim-11-robots','-dist10m', 10, 50, 11, 4000, []),
+#    ('18x10-sim-12-robots','-dist10m', 10, 50, 12, 4000, []),
+#    ('18x10-sim-9-robots','-dist10m', 10, 50, 9, 3000, []),
+#    ('18x10-sim-8-robots','-dist10m', 10, 50, 8, 3000, []),
+#    ('18x10-sim-7-robots','-dist10m', 10, 50, 7, 3000, []),
+#    ('18x10-sim-6-robots','-dist10m', 10, 50, 6, 3000, []),
+#    ('18x10-sim-5-robots','-dist10m', 10, 50, 5, 3000, []),
+#    ('18x10-sim-4-robots','-dist10m', 10, 50, 4, 3000, []),
+#    ('18x10-sim-3-robots','-dist10m', 10, 50, 3, 3000, []),
+#    ('18x10-sim-2-robots','-dist10m', 10, 50, 2, 3000, []),
+#    ('18x10-sim-13-robots','-dist10m', 10, 50, 13, 4000, []),
+#    ('18x10-sim-1-robots','-dist10m', 10, 50, 1, 5000, []),
+#    ('18x10-sim-14-robots','-dist10m', 10, 50, 14, 4000, []),
+#----------------------------------------------------
+
 #-----------------7x7 1 food ----------------
 #  Make sure to change the random walk distance parameter 
 #  in move_random.py
