@@ -6,7 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from swarming_turtles_msgs.msg import Turtles, Turtle
 
 #RATE = 20
-RATE = 20
+RATE = 10
 
 MAX_NUM_TURTLES = 20  # TODO Make param
 

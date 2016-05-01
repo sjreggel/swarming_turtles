@@ -31,13 +31,17 @@ FOOD_PRINT = 1   # How often food should be printed
 
 SHOW_OUTPUT_FROM_LAUNCH = True
 
-cm = -0.10
-pos = 4.0
+
+#----move food ----#
+cm = 1.0
+pos = -13.0
 
 def move():
     global cm, pos
     pos += cm
     return pos
+
+
 
 configs = [
     # launchfile (without .launch), additional_file-naming, repetitions, num_food_runs, num_robots, time_limit in s, array of future food poses (change after runs, Pose2D)
@@ -99,7 +103,7 @@ configs = [
 
 #-----------------10x10 1 food distx2----------------
 #  for distx2 make sure to change the random walk distance parameter 
-#  in move_random.py, move_random_stage.py
+#  in move_random.py
 #----------------------------------------------------
 #    ('10x10-sim-10-robots','-dist20m', 4, 50, 10, 4000, []),
 #    ('10x10-sim-11-robots','-dist20m', 4, 50, 11, 4000, []),
@@ -120,23 +124,66 @@ configs = [
 
 #-----------------18x10 1 food distx2----------------
 #  for distx2 make sure to change the random walk distance parameter 
-#  in move_random.py, move_random_stage.py
+#  in move_random.py
 #----------------------------------------------------
     #('18x10-sim-10-robots','-dist10m', 10, 50, 10, 4000, []),
-#    ('18x10-sim-11-robots','-dist10m', 10, 50, 11, 4000, []),
-#    ('18x10-sim-12-robots','-dist10m', 10, 50, 12, 4000, []),
-#    ('18x10-sim-9-robots','-dist10m', 10, 50, 9, 3000, []),
-#    ('18x10-sim-8-robots','-dist10m', 10, 50, 8, 3000, []),
-#    ('18x10-sim-7-robots','-dist10m', 10, 50, 7, 3000, []),
-#    ('18x10-sim-6-robots','-dist10m', 10, 50, 6, 3000, []),
-#    ('18x10-sim-5-robots','-dist10m', 10, 50, 5, 3000, []),
-#    ('18x10-sim-4-robots','-dist10m', 10, 50, 4, 3000, []),
-#    ('18x10-sim-3-robots','-dist10m', 10, 50, 3, 3000, []),
-#    ('18x10-sim-2-robots','-dist10m', 10, 50, 2, 3000, []),
-#    ('18x10-sim-13-robots','-dist10m', 10, 50, 13, 4000, []),
-#    ('18x10-sim-1-robots','-dist10m', 10, 50, 1, 5000, []),
-#    ('18x10-sim-14-robots','-dist10m', 10, 50, 14, 4000, []),
+    #('18x10-sim-11-robots','-dist10m', 10, 50, 11, 4000, []),
+    #('18x10-sim-12-robots','-dist10m', 10, 50, 12, 4000, []),
+    #('18x10-sim-9-robots','-dist10m', 10, 50, 9, 3000, []),
+    #('18x10-sim-8-robots','-dist10m', 10, 50, 8, 3000, []),
+    #('18x10-sim-7-robots','-dist10m', 10, 50, 7, 3000, []),
+    #('18x10-sim-6-robots','-dist10m', 10, 50, 6, 3000, []),
+    #('18x10-sim-5-robots','-dist10m', 5, 50, 5, 3000, []),
+    #('18x10-sim-4-robots','-dist10m', 10, 50, 4, 3000, []),
+    #('18x10-sim-3-robots','-dist10m', 10, 50, 3, 3000, []),
+    #('18x10-sim-2-robots','-dist10m', 10, 50, 2, 3000, []),
+    #('18x10-sim-13-robots','-dist10m', 10, 50, 13, 4000, []),
+    #('18x10-sim-1-robots','-dist10m', 10, 50, 1, 5000, []),
+    #('18x10-sim-14-robots','-dist10m', 10, 50, 14, 4000, []),
 #----------------------------------------------------
+
+
+#-----------------20x20 1 food - open environment sqrt same as 10x10, randomwalk 20m ----------------
+#  Make sure to change the random walk distance parameter 
+#  in move_random.py
+#----------------------------------------------------
+    #('20x20-sim-10-robots','-dist20m', 1, 50, 10, 4000, []),
+    #('20x20-sim-11-robots','-dist20m', 10, 50, 11, 4000, []),
+    #('20x20-sim-12-robots','-dist20m', 10, 50, 12, 4000, []),
+    #('20x20-sim-9-robots','-dist20m', 10, 50, 9, 3000, []),
+    #('20x20-sim-8-robots','-dist20m', 10, 50, 8, 3000, []),
+    #('20x20-sim-7-robots','-dist20m', 10, 50, 7, 3000, []),
+    #('20x20-sim-6-robots','-dist20m', 10, 50, 6, 3000, []),
+    #('20x20-sim-5-robots','-dist20m', 7, 50, 5, 3000, []),
+    #('20x20-sim-4-robots','-dist20m', 10, 50, 4, 3000, []),
+    #('20x20-sim-3-robots','-dist20m', 10, 50, 3, 3000, []),
+    #('20x20-sim-2-robots','-dist20m', 1, 50, 2, 3000, []),
+    #('20x20-sim-13-robots','-dist20m', 10, 50, 13, 4000, []),
+    #('20x20-sim-1-robots','-dist20m', 10, 50, 1, 5000, []),
+    #('20x20-sim-14-robots','-dist20m', 10, 50, 14, 4000, []),
+    #----------------------------------------------------
+
+#-----------------40x40 1 food - open environment sqrt same as 10x10, randomwalk 40m ----------------
+#  Make sure to change the random walk distance parameter 
+#  in move_random.py
+#----------------------------------------------------
+    #('40x40-sim-10-robots','-dist40m', 10, 50, 10, 5000, []),
+    #('40x40-sim-11-robots','-dist40m', 10, 50, 11, 5000, []),
+    #('40x40-sim-12-robots','-dist40m', 10, 50, 12, 5000, []),
+    #('40x40-sim-9-robots','-dist40m', 10, 50, 9, 5000, []),
+    #('40x40-sim-8-robots','-dist40m', 10, 50, 8, 5000, []),
+    ('40x40-sim-7-robots','-dist40m', 10, 50, 7, 5000, []),
+    ('40x40-sim-6-robots','-dist40m', 10, 50, 6, 5000, []),
+    ('40x40-sim-5-robots','-dist40m', 10, 50, 5, 5000, []),
+    ('40x40-sim-4-robots','-dist40m', 10, 50, 4, 5000, []),
+    ('40x40-sim-3-robots','-dist40m', 10, 50, 3, 5000, []),
+    ('40x40-sim-2-robots','-dist40m', 10, 50, 2, 5000, []),
+    ('40x40-sim-13-robots','-dist40m', 10, 50, 13, 5000, []),
+    ('40x40-sim-1-robots','-dist40m', 10, 50, 1, 5000, []),
+    ('40x40-sim-14-robots','-dist40m', 10, 50, 14, 5000, []),
+    #----------------------------------------------------
+
+
 
 #-----------------7x7 1 food ----------------
 #  Make sure to change the random walk distance parameter 
@@ -145,17 +192,17 @@ configs = [
 #    ('7x7-sim-10-robots','', 10, 50, 10, 4000, []),
 #    ('7x7-sim-11-robots','', 10, 50, 11, 4000, []),
 #    ('7x7-sim-9-robots','', 10, 50, 9, 3000, []),
-    ('7x7-sim-8-robots','', 10, 50, 8, 3000, []),
-    ('7x7-sim-7-robots','', 10, 50, 7, 3000, []),
-    ('7x7-sim-6-robots','', 10, 50, 6, 3000, []),
-    ('7x7-sim-5-robots','', 10, 50, 5, 3000, []),
-    ('7x7-sim-4-robots','', 10, 50, 4, 3000, []),
-    ('7x7-sim-3-robots','', 10, 50, 3, 3000, []),
-    ('7x7-sim-2-robots','', 10, 50, 2, 3000, []),
-    ('7x7-sim-1-robots','', 10, 50, 1, 5000, []),
-    ('7x7-sim-12-robots','', 9, 50, 12, 4000, []),
-    ('7x7-sim-13-robots','', 10, 50, 13, 4000, []),
-    ('7x7-sim-14-robots','', 10, 50, 14, 4000, []),
+#    ('7x7-sim-8-robots','', 10, 50, 8, 3000, []),
+#    ('7x7-sim-7-robots','', 10, 50, 7, 3000, []),
+#    ('7x7-sim-6-robots','', 10, 50, 6, 3000, []),
+#    ('7x7-sim-5-robots','', 6, 50, 5, 3000, []),
+#    ('7x7-sim-4-robots','', 10, 50, 4, 3000, []),
+#    ('7x7-sim-3-robots','', 10, 50, 3, 3000, []),
+#    ('7x7-sim-2-robots','', 10, 50, 2, 3000, []),
+#    ('7x7-sim-1-robots','', 10, 50, 1, 5000, []),
+#    ('7x7-sim-12-robots','', 9, 50, 12, 4000, []),
+#    ('7x7-sim-13-robots','', 10, 50, 13, 4000, []),
+#    ('7x7-sim-14-robots','', 10, 50, 14, 4000, []),
 #----------------------------------------------------
 
 
@@ -163,7 +210,7 @@ configs = [
 #--------------------- 10x10 x food ----------------
 
 
-    #('10x10-sim-11-robots','-movingfoodtest', 10, 50, 11, 3000, [(22, Pose2D(move(),4.9, math.radians(-90)))
+    #('10x10-sim-11-robots','-movingfoodtest', 10, 50, 11, 3000, [(0, Pose2D(move(),4.9, math.radians(-90)))
                                                                 #,(23, Pose2D(move(),4.9, math.radians(-90)))
                                                                 #,(24, Pose2D(move(),4.9, math.radians(-90)))
                                                                 #,(25, Pose2D(move(),4.9, math.radians(-90)))
@@ -189,7 +236,19 @@ configs = [
                                                                 #,(45, Pose2D(move(),4.9, math.radians(-90)))
                                                                 #]),
 #----------------------------------------------------
-
+    #('18x10-sim-10-robots','-movingfood-10x', 10, 300, 10, 6000, [(0, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(25, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(50, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(75, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(100, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(125, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(150, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(175, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(225, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(250, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #,(275, Pose2D(move(),4.9, math.radians(-90)))
+                                                                #]),
+#----------------------------------------------------
 
 #--------------------- 10x10 2 food ----------------
 #    ('10x10-sim-9-robots','-2food', 8, 100, 9, 3000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
@@ -207,6 +266,8 @@ configs = [
 #    ('10x10-sim-13-robots','-2food', 10, 100, 13, 5000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
 #    ('10x10-sim-14-robots','-2food', 10, 100, 14, 6000, [(50, Pose2D(-3.0,4.9, math.radians(-90)))]),
 #----------------------------------------------------
+
+
 
 #-----------------10x10 2 food distx2----------------
 #  for distx2 make sure to change the random walk distance parameter 
