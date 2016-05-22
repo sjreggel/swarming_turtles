@@ -3,7 +3,7 @@
   
     <include file="$(find swarming_turtles_stage)/launch/simulation_environment.launch" >
            <arg name="map" value="10xL_map.yaml" />
-	   <arg name="stage_world" value="10xL-9-robots.world" />
+	   <arg name="stage_world" value="10xL-3-robots.world" />
     </include>
 
     <include file="$(find swarming_turtles_shepherd)/launch/shepherd_teleop_joy.launch" >
@@ -24,31 +24,6 @@
     <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
     <arg name="robot" value="robot_3" />
     </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_4" />
-    </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_5" />
-    </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_6" />
-    </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_7" />
-    </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_8" />
-    </include>
-
-    <include file="$(find swarming_turtles_stage)/launch/robot.launch" >
-    <arg name="robot" value="robot_9" />
-    </include>
-
 
 
 </launch>
