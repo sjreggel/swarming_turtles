@@ -355,7 +355,7 @@ configs = [
     #('10xL-sim-10-robots','-3food', 10, 150, 10, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
     #('10xL-sim-11-robots','-3food', 10, 150, 11, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
     #('10xL-sim-12-robots','-3food', 10, 150, 12, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
-    ('10xL-sim-13-robots','-3food', 2, 150, 13, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
+    #('10xL-sim-13-robots','-3food', 2, 150, 13, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
     #('10xL-sim-14-robots','-3food', 10, 150, 14, 5000, [(50, Pose2D(-2.5,4.9, math.radians(-90))),(100, Pose2D(4.9,-2.5, math.radians(180)))]),
 #----------------------------------------------------
 
